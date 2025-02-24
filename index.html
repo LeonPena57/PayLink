@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Paylink</title>
+  <link href="https://fonts.googleapis.com/css2?family=Contrail+One&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Header will be injected here -->
+  <div id="header"></div>
+
+  <!-- Main Content -->
+  <main>
+    <div class="content">
+      <h1>Welcome to Paylink</h1>
+      <p>Your freelancing solution for easy payments and file delivery.</p>
+    </div>
+  </main>
+
+  <!-- Floating Nav Bar -->
+  <nav>
+    <button>Home</button>
+    <button>Files</button>
+    <button>Upload</button>
+    <button>QR Code</button>
+    <button>Account</button>
+  </nav>
+
+  <!-- Include JavaScript -->
+  <script src="script.js"></script>
+  <script>
+    // Load the header
+    fetch("header.html")
+      .then((response) => response.text())
+      .then((data) => {
+        document.getElementById("header").innerHTML = data;
+      });
+  </script>
+</body>
+</html>

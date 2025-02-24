@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Account - Paylink</title>
+  <link href="https://fonts.googleapis.com/css2?family=Contrail+One&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Header will be injected here -->
+  <div id="header"></div>
+
+  <!-- Main Content -->
+  <main class="account-page">
+    <!-- Banner -->
+    <div class="banner">
+      <img src="/images/YTBANNEER-min.jpg" alt="Banner" class="banner-image">
+      <button class="edit-button">Edit</button>
+    </div>
+
+    <!-- Profile Section -->
+    <div class="profile-section">
+      <div class="profile-picture">
+        <img src="/images/WHITELOGOTEST2025.png" alt="Profile Picture" class="profile-image">
+      </div>
+      <div class="profile-info">
+        <div class="username">John Doe</div>
+        <div class="edit-profile">Edit Profile</div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <div class="tab active">Portfolio</div>
+      <div class="tab">Services</div>
+      <div class="tab">Clients</div>
+      <div class="tab">FAQ</div>
+      <div class="tab">Contact</div>
+    </div>
+
+    <!-- Tab Content -->
+    <div class="tab-content">
+      <!-- Portfolio Tab -->
+      <div class="tab-pane active" id="portfolio">
+        <div class="portfolio-promo">
+          <img src="assets/portfolio-promo.jpg" alt="Portfolio Promo">
+          <div class="overlay">
+            <h2>Web Design & Development</h2>
+          </div>
+        </div>
+        <div class="portfolio-images">
+          <img src="assets/portfolio-1.jpg" alt="Portfolio 1">
+          <img src="assets/portfolio-2.jpg" alt="Portfolio 2">
+          <img src="assets/portfolio-3.jpg" alt="Portfolio 3">
+          <img src="assets/portfolio-4.jpg" alt="Portfolio 4">
+        </div>
+      </div>
+
+      <!-- Services Tab -->
+      <div class="tab-pane" id="services">
+        <div class="services-promo">
+          <img src="assets/services-promo.jpg" alt="Services Promo">
+          <div class="overlay">
+            <h2>Our Services</h2>
+          </div>
+        </div>
+        <div class="services-grid">
+          <img src="assets/service-1.jpg" alt="Service 1">
+          <img src="assets/service-2.jpg" alt="Service 2">
+          <img src="assets/service-3.jpg" alt="Service 3">
+          <img src="assets/service-4.jpg" alt="Service 4">
+        </div>
+        <div class="services-stats">
+          <div class="stat">
+            <h3>Reviews</h3>
+            <p>★★★★★</p>
+          </div>
+          <div class="stat">
+            <h3>Orders</h3>
+            <p>1,234</p>
+          </div>
+        </div>
+        <div class="services-social">
+          <img src="assets/social-1.png" alt="Social 1">
+          <img src="assets/social-2.png" alt="Social 2">
+          <img src="assets/social-3.png" alt="Social 3">
+          <img src="assets/social-4.png" alt="Social 4">
+        </div>
+      </div>
+
+      <!-- Clients Tab -->
+      <div class="tab-pane" id="clients">
+        <h2>Clients</h2>
+        <div class="clients-list">
+          <div class="client-card">
+            <img src="assets/client-1.jpg" alt="Client 1">
+            <div class="client-info">
+              <h3>Jane Doe</h3>
+              <p>Graphic Designer</p>
+            </div>
+            <div class="client-stats">
+              <p>12 Orders</p>
+            </div>
+          </div>
+          <div class="client-card">
+            <img src="assets/client-2.jpg" alt="Client 2">
+            <div class="client-info">
+              <h3>John Smith</h3>
+              <p>Web Developer</p>
+            </div>
+            <div class="client-stats">
+              <p>8 Orders</p>
+            </div>
+          </div>
+          <div class="client-card">
+            <img src="assets/client-3.jpg" alt="Client 3">
+            <div class="client-info">
+              <h3>Emily Johnson</h3>
+              <p>Marketing Specialist</p>
+            </div>
+            <div class="client-stats">
+              <p>15 Orders</p>
+            </div>
+          </div>
+          <div class="client-card">
+            <img src="assets/client-4.jpg" alt="Client 4">
+            <div class="client-info">
+              <h3>Michael Brown</h3>
+              <p>UI/UX Designer</p>
+            </div>
+            <div class="client-stats">
+              <p>10 Orders</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FAQ Tab -->
+      <div class="tab-pane" id="faq">
+        <h2>FAQ</h2>
+        <p>Have questions? Check out my frequently asked questions to learn more about my process, pricing, and availability.</p>
+      </div>
+
+      <!-- Contact Tab -->
+      <div class="tab-pane" id="contact">
+        <h2>Contact</h2>
+        <p>Feel free to reach out to me for inquiries or collaborations. I'm always excited to hear about new projects!</p>
+      </div>
+    </div>
+  </main>
+
+  <!-- Navigation will be injected here -->
+  <div id="nav"></div>
+
+  <!-- Include JavaScript -->
+  <script src="script.js"></script>
+  <script>
+    // Load the header and navigation
+    fetch("header.html")
+      .then((response) => response.text())
+      .then((data) => {
+        document.getElementById("header").innerHTML = data;
+      });
+
+    fetch("nav.html")
+      .then((response) => response.text())
+      .then((data) => {
+        document.getElementById("nav").innerHTML = data;
+      });
+  </script>
+</body>
+</html>
