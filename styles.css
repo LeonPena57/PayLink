@@ -129,6 +129,8 @@ main p {
   align-items: center;
   justify-content: center;
   gap: 5px;
+  text-decoration: none;
+  color: white;
 }
 
 .mobile-nav .nav-icon {

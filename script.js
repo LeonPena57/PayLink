@@ -2,11 +2,11 @@
 
 // Navigation Logic
 document.addEventListener("DOMContentLoaded", function () {
-  const navButtons = document.querySelectorAll("nav button");
+  const navButtons = document.querySelectorAll(".nav-button");
 
   navButtons.forEach((button) => {
     button.addEventListener("click", function () {
-      const pageName = button.textContent.toLowerCase().replace(" ", "-");
+      const pageName = button.querySelector("span").textContent.trim().toLowerCase().replace(/\s+/g, "-");
       window.location.href = `${pageName}.html`;
     });
   });

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Paylink</title>
   <link href="https://fonts.googleapis.com/css2?family=Contrail+One&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
   <!-- Header will be injected here -->
@@ -28,15 +28,24 @@
     <button>Account</button>
   </nav>
 
-  <!-- Include JavaScript -->
-  <script src="script.js"></script>
-  <script>
-    // Load the header
-    fetch("header.html")
-      .then((response) => response.text())
-      .then((data) => {
-        document.getElementById("header").innerHTML = data;
-      });
+ <!-- Navigation will be injected here -->
+ <div id="nav"></div>
+
+ <!-- Include JavaScript -->
+ <script src="script.js"></script>
+ <script>
+   // Load the header and navigation
+   fetch("header.html")
+     .then((response) => response.text())
+     .then((data) => {
+       document.getElementById("header").innerHTML = data;
+     });
+
+   fetch("nav.html")
+     .then((response) => response.text())
+     .then((data) => {
+       document.getElementById("nav").innerHTML = data;
+     });
   </script>
 </body>
 </html>
