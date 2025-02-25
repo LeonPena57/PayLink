@@ -149,6 +149,31 @@
       </div>
     </div>
   </main>
+  <!-- Add this to the Account tab content -->
+<div class="tab-pane" id="account">
+  <h2>Custom Branding</h2>
+  <div class="branding-settings">
+    <!-- Logo Upload -->
+    <div class="setting">
+      <label for="logoUpload">Upload Logo</label>
+      <input type="file" id="logoUpload" accept="image/*">
+      <div class="logo-preview" id="logoPreview"></div>
+    </div>
+
+    <!-- Color Picker -->
+    <div class="setting">
+      <label for="colorPicker">Choose Brand Color</label>
+      <input type="color" id="colorPicker" value="#007AFF">
+    </div>
+
+    <!-- Custom Domain -->
+    <div class="setting">
+      <label for="customDomain">Custom Domain</label>
+      <input type="text" id="customDomain" placeholder="e.g., yourbrand.paylink.com">
+      <button id="saveDomain">Save</button>
+    </div>
+  </div>
+</div>
 
   <!-- Navigation will be injected here -->
   <div id="nav"></div>
