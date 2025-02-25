@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Paylink</title>
   <link href="https://fonts.googleapis.com/css2?family=Contrail+One&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
   <!-- Header will be injected here -->
@@ -89,32 +89,20 @@
     </div>
   </main>
 
-  <!-- Footer -->
-  <footer>
-    <div class="footer-content">
-      <p>&copy; 2023 Paylink. All rights reserved.</p>
-      <div class="social-links">
-        <a href="#">Twitter</a>
-        <a href="#">Facebook</a>
-        <a href="#">Instagram</a>
-      </div>
-    </div>
-  </footer>
-
   <!-- Navigation will be injected here -->
   <div id="nav"></div>
 
   <!-- Include JavaScript -->
-  <script src="script.js"></script>
+  <script src="./script.js"></script>
   <script>
     // Load the header and navigation
-    fetch("header.html")
+    fetch("./header.html")
       .then((response) => response.text())
       .then((data) => {
         document.getElementById("header").innerHTML = data;
       });
 
-    fetch("nav.html")
+    fetch("./nav.html")
       .then((response) => response.text())
       .then((data) => {
         document.getElementById("nav").innerHTML = data;
