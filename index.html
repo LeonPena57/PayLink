@@ -16,26 +16,108 @@
     <div class="content">
       <h1>Welcome to Paylink</h1>
       <p>Your freelancing solution for easy payments and file delivery.</p>
+      <div class="cta-buttons">
+        <a href="signup.html" class="cta-button">Sign Up</a>
+        <a href="login.html" class="cta-button">Log In</a>
+      </div>
+    </div>
+
+    <!-- Feature Highlights -->
+    <div class="features">
+      <div class="feature">
+        <img src="assets/upload-icon.svg" alt="Upload">
+        <h3>Easy File Upload</h3>
+        <p>Upload and share files with clients in seconds.</p>
+      </div>
+      <div class="feature">
+        <img src="assets/payment-icon.svg" alt="Payment">
+        <h3>Secure Payments</h3>
+        <p>Get paid quickly and securely through Paylink.</p>
+      </div>
+      <div class="feature">
+        <img src="assets/discover-icon.svg" alt="Discover">
+        <h3>Find Freelancers</h3>
+        <p>Discover talented freelancers in your niche.</p>
+      </div>
+    </div>
+
+    <!-- Testimonials -->
+    <div class="testimonials">
+      <h2>What Our Users Say</h2>
+      <div class="testimonial">
+        <p>"Paylink has made my freelancing life so much easier. Highly recommended!"</p>
+        <p class="author">- Jane Doe, Graphic Designer</p>
+      </div>
+      <div class="testimonial">
+        <p>"The payment process is seamless, and the file sharing is super convenient."</p>
+        <p class="author">- John Smith, Web Developer</p>
+      </div>
+    </div>
+
+    <!-- How It Works -->
+    <div class="how-it-works">
+      <h2>How It Works</h2>
+      <div class="step">
+        <span>1</span>
+        <p>Upload your files to Paylink.</p>
+      </div>
+      <div class="step">
+        <span>2</span>
+        <p>Create a paylink and set your price.</p>
+      </div>
+      <div class="step">
+        <span>3</span>
+        <p>Share the link with your client and get paid.</p>
+      </div>
+    </div>
+
+    <!-- Freelancer Showcase -->
+    <div class="freelancer-showcase">
+      <h2>Featured Freelancers</h2>
+      <div class="freelancers">
+        <div class="freelancer">
+          <img src="assets/freelancer-1.jpg" alt="Freelancer 1">
+          <h3>Jane Doe</h3>
+          <p>Graphic Designer</p>
+        </div>
+        <div class="freelancer">
+          <img src="assets/freelancer-2.jpg" alt="Freelancer 2">
+          <h3>John Smith</h3>
+          <p>Web Developer</p>
+        </div>
+      </div>
     </div>
   </main>
 
-  <!-- Floating Nav Bar -->
-  <nav>
-    <button>Home</button>
-    <button>Files</button>
-    <button>Upload</button>
-    <button>QR Code</button>
-    <button>Account</button>
-  </nav>
+  <!-- Footer -->
+  <footer>
+    <div class="footer-content">
+      <p>&copy; 2023 Paylink. All rights reserved.</p>
+      <div class="social-links">
+        <a href="#">Twitter</a>
+        <a href="#">Facebook</a>
+        <a href="#">Instagram</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Navigation will be injected here -->
+  <div id="nav"></div>
 
   <!-- Include JavaScript -->
   <script src="script.js"></script>
   <script>
-    // Load the header
+    // Load the header and navigation
     fetch("header.html")
       .then((response) => response.text())
       .then((data) => {
         document.getElementById("header").innerHTML = data;
+      });
+
+    fetch("nav.html")
+      .then((response) => response.text())
+      .then((data) => {
+        document.getElementById("nav").innerHTML = data;
       });
   </script>
 </body>
