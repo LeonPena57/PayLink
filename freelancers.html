@@ -75,54 +75,55 @@
   </div>
 
   <!-- Footer will be injected here -->
-  <div id="footer"></div>
+<div id="footer"></div>
+<div id="nav"></div>
 
-  <!-- Include JavaScript -->
-  <script src="./script.js"></script>
-  <script>
-    // Load the header, navigation, and footer
-    fetch("./header.html")
-      .then((response) => response.text())
-      .then((data) => {
-        document.getElementById("header").innerHTML = data;
-      });
+<!-- Include JavaScript -->
+<script src="./script.js"></script>
+<script>
+  // Load the header, navigation, and footer
+  fetch("./header.html")
+    .then((response) => response.text())
+    .then((data) => {
+      document.getElementById("header").innerHTML = data;
+    });
 
-    fetch("./nav.html")
-      .then((response) => response.text())
-      .then((data) => {
-        document.getElementById("nav").innerHTML = data;
-      });
+  fetch("./nav.html")
+    .then((response) => response.text())
+    .then((data) => {
+      document.getElementById("nav").innerHTML = data;
+    });
 
-    fetch("./footer.html")
-      .then((response) => response.text())
-      .then((data) => {
-        document.getElementById("footer").innerHTML = data;
-      });
+  fetch("./footer.html")
+    .then((response) => response.text())
+    .then((data) => {
+      document.getElementById("footer").innerHTML = data;
+    });
 
-    // Category Tabs Functionality
-    const tabs = document.querySelectorAll('.tab');
-    const freelancerCards = document.querySelectorAll('.freelancer-card');
+  // Category Tabs Functionality
+  const tabs = document.querySelectorAll('.tab');
+  const freelancerCards = document.querySelectorAll('.freelancer-card');
 
-    tabs.forEach(tab => {
-      tab.addEventListener('click', () => {
-        // Remove active class from all tabs
-        tabs.forEach(t => t.classList.remove('active'));
-        // Add active class to the clicked tab
-        tab.classList.add('active');
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      // Remove active class from all tabs
+      tabs.forEach(t => t.classList.remove('active'));
+      // Add active class to the clicked tab
+      tab.classList.add('active');
 
-        // Get the selected category
-        const category = tab.getAttribute('data-category');
+      // Get the selected category
+      const category = tab.getAttribute('data-category');
 
-        // Filter freelancer cards
-        freelancerCards.forEach(card => {
-          if (category === 'all' || card.getAttribute('data-category') === category) {
-            card.style.display = 'block';
-          } else {
-            card.style.display = 'none';
-          }
-        });
+      // Filter freelancer cards
+      freelancerCards.forEach(card => {
+        if (category === 'all' || card.getAttribute('data-category') === category) {
+          card.style.display = 'block';
+        } else {
+          card.style.display = 'none';
+        }
       });
     });
-  </script>
+  });
+</script>
 </body>
 </html>
