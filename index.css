@@ -27,6 +27,10 @@ body::before {
   opacity: 0.1; /* Subtle gradient effect */
 }
 
+body.light-mode::before {
+  background: linear-gradient(45deg, #FFD6A5, #FFC3A0, #FFADAD, #FF9A9E); /* Pastel gradient for light mode */
+}
+
 @keyframes gradientAnimation {
   0% {
     background-position: 0% 50%;
@@ -48,7 +52,7 @@ body::before {
 body.light-mode .hero,
 body.light-mode .benefit,
 body.light-mode .freelancer {
-  background: rgba(255, 255, 255, 0.5); /* Semi-transparent background for light mode */
+  background: rgba(255, 255, 255, 0.8); /* Semi-transparent background for light mode */
 }
 
 /* Faint Digital Grid */
@@ -84,60 +88,110 @@ body.light-mode::after {
 }
 
 /* Header */
+header {
+  background-color: rgba(18, 18, 18, 0.8);
+  padding: 20px;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  backdrop-filter: blur(10px);
+}
 
 body.light-mode header {
   background-color: rgba(255, 255, 255, 0.8);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.mode-toggle {
+.header-wrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.logo-container {
   display: flex;
   align-items: center;
 }
 
-.switch {
-  position: relative;
-  display: inline-block;
-  width: 40px;
-  height: 20px;
+.logo {
+  height: 40px;
+  width: auto;
 }
 
-.switch input {
-  opacity: 0;
-  width: 0;
-  height: 0;
+body.light-mode .logo {
+  display: none; /* Hide dark mode logo in light mode */
 }
 
-.slider {
-  position: absolute;
-  cursor: pointer;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: #ccc;
-  transition: 0.3s;
-  border-radius: 20px;
+.logo-light {
+  height: 40px;
+  width: auto;
+  display: none; /* Hide light mode logo in dark mode */
 }
 
-.slider:before {
-  position: absolute;
-  content: '';
-  height: 16px;
-  width: 16px;
-  left: 2px;
-  bottom: 2px;
-  background-color: white;
-  transition: 0.3s;
-  border-radius: 50%;
+body.light-mode .logo-light {
+  display: block; /* Show light mode logo in light mode */
 }
 
-input:checked + .slider {
+.app-name {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-left: 10px;
+  color: #ffffff;
+}
+
+body.light-mode .app-name {
+  color: #000000; /* Black text in light mode */
+}
+
+.desktop-nav {
+  display: flex;
+  gap: 20px;
+}
+
+.nav-link {
+  color: #ffffff;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.3s ease;
+}
+
+body.light-mode .nav-link {
+  color: #000000; /* Black text in light mode */
+}
+
+.nav-link:hover {
+  color: #007AFF;
+}
+
+.auth-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.auth-button {
+  padding: 8px 16px;
   background-color: #007AFF;
+  color: #ffffff;
+  text-decoration: none;
+  border-radius: 5px;
+  font-weight: 500;
+  transition: background-color 0.3s ease;
 }
 
-input:checked + .slider:before {
-  transform: translateX(20px);
+.auth-button.secondary {
+  background-color: transparent;
+  border: 2px solid #007AFF;
+}
+
+.auth-button:hover {
+  background-color: #005bb5;
+}
+
+.auth-button.secondary:hover {
+  background-color: #007AFF;
+  color: #ffffff;
 }
 
 /* Hero Section */
@@ -159,6 +213,11 @@ input:checked + .slider:before {
   font-size: 4rem;
   font-weight: 700;
   margin-bottom: 20px;
+  color: #ffffff; /* White text in dark mode */
+}
+
+body.light-mode .hero h1 {
+  color: #000000; /* Black text in light mode */
 }
 
 .hero h1 .highlight {
@@ -172,7 +231,7 @@ input:checked + .slider:before {
 }
 
 body.light-mode .hero p {
-  color: #666666;
+  color: #666666; /* Darker text for better readability */
 }
 
 .hero-image img {
@@ -241,6 +300,11 @@ body.light-mode .hero p {
   width: 50px;
   height: 50px;
   margin-bottom: 15px;
+  filter: brightness(0) invert(1); /* White SVGs in dark mode */
+}
+
+body.light-mode .benefit img {
+  filter: brightness(0) invert(0); /* Black SVGs in light mode */
 }
 
 .benefit h3 {
@@ -255,7 +319,7 @@ body.light-mode .hero p {
 }
 
 body.light-mode .benefit p {
-  color: #666666;
+  color: #666666; /* Darker text for better readability */
 }
 
 /* Freelancer Showcase */
@@ -309,7 +373,7 @@ body.light-mode .benefit p {
 }
 
 body.light-mode .freelancer p {
-  color: #666666;
+  color: #666666; /* Darker text for better readability */
 }
 
 /* CTA Buttons */
@@ -344,6 +408,34 @@ body.light-mode .freelancer p {
 .cta-button.secondary:hover {
   background-color: #007AFF;
   color: #ffffff;
+}
+
+/* Mode Toggle Switch */
+.mode-toggle {
+  display: flex;
+  align-items: center;
+}
+
+.mode-toggle svg {
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+}
+
+.mode-toggle .sun {
+  display: none; /* Hide sun icon in dark mode */
+}
+
+.mode-toggle .moon {
+  display: block; /* Show moon icon in dark mode */
+}
+
+body.light-mode .mode-toggle .sun {
+  display: block; /* Show sun icon in light mode */
+}
+
+body.light-mode .mode-toggle .moon {
+  display: none; /* Hide moon icon in light mode */
 }
 
 /* Responsive Design */
