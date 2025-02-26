@@ -380,12 +380,17 @@ body.light-mode header {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-body.light-mode .logo {
-  display: none; /* Hide dark mode logo in light mode */
+/* Logo Styling */
+.logo-container img.logo {
+  display: none; /* Hide all logos by default */
 }
 
-body.light-mode .logo-light {
+body.light-mode .logo-container img.light-logo {
   display: block; /* Show light mode logo in light mode */
+}
+
+body:not(.light-mode) .logo-container img.dark-logo {
+  display: block; /* Show dark mode logo in dark mode */
 }
 
 body.light-mode .app-name {
@@ -422,6 +427,28 @@ body.light-mode .freelancer p {
 
 body.light-mode .cta-button.secondary {
   color: #000000; /* Black text in light mode */
+}
+
+/* Sun and Moon SVG Styling */
+.mode-toggle {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mode-toggle svg {
+  width: 24px; /* Adjust size as needed */
+  height: 24px; /* Adjust size as needed */
+  transition: opacity 0.3s ease;
+}
+
+.mode-toggle .sun {
+  display: none; /* Hide sun by default */
+}
+
+.mode-toggle .moon {
+  display: block; /* Show moon by default */
 }
 
 body.light-mode .mode-toggle .sun {

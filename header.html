@@ -1,8 +1,10 @@
 <header>
   <div class="header-wrapper">
     <div class="logo-container">
-      <img src="images/WhiteLikn.png" alt="Paylink Logo" class="logo">
-      <img src="images/PaylinkDark.png" alt="Paylink Logo" class="logo-light">
+      <!-- Dark Mode Logo -->
+      <img src="images/WhiteLikn.png" alt="Paylink Logo" class="logo dark-logo">
+      <!-- Light Mode Logo -->
+      <img src="images/PaylinkDark.png" alt="Paylink Logo" class="logo light-logo">
       <span class="app-name">Paylink</span>
     </div>
     <nav class="desktop-nav">
@@ -25,4 +27,75 @@
       </svg>
     </div>
   </div>
+
+  <script>
+    // Function to toggle between light and dark mode
+    function toggleMode() {
+      const body = document.body;
+      body.classList.toggle('light-mode');
+
+      // Update logos and icons based on the current mode
+      updateLogo();
+      updateIcons();
+
+      // Save the user's preference in localStorage
+      const isLightMode = body.classList.contains('light-mode');
+      localStorage.setItem('lightMode', isLightMode);
+    }
+
+    // Function to update logos based on the current mode
+    const updateLogo = () => {
+      const darkLogo = document.querySelector('.dark-logo');
+      const lightLogo = document.querySelector('.light-logo');
+
+      if (document.body.classList.contains('light-mode')) {
+        // Light mode: Show light logo, hide dark logo
+        darkLogo.style.display = 'none';
+        lightLogo.style.display = 'block';
+      } else {
+        // Dark mode: Show dark logo, hide light logo
+        darkLogo.style.display = 'block';
+        lightLogo.style.display = 'none';
+      }
+    };
+
+    // Function to update the sun and moon icons based on the current mode
+    const updateIcons = () => {
+      const sunIcon = document.querySelector('.mode-toggle .sun');
+      const moonIcon = document.querySelector('.mode-toggle .moon');
+
+      if (document.body.classList.contains('light-mode')) {
+        // Light mode: Show sun icon, hide moon icon
+        sunIcon.style.display = 'block';
+        moonIcon.style.display = 'none';
+      } else {
+        // Dark mode: Show moon icon, hide sun icon
+        sunIcon.style.display = 'none';
+        moonIcon.style.display = 'block';
+      }
+    };
+
+    // Check for saved user preference on page load
+    const savedLightMode = localStorage.getItem('lightMode');
+    if (savedLightMode === 'true') {
+      document.body.classList.add('light-mode');
+    } else if (savedLightMode === 'false') {
+      document.body.classList.remove('light-mode');
+    }
+
+    // Initial update of logos and icons
+    updateLogo();
+    updateIcons();
+
+    // Listen for changes in system theme (optional)
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+      if (e.matches) {
+        document.body.classList.remove('light-mode');
+      } else {
+        document.body.classList.add('light-mode');
+      }
+      updateLogo();
+      updateIcons();
+    });
+  </script>
 </header>
