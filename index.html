@@ -88,12 +88,6 @@
         // Add light/dark mode toggle functionality
         const modeToggle = document.createElement('div');
         modeToggle.className = 'mode-toggle';
-        modeToggle.innerHTML = `
-          <label class="switch">
-            <input type="checkbox" id="mode-toggle">
-            <span class="slider"></span>
-          </label>
-        `;
         document.querySelector('header').appendChild(modeToggle);
 
         const toggle = document.getElementById('mode-toggle');

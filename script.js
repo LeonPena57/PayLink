@@ -1,4 +1,7 @@
 // script.js
+function toggleMode() {
+  document.body.classList.toggle('light-mode');
+}
 
 // Navigation Logic
 document.addEventListener("DOMContentLoaded", function () {

@@ -45,7 +45,7 @@ header .logo-container {
   gap: 10px;
 }
 
-header .logo {
+header .logo, .logo-light {
   height: 22px;
   width: auto;
 }
@@ -54,6 +54,7 @@ header .app-name {
   font-family: 'Contrail One', sans-serif;
   font-size: 1.5rem;
   color: #ffffff; /* Light text for dark mode */
+  padding: 100px;
 }
 
 /* Desktop Navigation */
