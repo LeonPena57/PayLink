@@ -6,28 +6,35 @@
   <title>Files - Paylink</title>
   <link href="https://fonts.googleapis.com/css2?family=Contrail+One&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="files.css">
 </head>
 <body>
   <!-- Header will be injected here -->
   <div id="header"></div>
 
-  <!-- Main Content -->
-  <main class="files-page">
-    <!-- Drag and Drop Area -->
-    <div class="drag-drop-area" id="dragDropArea">
-      <p>Drag and drop files here to upload</p>
+<!-- Main Content -->
+<main class="files-page">
+  <!-- Drag and Drop Area -->
+  <div class="drag-drop-area" id="dragDropArea">
+    <div class="drag-drop-content">
+      <img src="assets/folder.svg" alt="Folder Icon" class="folder-icon">
+      <p>No files yet. Drag and Drop anywhere to upload!</p>
     </div>
+  </div>
 
-    <!-- File List -->
-    <div class="file-list" id="fileList">
-      <!-- Files will be dynamically added here -->
-    </div>
+  <!-- File List -->
+  <div class="file-list" id="fileList">
+    <!-- Files will be dynamically added here -->
+  </div>
 
-    <!-- Floating Action Button (FAB) -->
-    <div class="fab" id="fab">
-      <span>+</span>
-    </div>
-  </main>
+  <!-- Create Payment Link Section -->
+  <div class="create-payment-link">
+    <button class="create-paylink-button">
+      <img src="images/PaylinkDark.png" alt="Paylink Logo" class="payment-logo">
+      <span>Create Payment Link</span>
+    </button>
+  </div>
+</main>
 
 <!-- Footer will be injected here -->
 <div id="footer"></div>
