@@ -6,6 +6,7 @@
   <title>Paylink - Freelancer Payments Made Easy</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./styles.css">
+  <link rel="stylesheet" href="./index.css">
 </head>
 <body>
   <!-- Header will be injected here -->
@@ -24,7 +25,7 @@
         </div>
       </div>
       <div class="hero-image">
-        <img src="images/hero-image.png" alt="Paylink Hero Image">
+        <img src="images/MobileHERO.png" alt="Paylink Hero Image">
       </div>
     </div>
 
@@ -69,56 +70,71 @@
     </div>
   </main>
 
-<!-- Footer will be injected here -->
-<div id="footer"></div>
-<div id="nav"></div>
+  <!-- Footer will be injected here -->
+  <div id="footer"></div>
+  <div id="nav"></div>
 
-<!-- Include JavaScript -->
-<script src="./script.js"></script>
-<script>
-  // Load the header, navigation, and footer
-  fetch("./header.html")
-    .then((response) => response.text())
-    .then((data) => {
-      document.getElementById("header").innerHTML = data;
-    });
+  <!-- Include JavaScript -->
+  <script src="./script.js"></script>
+  <script>
+    // Load the header, navigation, and footer
+    fetch("./header.html")
+      .then((response) => response.text())
+      .then((data) => {
+        document.getElementById("header").innerHTML = data;
+        // Add light/dark mode toggle functionality
+        const modeToggle = document.createElement('div');
+        modeToggle.className = 'mode-toggle';
+        modeToggle.innerHTML = `
+          <label class="switch">
+            <input type="checkbox" id="mode-toggle">
+            <span class="slider"></span>
+          </label>
+        `;
+        document.querySelector('header').appendChild(modeToggle);
 
-  fetch("./nav.html")
-    .then((response) => response.text())
-    .then((data) => {
-      document.getElementById("nav").innerHTML = data;
-    });
+        const toggle = document.getElementById('mode-toggle');
+        toggle.addEventListener('change', () => {
+          document.body.classList.toggle('light-mode');
+        });
+      });
 
-  fetch("./footer.html")
-    .then((response) => response.text())
-    .then((data) => {
-      document.getElementById("footer").innerHTML = data;
-    });
+    fetch("./nav.html")
+      .then((response) => response.text())
+      .then((data) => {
+        document.getElementById("nav").innerHTML = data;
+      });
 
-  // Category Tabs Functionality
-  const tabs = document.querySelectorAll('.tab');
-  const freelancerCards = document.querySelectorAll('.freelancer-card');
+    fetch("./footer.html")
+      .then((response) => response.text())
+      .then((data) => {
+        document.getElementById("footer").innerHTML = data;
+      });
 
-  tabs.forEach(tab => {
-    tab.addEventListener('click', () => {
-      // Remove active class from all tabs
-      tabs.forEach(t => t.classList.remove('active'));
-      // Add active class to the clicked tab
-      tab.classList.add('active');
+    // Category Tabs Functionality
+    const tabs = document.querySelectorAll('.tab');
+    const freelancerCards = document.querySelectorAll('.freelancer-card');
 
-      // Get the selected category
-      const category = tab.getAttribute('data-category');
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        // Remove active class from all tabs
+        tabs.forEach(t => t.classList.remove('active'));
+        // Add active class to the clicked tab
+        tab.classList.add('active');
 
-      // Filter freelancer cards
-      freelancerCards.forEach(card => {
-        if (category === 'all' || card.getAttribute('data-category') === category) {
-          card.style.display = 'block';
-        } else {
-          card.style.display = 'none';
-        }
+        // Get the selected category
+        const category = tab.getAttribute('data-category');
+
+        // Filter freelancer cards
+        freelancerCards.forEach(card => {
+          if (category === 'all' || card.getAttribute('data-category') === category) {
+            card.style.display = 'block';
+          } else {
+            card.style.display = 'none';
+          }
+        });
       });
     });
-  });
-</script>
+  </script>
 </body>
 </html>
