@@ -85,8 +85,8 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    background-color: #007AFF;
-    color: #ffffff;
+    background-color: white;
+    color: #005bb5;
     border: none;
     border-radius: 10px;
     padding: 10px 20px;
@@ -97,6 +97,7 @@
   
   .create-paylink-button:hover {
     background-color: #005bb5;
+    color: white;
   }
   
   .payment-logo {

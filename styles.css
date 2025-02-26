@@ -19,16 +19,23 @@ body {
 header {
   width: 100%;
   height: 60px;
-  background-color: rgba(65, 65, 65, 0.25); /* #414141 at 25% opacity */
+  background-color: #292929b6;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 0 20px;
-  position: fixed;
+  position: fixed; /* Ensures the header stays at the top */
   top: 0;
   left: 0;
-  z-index: 10;
+  z-index: 1000; /* Ensure header is above other content */
   backdrop-filter: blur(10px); /* Adds a blur effect to the header */
+  transition: background-color 0.3s ease, backdrop-filter 0.3s ease;
+}
+
+/* Light Mode Header */
+body.light-mode header {
+  background-color: rgba(255, 255, 255, 0.8); /* White with 80% opacity */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow for light mode */
 }
 
 header .header-wrapper {
@@ -56,8 +63,14 @@ header .app-name {
   color: #ffffff; /* Light text for dark mode */
 }
 
+/* Light Mode App Name */
+body.light-mode header .app-name {
+  color: #000000; /* Dark text for light mode */
+}
+
 /* Desktop Navigation */
 header .desktop-nav {
+  display: flex;
   gap: 30px;
   padding: 30px;
 }
@@ -69,6 +82,11 @@ header .desktop-nav a {
   font-weight: 500;
   position: relative;
   transition: color 0.3s ease;
+}
+
+/* Light Mode Nav Links */
+body.light-mode header .desktop-nav a {
+  color: #666666; /* Dark gray for inactive links in light mode */
 }
 
 header .desktop-nav a::after {
@@ -84,6 +102,11 @@ header .desktop-nav a::after {
 
 header .desktop-nav a:hover {
   color: #ffffff; /* White on hover */
+}
+
+/* Light Mode Nav Link Hover */
+body.light-mode header .desktop-nav a:hover {
+  color: #000000; /* Black on hover in light mode */
 }
 
 header .desktop-nav a:hover::after {
@@ -133,6 +156,23 @@ header .desktop-nav a.active::after {
   color: #ffffff;
 }
 
+/* Light Mode Auth Buttons */
+body.light-mode .auth-button {
+  background-color: #007AFF;
+  color: #ffffff;
+}
+
+body.light-mode .auth-button.secondary {
+  background-color: transparent;
+  border: 2px solid #007AFF;
+  color: #007AFF;
+}
+
+body.light-mode .auth-button.secondary:hover {
+  background-color: #007AFF;
+  color: #ffffff;
+}
+
 /* Hide Auth Buttons on Homepage */
 body.home .auth-buttons {
   display: none;
@@ -152,6 +192,8 @@ body.home .auth-buttons {
     display: none; /* Hide auth buttons on mobile */
   }
 }
+
+/* END HEADER --------- */
 
 /* Main Content */
 main {
@@ -495,7 +537,7 @@ body::before {
   background-size: 200% 200%;
   animation: gradientAnimation 10s ease infinite;
   z-index: -1;
-  opacity: 0.1; /* Subtle gradient effect */
+  opacity: 0.07; /* Subtle gradient effect */
 }
 
 @keyframes gradientAnimation {
@@ -510,7 +552,7 @@ body::before {
   }
 }
 
-/* Faint Digital Grid */
+/* Faint Digital Grid (Dark Mode) */
 body::after {
   content: '';
   position: fixed;
@@ -521,7 +563,7 @@ body::after {
   background: radial-gradient(circle, transparent 20%, #121212 20%, #121212 80%, transparent 80%, transparent),
               radial-gradient(circle, transparent 20%, #121212 20%, #121212 80%, transparent 80%, transparent) 50px 50px;
   background-size: 100px 100px;
-  opacity: 0.3; /* Start with 0 opacity */
+  opacity: 0.2; /* Start with 0 opacity */
   animation: gridAnimation 10s linear infinite;
   z-index: -1;
   mask-image: linear-gradient(to bottom, transparent 0%, black 100%); /* Gradient opacity */
@@ -536,8 +578,48 @@ body::after {
   }
 }
 
-/* Glassmorphism Blur Effect */
+/* Glassmorphism Blur Effect (Dark Mode) */
 .hero, .benefit, .freelancer {
+  backdrop-filter: blur(10px); /* Frosted glass effect */
+  border-radius: 15px;
+}
+
+/* Light Mode Gradient Background */
+body.light-mode::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(45deg, #FFD6A5, #FFC3A0, #FFADAD, #FF9A9E); /* Pastel colors for light mode */
+  background-size: 200% 200%;
+  animation: gradientAnimation 10s ease infinite;
+  z-index: -1;
+  opacity: 0.15; /* Subtle gradient effect */
+}
+
+/* Faint Digital Grid (Light Mode) */
+body.light-mode::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle, transparent 20%, #EFF2F9 20%, #EFF2F9 80%, transparent 80%, transparent),
+              radial-gradient(circle, transparent 20%, #EFF2F9 20%, #EFF2F9 80%, transparent 80%, transparent) 50px 50px;
+  background-size: 100px 100px;
+  opacity: 1; /* Start with 0 opacity */
+  animation: gridAnimation 10s linear infinite;
+  z-index: -1;
+  mask-image: linear-gradient(to bottom, transparent 0%, black 100%); /* Gradient opacity */
+}
+
+/* Glassmorphism Blur Effect (Light Mode) */
+body.light-mode .hero,
+body.light-mode .benefit,
+body.light-mode .freelancer {
   backdrop-filter: blur(10px); /* Frosted glass effect */
   border-radius: 15px;
 }

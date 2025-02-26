@@ -1,0 +1,137 @@
+/* General Styles */
+body {
+    font-family: 'Contrail One', sans-serif;
+    background-color: #121212; /* Dark background */
+    color: #ffffff; /* Light text */
+    margin: 0;
+    padding: 0;
+}
+
+/* Header */
+header {
+    width: 100%;
+    height: 60px;
+    background-color: rgba(65, 65, 65, 0.25); /* Semi-transparent dark background */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 20px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+    backdrop-filter: blur(10px); /* Frosted glass effect */
+}
+
+/* Light Mode Header */
+body.light-mode header {
+    background-color: rgba(255, 255, 255, 0.8); /* Semi-transparent white background */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+    color: #000000; /* Dark text for header */
+}
+
+/* Main Content */
+main {
+    padding-top: 80px; /* Space for the fixed header */
+    padding-bottom: 60px; /* Space for the footer */
+    text-align: center;
+}
+
+.content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+h1 {
+    font-size: 2.5rem;
+    margin-bottom: 20px;
+}
+
+p {
+    font-size: 1.2rem;
+    color: #cccccc; /* Light gray text */
+}
+
+/* QR Code Section */
+.qr-code-container {
+    margin-top: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.qr-code-box {
+    background-color: transparent; /* No background color */
+    padding: 10px; /* Padding to create space between the box and the QR code */
+    border: 4px solid #007AFF; /* Blue outline */
+    border-radius: 20px; /* Rounded corners for the box */
+    display: inline-block;
+}
+
+.qr-code-box img {
+    width: 400px; /* Smaller QR code size */
+    height: auto; /* Maintain aspect ratio */
+    border-radius: 15px; /* Rounded corners for the QR code */
+    display: block;
+}
+
+/* Footer */
+footer {
+    width: 100%;
+    height: 60px;
+    background-color: rgba(65, 65, 65, 0.25); /* Semi-transparent dark background */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    z-index: 1000;
+    backdrop-filter: blur(10px); /* Frosted glass effect */
+}
+
+/* Light Mode Footer */
+body.light-mode footer {
+    background-color: rgba(255, 255, 255, 0.8); /* Semi-transparent white background */
+    box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+    color: #000000; /* Dark text for footer */
+}
+
+/* Light Mode Text */
+body.light-mode {
+    background-color: #EFF2F9; /* Light background */
+    color: #000000; /* Dark text */
+}
+
+body.light-mode p {
+    color: #000000; /* Dark text for paragraphs */
+}
+
+body.light-mode h1,
+body.light-mode h2,
+body.light-mode h3,
+body.light-mode h4,
+body.light-mode h5,
+body.light-mode h6 {
+    color: #000000; /* Dark text for headings */
+}
+
+/* Mobile Styles */
+@media (max-width: 767px) {
+    h1 {
+        font-size: 2rem; /* Smaller heading on mobile */
+    }
+
+    p {
+        font-size: 1rem; /* Smaller text on mobile */
+    }
+
+    footer {
+        display: none;
+    }
+
+    .qr-code-box img {
+        width: 300px; /* Smaller QR code on mobile */
+    }
+}
