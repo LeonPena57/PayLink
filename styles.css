@@ -42,7 +42,7 @@ header .header-wrapper {
 header .logo-container {
   display: flex;
   align-items: center;
-  gap: 10px;
+  padding: 75px;
 }
 
 header .logo, .logo-light {
@@ -54,7 +54,6 @@ header .app-name {
   font-family: 'Contrail One', sans-serif;
   font-size: 1.5rem;
   color: #ffffff; /* Light text for dark mode */
-  padding: 100px;
 }
 
 /* Desktop Navigation */
@@ -358,6 +357,82 @@ header .desktop-nav a:hover,
 
 /* END ACTIVE PAGE --------------------- */
 
+/* LIGHT DARK MODE SWAP ------------------------*/
+
+/* Light/Dark Mode Swap */
+body.light-mode {
+  background-color: #EFF2F9; /* Light mode page background */
+  color: #000000; /* Black text in light mode */
+}
+
+body.light-mode::before {
+  background: linear-gradient(45deg, #FFD6A5, #FFC3A0, #FFADAD, #FF9A9E); /* Pastel gradient for light mode */
+}
+
+body.light-mode::after {
+  background: radial-gradient(circle, transparent 20%, #EFF2F9 20%, #EFF2F9 80%, transparent 80%, transparent),
+              radial-gradient(circle, transparent 20%, #EFF2F9 20%, #EFF2F9 80%, transparent 80%, transparent) 50px 50px;
+  background-size: 100px 100px;
+}
+
+body.light-mode header {
+  background-color: rgba(255, 255, 255, 0.8);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+body.light-mode .logo {
+  display: none; /* Hide dark mode logo in light mode */
+}
+
+body.light-mode .logo-light {
+  display: block; /* Show light mode logo in light mode */
+}
+
+body.light-mode .app-name {
+  color: #000000; /* Black text in light mode */
+}
+
+body.light-mode .nav-link {
+  color: #000000; /* Black text in light mode */
+}
+
+body.light-mode .auth-button.secondary {
+  color: #000000; /* Black text in light mode */
+}
+
+body.light-mode .hero h1 {
+  color: #000000; /* Black text in light mode */
+}
+
+body.light-mode .hero p {
+  color: #666666; /* Darker text for better readability */
+}
+
+body.light-mode .benefit img {
+  filter: brightness(0) invert(0); /* Black SVGs in light mode */
+}
+
+body.light-mode .benefit p {
+  color: #666666; /* Darker text for better readability */
+}
+
+body.light-mode .freelancer p {
+  color: #666666; /* Darker text for better readability */
+}
+
+body.light-mode .cta-button.secondary {
+  color: #000000; /* Black text in light mode */
+}
+
+body.light-mode .mode-toggle .sun {
+  display: block; /* Show sun icon in light mode */
+}
+
+body.light-mode .mode-toggle .moon {
+  display: none; /* Hide moon icon in light mode */
+}
+
+/* END LIGHT DARK MODE SWAP ------------------------*/
 
 /* FOOTER --------------------------- */
 

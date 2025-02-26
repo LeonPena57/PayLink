@@ -7,11 +7,6 @@ body {
   overflow-x: hidden;
 }
 
-body.light-mode {
-  background-color: #EFF2F9; /* Light mode page background */
-  color: #000000; /* Black text in light mode */
-}
-
 /* Dark Mode Gradient Background */
 body::before {
   content: '';
@@ -25,21 +20,6 @@ body::before {
   animation: gradientAnimation 10s ease infinite;
   z-index: -1;
   opacity: 0.1; /* Subtle gradient effect */
-}
-
-/* Light Mode Gradient Background */
-body.light-mode::before {
-  content: '';
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(45deg, #FFD6A5, #FFC3A0, #FFADAD, #FF9A9E); /* Pastel gradient for light mode */
-  background-size: 200% 200%;
-  animation: gradientAnimation 10s ease infinite;
-  z-index: -1;
-  opacity: 0.3; /* Subtle gradient effect */
 }
 
 @keyframes gradientAnimation {
@@ -71,12 +51,6 @@ body::after {
   mask-image: linear-gradient(to bottom, transparent 0%, black 100%); /* Gradient opacity */
 }
 
-body.light-mode::after {
-  background: radial-gradient(circle, transparent 20%, #EFF2F9 20%, #EFF2F9 80%, transparent 80%, transparent),
-              radial-gradient(circle, transparent 20%, #EFF2F9 20%, #EFF2F9 80%, transparent 80%, transparent) 50px 50px;
-  background-size: 100px 100px;
-}
-
 @keyframes gridAnimation {
   0% {
     background-position: 0 0;
@@ -92,7 +66,6 @@ body.light-mode::after {
   border-radius: 15px;
 }
 
-
 /* Header */
 header {
   background-color: rgba(18, 18, 18, 0.8);
@@ -101,11 +74,6 @@ header {
   top: 0;
   z-index: 1000;
   backdrop-filter: blur(10px);
-}
-
-body.light-mode header {
-  background-color: rgba(255, 255, 255, 0.8);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .header-wrapper {
@@ -126,16 +94,8 @@ body.light-mode header {
   width: auto;
 }
 
-body.light-mode .logo {
-  display: none; /* Hide dark mode logo in light mode */
-}
-
 .logo-light {
   display: none; /* Hide light mode logo in dark mode */
-}
-
-body.light-mode .logo-light {
-  display: block; /* Show light mode logo in light mode */
 }
 
 .app-name {
@@ -143,10 +103,6 @@ body.light-mode .logo-light {
   font-weight: 700;
   margin-left: 10px;
   color: #ffffff;
-}
-
-body.light-mode .app-name {
-  color: #000000; /* Black text in light mode */
 }
 
 .desktop-nav {
@@ -159,10 +115,6 @@ body.light-mode .app-name {
   text-decoration: none;
   font-weight: 500;
   transition: color 0.3s ease;
-}
-
-body.light-mode .nav-link {
-  color: #000000; /* Black text in light mode */
 }
 
 .nav-link:hover {
@@ -188,10 +140,6 @@ body.light-mode .nav-link {
   background-color: transparent;
   border: 2px solid #007AFF;
   color: #007AFF; /* Blue text in dark mode */
-}
-
-body.light-mode .auth-button.secondary {
-  color: #000000; /* Black text in light mode */
 }
 
 .auth-button:hover {
@@ -224,10 +172,6 @@ body.light-mode .auth-button.secondary {
   color: #ffffff; /* White text in dark mode */
 }
 
-body.light-mode .hero h1 {
-  color: #000000; /* Black text in light mode */
-}
-
 .hero h1 .highlight {
   color: #007AFF;
 }
@@ -236,10 +180,6 @@ body.light-mode .hero h1 {
   font-size: 1.5rem;
   color: #cccccc;
   margin-bottom: 40px;
-}
-
-body.light-mode .hero p {
-  color: #666666; /* Darker text for better readability */
 }
 
 .hero-image img {
@@ -311,10 +251,6 @@ body.light-mode .hero p {
   filter: brightness(0) invert(1); /* White SVGs in dark mode */
 }
 
-body.light-mode .benefit img {
-  filter: brightness(0) invert(0); /* Black SVGs in light mode */
-}
-
 .benefit h3 {
   font-size: 1.25rem;
   font-weight: 600;
@@ -324,10 +260,6 @@ body.light-mode .benefit img {
 .benefit p {
   font-size: 0.95rem;
   color: #cccccc;
-}
-
-body.light-mode .benefit p {
-  color: #666666; /* Darker text for better readability */
 }
 
 /* Freelancer Showcase */
@@ -380,10 +312,6 @@ body.light-mode .benefit p {
   color: #cccccc;
 }
 
-body.light-mode .freelancer p {
-  color: #666666; /* Darker text for better readability */
-}
-
 /* CTA Buttons */
 .cta-buttons {
   display: flex;
@@ -414,10 +342,6 @@ body.light-mode .freelancer p {
   color: #007AFF; /* Blue text in dark mode */
 }
 
-body.light-mode .cta-button.secondary {
-  color: #000000; /* Black text in light mode */
-}
-
 .cta-button.secondary:hover {
   background-color: #007AFF;
   color: #ffffff;
@@ -441,14 +365,6 @@ body.light-mode .cta-button.secondary {
 
 .mode-toggle .moon {
   display: block; /* Show moon icon in dark mode */
-}
-
-body.light-mode .mode-toggle .sun {
-  display: block; /* Show sun icon in light mode */
-}
-
-body.light-mode .mode-toggle .moon {
-  display: none; /* Hide moon icon in light mode */
 }
 
 /* Responsive Design */
