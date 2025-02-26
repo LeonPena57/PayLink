@@ -3,46 +3,48 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Manage your Paylink account, update your profile, and explore your portfolio, services, and clients.">
   <title>Account - Paylink</title>
   <link href="https://fonts.googleapis.com/css2?family=Contrail+One&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="account.css">
 </head>
 <body>
   <!-- Header will be injected here -->
-  <div id="header"></div>
+  <div id="header">Loading header...</div>
 
   <!-- Main Content -->
   <main class="account-page">
     <!-- Banner -->
     <div class="banner">
       <img src="/images/YTBANNEER-min.jpg" alt="Banner" class="banner-image">
-      <button class="edit-button">Edit</button>
+      <button class="edit-button" aria-label="Edit Banner">Edit</button>
     </div>
 
     <!-- Profile Section -->
-    <div class="profile-section">
+    <section class="profile-section">
       <div class="profile-picture">
         <img src="/images/WHITELOGOTEST2025.png" alt="Profile Picture" class="profile-image">
       </div>
-      <div class="profile-info">
-        <div class="username">John Doe</div>
-        <div class="edit-profile">Edit Profile</div>
-      </div>
-    </div>
+      <article class="profile-info">
+        <h1 class="username">John Doe</h1>
+        <button class="edit-profile" aria-label="Edit Profile">Edit Profile</button>
+      </article>
+    </section>
 
     <!-- Tabs -->
-    <div class="tabs">
-      <div class="tab active">Portfolio</div>
-      <div class="tab">Services</div>
-      <div class="tab">Clients</div>
-      <div class="tab">FAQ</div>
-      <div class="tab">Contact</div>
-    </div>
+    <nav class="tabs" role="tablist">
+      <div class="tab active" role="tab" aria-selected="true">Portfolio</div>
+      <div class="tab" role="tab">Services</div>
+      <div class="tab" role="tab">Clients</div>
+      <div class="tab" role="tab">FAQ</div>
+      <div class="tab" role="tab">Contact</div>
+    </nav>
 
     <!-- Tab Content -->
     <div class="tab-content">
       <!-- Portfolio Tab -->
-      <div class="tab-pane active" id="portfolio">
+      <section class="tab-pane active" id="portfolio" role="tabpanel">
         <div class="portfolio-promo">
           <img src="assets/portfolio-promo.jpg" alt="Portfolio Promo">
           <div class="overlay">
@@ -55,10 +57,10 @@
           <img src="assets/portfolio-3.jpg" alt="Portfolio 3">
           <img src="assets/portfolio-4.jpg" alt="Portfolio 4">
         </div>
-      </div>
+      </section>
 
       <!-- Services Tab -->
-      <div class="tab-pane" id="services">
+      <section class="tab-pane" id="services" role="tabpanel">
         <div class="services-promo">
           <img src="assets/services-promo.jpg" alt="Services Promo">
           <div class="overlay">
@@ -87,10 +89,10 @@
           <img src="assets/social-3.png" alt="Social 3">
           <img src="assets/social-4.png" alt="Social 4">
         </div>
-      </div>
+      </section>
 
       <!-- Clients Tab -->
-      <div class="tab-pane" id="clients">
+      <section class="tab-pane" id="clients" role="tabpanel">
         <h2>Clients</h2>
         <div class="clients-list">
           <div class="client-card">
@@ -134,65 +136,72 @@
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
       <!-- FAQ Tab -->
-      <div class="tab-pane" id="faq">
+      <section class="tab-pane" id="faq" role="tabpanel">
         <h2>FAQ</h2>
         <p>Have questions? Check out my frequently asked questions to learn more about my process, pricing, and availability.</p>
-      </div>
+      </section>
 
       <!-- Contact Tab -->
-      <div class="tab-pane" id="contact">
+      <section class="tab-pane" id="contact" role="tabpanel">
         <h2>Contact</h2>
         <p>Feel free to reach out to me for inquiries or collaborations. I'm always excited to hear about new projects!</p>
-      </div>
+      </section>
     </div>
   </main>
-  <!-- Add this to the Account tab content -->
-<div class="tab-pane" id="account">
-  <h2>Custom Branding</h2>
-  <div class="branding-settings">
-    <!-- Logo Upload -->
-    <div class="setting">
-      <label for="logoUpload">Upload Logo</label>
-      <input type="file" id="logoUpload" accept="image/*">
-      <div class="logo-preview" id="logoPreview"></div>
-    </div>
 
-    <!-- Color Picker -->
-    <div class="setting">
-      <label for="colorPicker">Choose Brand Color</label>
-      <input type="color" id="colorPicker" value="#007AFF">
-    </div>
+<!-- Footer will be injected here -->
+<div id="footer"></div>
+<div id="nav"></div>
 
-    <!-- Custom Domain -->
-    <div class="setting">
-      <label for="customDomain">Custom Domain</label>
-      <input type="text" id="customDomain" placeholder="e.g., yourbrand.paylink.com">
-      <button id="saveDomain">Save</button>
-    </div>
-  </div>
-</div>
+<!-- Include JavaScript -->
+<script src="./script.js"></script>
+<script>
+  // Load the header, navigation, and footer
+  fetch("./header.html")
+    .then((response) => response.text())
+    .then((data) => {
+      document.getElementById("header").innerHTML = data;
+    });
 
-  <!-- Navigation will be injected here -->
-  <div id="nav"></div>
+  fetch("./nav.html")
+    .then((response) => response.text())
+    .then((data) => {
+      document.getElementById("nav").innerHTML = data;
+    });
 
-  <!-- Include JavaScript -->
-  <script src="script.js"></script>
-  <script>
-    // Load the header and navigation
-    fetch("header.html")
-      .then((response) => response.text())
-      .then((data) => {
-        document.getElementById("header").innerHTML = data;
+  fetch("./footer.html")
+    .then((response) => response.text())
+    .then((data) => {
+      document.getElementById("footer").innerHTML = data;
+    });
+
+  // Category Tabs Functionality
+  const tabs = document.querySelectorAll('.tab');
+  const freelancerCards = document.querySelectorAll('.freelancer-card');
+
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      // Remove active class from all tabs
+      tabs.forEach(t => t.classList.remove('active'));
+      // Add active class to the clicked tab
+      tab.classList.add('active');
+
+      // Get the selected category
+      const category = tab.getAttribute('data-category');
+
+      // Filter freelancer cards
+      freelancerCards.forEach(card => {
+        if (category === 'all' || card.getAttribute('data-category') === category) {
+          card.style.display = 'block';
+        } else {
+          card.style.display = 'none';
+        }
       });
-
-    fetch("nav.html")
-      .then((response) => response.text())
-      .then((data) => {
-        document.getElementById("nav").innerHTML = data;
-      });
-  </script>
+    });
+  });
+</script>
 </body>
 </html>

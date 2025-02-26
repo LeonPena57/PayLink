@@ -1,0 +1,168 @@
+/* Search Bar */
+.search-bar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 30px;
+  }
+  
+  .search-input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #007AFF;
+    border-radius: 5px;
+    background-color: rgba(20, 20, 20, 0.8);
+    color: #ffffff;
+    font-size: 1rem;
+  }
+  
+  .search-input::placeholder {
+    color: #cccccc;
+  }
+  
+  .search-button {
+    padding: 10px 20px;
+    background-color: #007AFF;
+    color: #ffffff;
+    border: none;
+    border-radius: 5px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+  }
+  
+  .search-button:hover {
+    background-color: #005bb5;
+    transform: translateY(-2px);
+  }
+  
+  /* Category Tabs */
+  .category-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 30px;
+  }
+  
+  .tab {
+    padding: 10px 20px;
+    background-color: rgba(20, 20, 20, 0.8);
+    border: 1px solid #007AFF;
+    border-radius: 5px;
+    color: #cccccc;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+  
+  .tab.active {
+    background-color: #007AFF;
+    color: #ffffff;
+  }
+  
+  .tab:hover {
+    background-color: #007AFF;
+    color: #ffffff;
+  }
+  
+  /* Freelancer Cards */
+  .freelancer-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 30px;
+  }
+
+  .freelancers-container {
+    max-width: 1200px;
+    margin: 100px auto;
+    padding: 10px 20px 20px; /* Added top padding to move content lower */
+  }
+  
+  .freelancer-card {
+    background-color: rgba(20, 20, 20, 0.8);
+    border-radius: 15px;
+    padding: 20px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  .freelancer-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 10px 20px rgba(0, 122, 255, 0.2);
+  }
+  
+  .freelancer-image {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    border-radius: 10px;
+    margin-bottom: 20px;
+  }
+  
+  .freelancer-info h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+  }
+  
+  .freelancer-title {
+    font-size: 1.1rem;
+    color: #007AFF;
+    margin-bottom: 10px;
+  }
+  
+  .freelancer-description {
+    font-size: 1rem;
+    color: #cccccc;
+    margin-bottom: 15px;
+  }
+  
+  .freelancer-rating {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-bottom: 15px;
+  }
+  
+  .freelancer-rating .stars {
+    color: #ffd700; /* Gold color for stars */
+  }
+  
+  .freelancer-rating .rating {
+    font-weight: 600;
+  }
+  
+  .freelancer-rating .reviews {
+    color: #cccccc;
+    font-size: 0.9rem;
+  }
+  
+  .freelancer-pricing {
+    margin-bottom: 20px;
+  }
+  
+  .freelancer-pricing .price {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #ffffff;
+  }
+  
+  .freelancer-card .cta-button {
+    width: 100%;
+    padding: 12px;
+    font-size: 1rem;
+  }
+  
+  /* Responsive Design */
+  @media (max-width: 768px) {
+    .freelancer-cards {
+      grid-template-columns: 1fr;
+    }
+  
+    .category-tabs {
+      flex-wrap: wrap;
+    }
+  
+    .tab {
+      flex: 1 1 45%; /* Two tabs per row on smaller screens */
+    }
+  }

@@ -1,27 +1,5 @@
 /* General Reset */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
 
-body {
-  font-family: Arial, sans-serif;
-  background-color: #212121; /* Dark mode background */
-  color: #ffffff; /* Light text for dark mode */
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 100vh;
-  overflow: hidden;
-  aspect-ratio: 9 / 16;
-  max-width: 100%;
-  margin: auto;
-  position: relative;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
 
 /* Header */
 header {
@@ -36,6 +14,7 @@ header {
   top: 0;
   left: 0;
   z-index: 10;
+  backdrop-filter: blur(10px); /* Adds a blur effect to the header */
 }
 
 header .header-wrapper {
@@ -43,8 +22,7 @@ header .header-wrapper {
   max-width: 1200px;
   display: flex;
   align-items: center;
-  justify-content: center; /* Center the logo and app name */
-  gap: 10px; /* Space between logo and app name */
+  justify-content: space-between; /* Space between logo and nav */
 }
 
 header .logo-container {
@@ -67,19 +45,97 @@ header .app-name {
 /* Desktop Navigation */
 header .desktop-nav {
   display: none; /* Hide by default */
-  gap: 20px;
+  gap: 30px;
 }
 
 header .desktop-nav a {
   text-decoration: none;
-  color: #ffffff; /* Light text for dark mode */
-  font-size: 0.9rem;
+  color: #cccccc; /* Light gray for inactive links */
+  font-size: 1rem;
   font-weight: 500;
+  position: relative;
   transition: color 0.3s ease;
 }
 
+header .desktop-nav a::after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background-color: #007AFF;
+  transition: width 0.3s ease;
+}
+
 header .desktop-nav a:hover {
-  color: #007AFF;
+  color: #ffffff; /* White on hover */
+}
+
+header .desktop-nav a:hover::after {
+  width: 100%; /* Underline effect on hover */
+}
+
+header .desktop-nav a.active {
+  color: #007AFF; /* Blue for active link */
+}
+
+header .desktop-nav a.active::after {
+  width: 100%; /* Underline effect for active link */
+}
+
+/* Auth Buttons */
+.auth-buttons {
+  display: flex;
+  gap: 15px;
+}
+
+.auth-button {
+  text-decoration: none;
+  padding: 8px 10px;
+  background-color: #007AFF;
+  color: #ffffff;
+  border: none;
+  border-radius: 5px;
+  font-size: 1rem;
+  font-weight: 450;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.auth-button:hover {
+  background-color: #005bb5;
+  transform: translateY(-2px);
+}
+
+.auth-button.secondary {
+  background-color: transparent;
+  border: 2px solid #007AFF;
+}
+
+.auth-button.secondary:hover {
+  background-color: #007AFF;
+  color: #ffffff;
+}
+
+/* Hide Auth Buttons on Homepage */
+body.home .auth-buttons {
+  display: none;
+}
+
+/* Mobile Navigation */
+@media (max-width: 768px) {
+  header .desktop-nav {
+    display: none; /* Hide desktop nav on mobile */
+  }
+
+  header .header-wrapper {
+    justify-content: center; /* Center logo and app name on mobile */
+  }
+
+  .auth-buttons {
+    display: none; /* Hide auth buttons on mobile */
+  }
 }
 
 /* Main Content */
@@ -145,469 +201,6 @@ main p {
   font-size: 0.75rem;
   cursor: pointer;
   padding: 0;
-}
-
-/* Account Page */
-.account-page {
-  width: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.banner {
-  position: relative;
-  margin-top: -19px;
-  width: 100vw; /* Ensure banner touches both sides of the browser */
-  margin-left: calc(-50vw + 50%); /* Center the banner horizontally */
-  height: 200px; /* Fixed height for the banner */
-  background-color: #333333; /* Placeholder color */
-  overflow: hidden;
-}
-
-.banner-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center; /* Center the image */
-}
-
-/* Zoom in the banner on mobile */
-@media (max-width: 767px) {
-  .banner-image {
-    object-fit: cover;
-    object-position: center 30%; /* Adjust this value to zoom in more */
-  }
-}
-
-/* Profile Section */
-.profile-section {
-  position: relative;
-  display: flex;
-  align-items: flex-end;
-  margin-top: -75px; /* Adjust to overlap the banner */
-  padding: 0 20px;
-  z-index: 1; /* Ensure profile section is above the banner */
-}
-
-.profile-picture {
-  width: 100px; /* Smaller profile picture */
-  height: 100px; /* Smaller profile picture */
-  border-radius: 50%;
-  overflow: hidden;
-  border: 3px solid #212121; /* Match background */
-  background-color: #212121; /* Fallback background color */
-}
-
-.profile-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.profile-info {
-  margin-left: -15px; /* Bring text closer to the profile picture */
-  display: flex;
-  flex-direction: column;
-  gap: 5px; /* Space between name and edit button */
-  flex: 1; /* Allow the username to take up remaining space */
-  background-color: rgba(33, 33, 33, 0.452); /* Low-opacity box */
-  padding: 2px 5px; /* Adjusted padding for barely encapsulating text */
-  border-radius: 10px; /* Rounded corners */
-  max-width: 150px; /* Set a maximum width */
-  z-index: -1; /* Ensure the box is behind other elements */
-}
-
-.username {
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: #ffffff;
-  margin: 0; /* Remove default margin */
-}
-
-.edit-profile {
-  margin-top: 0px;
-  text-shadow: 2px 2px 2px black;
-  color: #007AFF;
-  text-decoration: underline;
-  cursor: pointer;
-  font-size: 0.8rem; /* Smaller edit text */
-  position: absolute; /* Absolute positioning */
-  right: 20px; /* Position it 20px from the right edge of the parent container */
-  transition: opacity 0.3s ease; /* Smooth hover effect */
-}
-
-.edit-profile:hover {
-  opacity: 0.8; /* Slightly fade on hover */
-}
-
-/* Tabs */
-.tabs {
-  display: flex;
-  justify-content: space-around;
-  margin-top: 20px;
-  border-bottom: 1px solid #444444;
-}
-
-.tab {
-  padding: 10px;
-  cursor: pointer;
-  color: #cccccc;
-}
-
-.tab.active {
-  color: #007AFF;
-  border-bottom: 2px solid #007AFF;
-}
-
-.tab-content {
-  padding: 20px;
-}
-
-.tab-pane {
-  display: none;
-}
-
-.tab-pane.active {
-  display: block;
-}
-
-/* Fake Content for Tabs */
-.tab-content .tab-pane h2 {
-  font-size: 1.25rem;
-  margin-bottom: 10px;
-}
-
-.tab-content .tab-pane p {
-  font-size: 0.9rem;
-  color: #cccccc;
-  line-height: 1.5;
-}
-
-/* Responsive Design */
-@media (max-width: 767px) {
-  .profile-picture {
-    width: 80px; /* Smaller profile picture on mobile */
-    height: 80px; /* Smaller profile picture on mobile */
-  }
-
-  .username {
-    font-size: 1.25rem; /* Smaller username on mobile */
-  }
-
-  .edit-profile {
-    font-size: 0.7rem; /* Smaller edit text on mobile */
-  }
-}
-
-@media (min-width: 768px) {
-  /* Hide mobile navigation on desktop */
-  .mobile-nav {
-    display: none;
-  }
-
-  /* Show desktop navigation */
-  header .desktop-nav {
-    display: flex;
-    align-items: center;
-  }
-
-  /* Center header content */
-  header .header-wrapper {
-    justify-content: center;
-    gap: 40px;
-  }
-
-  /* Adjust main content padding */
-  main {
-    padding: 100px 20px 20px 20px;
-  }
-}
-
-/* Portfolio Page */
-.portfolio-promo {
-  position: relative;
-  width: 100%;
-  height: 300px; /* Adjust height as needed */
-  overflow: hidden;
-  margin-bottom: 20px;
-}
-
-.portfolio-promo img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.portfolio-promo .overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(to bottom, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.7)); /* Gradient overlay */
-  display: flex;
-  align-items: flex-end;
-  padding: 20px;
-}
-
-.portfolio-promo .overlay h2 {
-  font-size: 2rem;
-  color: #ffffff;
-  margin: 0;
-}
-
-.portfolio-images {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 20px;
-}
-
-.portfolio-images img {
-  width: 100%;
-  height: auto;
-  border-radius: 10px;
-}
-
-/* Services Page */
-.services-promo {
-  position: relative;
-  width: 100%;
-  height: 200px; /* Adjust height as needed */
-  overflow: hidden;
-  margin-bottom: 20px;
-}
-
-.services-promo img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.services-promo .overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(to bottom, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.7)); /* Gradient overlay */
-  display: flex;
-  align-items: flex-end;
-  padding: 20px;
-}
-
-.services-promo .overlay h2 {
-  font-size: 1.5rem;
-  color: #ffffff;
-  margin: 0;
-}
-
-.services-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-}
-
-.services-grid img {
-  width: 100%;
-  height: auto;
-  border-radius: 10px;
-}
-
-.services-stats {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 20px;
-}
-
-.services-stats .stat {
-  background-color: rgba(71, 71, 71, 0.55); /* #474747 at 55% opacity */
-  border-radius: 10px;
-  padding: 20px;
-  text-align: center;
-  flex: 1;
-  margin: 0 10px;
-}
-
-.services-stats .stat h3 {
-  font-size: 1.25rem;
-  margin: 0 0 10px 0;
-  color: #ffffff;
-}
-
-.services-stats .stat p {
-  font-size: 1rem;
-  color: #cccccc;
-  margin: 0;
-}
-
-.services-social {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 20px;
-}
-
-.services-social img {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-}
-
-/* Clients Page */
-.clients-list {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  margin-top: 20px;
-}
-
-.client-card {
-  display: flex;
-  align-items: center;
-  border-radius: 10px;
-  padding: 15px;
-}
-
-/* Gradient for each client card */
-.client-card:nth-child(1) {
-  background: linear-gradient(to bottom, rgba(50, 50, 50, 0.55), rgba(71, 71, 71, 0.55)); /* Darker */
-}
-
-.client-card:nth-child(2) {
-  background: linear-gradient(to bottom, rgba(60, 60, 60, 0.55), rgba(81, 81, 81, 0.55)); /* Slightly lighter */
-}
-
-.client-card:nth-child(3) {
-  background: linear-gradient(to bottom, rgba(71, 71, 71, 0.55), rgba(91, 91, 91, 0.55)); /* Current color in the middle */
-}
-
-.client-card:nth-child(4) {
-  background: linear-gradient(to bottom, rgba(81, 81, 81, 0.55), rgba(101, 101, 101, 0.55)); /* Lighter */
-}
-
-.client-card:nth-child(5) {
-  background: linear-gradient(to bottom, rgba(91, 91, 91, 0.55), rgba(111, 111, 111, 0.55)); /* Even lighter */
-}
-
-.client-card img {
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  margin-right: 15px;
-}
-
-.client-info {
-  flex: 1;
-}
-
-.client-info h3 {
-  font-size: 1.25rem;
-  margin: 0 0 5px 0;
-  color: #ffffff;
-}
-
-.client-info p {
-  font-size: 0.9rem;
-  color: #cccccc;
-  margin: 0;
-}
-
-.client-stats {
-  text-align: right;
-}
-
-.client-stats p {
-  font-size: 0.9rem;
-  color: #cccccc;
-  margin: 0;
-}
-
-/* Files Page */
-.files-page {
-  padding: 80px 20px 100px 20px; /* Adjusted padding to avoid header and nav */
-  min-height: calc(100vh - 160px); /* Ensure it takes up the remaining space */
-}
-
-.drag-drop-area {
-  position: fixed;
-  top: 60px; /* Start below the header */
-  left: 0;
-  right: 0;
-  bottom: 80px; /* End above the nav */
-  background-color: rgba(245, 245, 245, 0.); /* Light gray with low opacity */
-  border: 2px dashed #cccccc; /* Light gray border */
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #cccccc;
-  font-size: 1.2rem;
-  z-index: 5; /* Ensure it's above other content */
-  pointer-events: none; /* Allow clicks to pass through */
-}
-
-.drag-drop-area.dragover {
-  background-color: rgba(245, 245, 245, 0.5); /* Slightly darker gray when dragging */
-}
-
-.file-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 20px;
-  margin-top: 20px;
-}
-
-.file-item {
-  background-color: rgba(71, 71, 71, 0.55); /* #474747 at 55% opacity */
-  border-radius: 10px;
-  padding: 15px;
-  text-align: center;
-}
-
-.file-item img {
-  width: 50px;
-  height: 50px;
-  margin-bottom: 10px;
-}
-
-.file-item p {
-  font-size: 0.9rem;
-  color: #cccccc;
-  margin: 0;
-}
-
-/* Floating Action Button (FAB) */
-.fab {
-  position: fixed;
-  bottom: 90px; /* Adjust based on nav bar height */
-  right: 20px;
-  width: 60px;
-  height: 60px;
-  background-color: #007AFF;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 2rem;
-  color: #ffffff;
-  cursor: pointer;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  transition: transform 0.3s ease;
-  z-index: 10; /* Ensure it's above other content */
-}
-
-.fab:hover {
-  transform: scale(1.1); /* Slightly enlarge on hover */
-}
-
-/* Hide drag-and-drop area on mobile */
-@media (max-width: 767px) {
-  .drag-drop-area {
-    display: none;
-  }
-
-  .fab {
-    bottom: 120px; /* Move FAB higher on mobile */
-  }
 }
 
 /* FILES END ------------------------- */
@@ -697,188 +290,289 @@ header .desktop-nav a:hover,
 
 /* NEW STUFF ------------------------ */
 
-footer {
-  margin-top: 40px;
-  padding: 20px;
-  background-color: rgba(65, 65, 65, 0.25);
+/* General Reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: #0a0a0a;
+  color: #ffffff;
+  line-height: 1.6;
+  overflow-x: hidden;
+  overflow-y: auto; /* Enable scrolling */
+}
+
+/* Hero Section */
+.hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 60px 20px;
   text-align: center;
 }
 
-.footer-content {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.hero-content {
+  max-width: 600px;
+}
+
+.hero h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 20px;
+}
+
+.hero h1 .highlight {
+  color: #007AFF;
+}
+
+.hero p {
+  font-size: 1.1rem;
+  color: #cccccc;
+  margin-bottom: 30px;
+}
+
+.hero-image img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 15px;
+  margin-top: 30px;
+}
+
+/* Benefits Section */
+.benefits {
+  padding: 60px 20px;
   max-width: 1200px;
   margin: 0 auto;
+  text-align: center;
 }
 
-.social-links {
-  display: flex;
-  gap: 10px;
+.benefits h2 {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 30px;
 }
 
-.social-links a {
-  color: #007AFF;
-  text-decoration: none;
-  font-size: 0.9rem;
+.benefit-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
 }
 
-.social-links a:hover {
-  text-decoration: underline;
+.benefit {
+  text-align: center;
+  padding: 20px;
+  background-color: rgba(20, 20, 20, 0.8);
+  border-radius: 15px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
+.benefit:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 10px 20px rgba(0, 122, 255, 0.2);
+}
+
+.benefit img {
+  width: 50px;
+  height: 50px;
+  margin-bottom: 15px;
+}
+
+.benefit h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.benefit p {
+  font-size: 0.95rem;
+  color: #cccccc;
+}
+
+/* Freelancer Showcase */
 .freelancer-showcase {
-  margin-top: 40px;
+  padding: 60px 20px;
+  max-width: 1200px;
+  margin: 0 auto;
   text-align: center;
 }
 
 .freelancer-showcase h2 {
-  font-size: 1.5rem;
-  margin-bottom: 20px;
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 30px;
 }
 
 .freelancers {
-  display: flex;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 20px;
+  margin-bottom: 30px;
 }
 
 .freelancer {
-  background-color: rgba(71, 71, 71, 0.55);
+  background-color: rgba(20, 20, 20, 0.8);
   padding: 20px;
-  border-radius: 10px;
-  text-align: center;
+  border-radius: 15px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.freelancer:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 10px 20px rgba(0, 122, 255, 0.2);
 }
 
 .freelancer img {
-  width: 100px;
-  height: 100px;
+  width: 80px;
+  height: 80px;
   border-radius: 50%;
   margin-bottom: 10px;
 }
 
 .freelancer h3 {
   font-size: 1.25rem;
+  font-weight: 600;
   margin-bottom: 5px;
 }
 
 .freelancer p {
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   color: #cccccc;
 }
 
-.how-it-works {
-  margin-top: 40px;
-  text-align: center;
-}
-
-.how-it-works h2 {
-  font-size: 1.5rem;
-  margin-bottom: 20px;
-}
-
-.step {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  margin-bottom: 20px;
-}
-
-.step span {
-  width: 30px;
-  height: 30px;
-  background-color: #007AFF;
-  color: #ffffff;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1rem;
-}
-
-.step p {
-  font-size: 1rem;
-  color: #ffffff;
-}
-
-.testimonials {
-  margin-top: 40px;
-  text-align: center;
-}
-
-.testimonials h2 {
-  font-size: 1.5rem;
-  margin-bottom: 20px;
-}
-
-.testimonial {
-  background-color: rgba(71, 71, 71, 0.55);
-  padding: 20px;
-  border-radius: 10px;
-  margin-bottom: 20px;
-}
-
-.testimonial p {
-  font-size: 1rem;
-  color: #ffffff;
-}
-
-.testimonial .author {
-  font-size: 0.9rem;
-  color: #cccccc;
-  margin-top: 10px;
-}
-
-.features {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 20px;
-  margin-top: 40px;
-}
-
-.feature {
-  text-align: center;
-  padding: 20px;
-  background-color: rgba(71, 71, 71, 0.55);
-  border-radius: 10px;
-}
-
-.feature img {
-  width: 50px;
-  height: 50px;
-  margin-bottom: 10px;
-}
-
-.feature h3 {
-  font-size: 1.25rem;
-  margin-bottom: 10px;
-}
-
-.feature p {
-  font-size: 0.9rem;
-  color: #cccccc;
-}
-
+/* CTA Buttons */
 .cta-buttons {
   display: flex;
   justify-content: center;
-  gap: 20px;
-  margin-top: 20px;
+  gap: 15px;
+  margin-top: 30px;
 }
 
 .cta-button {
-  padding: 10px 20px;
+  padding: 12px 24px;
   background-color: #007AFF;
   color: #ffffff;
   text-decoration: none;
   border-radius: 5px;
   font-size: 1rem;
-  transition: background-color 0.3s ease;
+  font-weight: 600;
+  transition: background-color 0.3s ease, transform 0.3s ease;
 }
 
 .cta-button:hover {
   background-color: #005bb5;
+  transform: translateY(-5px);
 }
 
+.cta-button.secondary {
+  background-color: transparent;
+  border: 2px solid #007AFF;
+}
+
+.cta-button.secondary:hover {
+  background-color: #007AFF;
+  color: #ffffff;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .hero h1 {
+    font-size: 2rem;
+  }
+
+  .hero p {
+    font-size: 1rem;
+  }
+
+  .benefit-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .freelancers {
+    grid-template-columns: 1fr;
+  }
+}
 /* HOMEPAGE END ------------------------------- */
+
+/* ACTIVE PAGE */
+
+/* Desktop Navigation */
+.desktop-nav {
+  display: flex;
+  gap: 30px;
+}
+
+.nav-link {
+  text-decoration: none;
+  color: #cccccc; /* Light gray for inactive links */
+  font-size: 1rem;
+  font-weight: 500;
+  position: relative;
+  transition: color 0.3s ease;
+}
+
+.nav-link::after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background-color: #007AFF;
+  transition: width 0.3s ease;
+}
+
+.nav-link:hover {
+  color: #ffffff; /* White on hover */
+}
+
+.nav-link:hover::after {
+  width: 100%; /* Underline effect on hover */
+}
+
+.nav-link.active {
+  color: #007AFF; /* Blue for active link */
+}
+
+.nav-link.active::after {
+  width: 100%; /* Underline effect for active link */
+}
+
+/* END ACTIVE PAGE --------------------- */
+
+
+/* FOOTER --------------------------- */
+
+/* Footer */
+footer {
+  display: none; /* Hidden by default */
+  background-color: rgba(65, 65, 65, 0.25); /* Match header background */
+  backdrop-filter: blur(10px); /* Match header blur effect */
+  padding: 20px; /* Reduced padding for minimalism */
+  border-top: 1px solid #007AFF; /* Thin blue outline */
+  margin-top: auto; /* Push footer to the bottom */
+}
+
+.footer-wrapper {
+  max-width: 1200px;
+  margin: 0 auto;
+  text-align: center; /* Center-align content */
+}
+
+.footer-bottom {
+  font-size: 0.9rem;
+  color: #cccccc;
+  margin: 0;
+}
+
+/* Show footer only on PC */
+@media (min-width: 768px) {
+  footer {
+    display: block;
+  }
+}
+
+/* Footer END ----------------------- */

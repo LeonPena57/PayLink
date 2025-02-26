@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Freelancers - Paylink</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles.css">
+  <link rel="stylesheet" href="./freelancers.css">
+</head>
+<body>
+  <!-- Header will be injected here -->
+  <div id="header"></div>
+
+  <!-- Freelancers Section -->
+  <div class="freelancers-container">
+    <h1>Find Freelancers</h1>
+    <p>Discover talented freelancers in your niche.</p>
+
+    <!-- Search Bar -->
+    <div class="search-bar">
+      <input type="text" placeholder="Search for freelancers..." class="search-input">
+      <button class="search-button">Search</button>
+    </div>
+
+    <!-- Category Tabs -->
+    <div class="category-tabs">
+      <button class="tab active" data-category="all">All</button>
+      <button class="tab" data-category="art">Art</button>
+      <button class="tab" data-category="graphic-design">Graphic Design</button>
+      <button class="tab" data-category="web-design">Web Design</button>
+      <button class="tab" data-category="coding">Coding</button>
+    </div>
+
+    <!-- Freelancer Cards -->
+    <div class="freelancer-cards">
+      <!-- Freelancer Card 1 -->
+      <div class="freelancer-card" data-category="graphic-design">
+        <img src="images/WHITELOGOTEST2025.png" alt="Freelancer 1" class="freelancer-image">
+        <div class="freelancer-info">
+          <h2>Jane Doe</h2>
+          <p class="freelancer-title">Graphic Designer</p>
+          <p class="freelancer-description">Specializing in logo design, branding, and illustrations.</p>
+          <div class="freelancer-rating">
+            <span class="stars">★★★★★</span>
+            <span class="rating">5.0</span>
+            <span class="reviews">(25 reviews)</span>
+          </div>
+          <div class="freelancer-pricing">
+            <span class="price">Starting at $50</span>
+          </div>
+          <a href="freelancer-profile.html" class="cta-button">View Profile</a>
+        </div>
+      </div>
+
+      <!-- Freelancer Card 2 -->
+      <div class="freelancer-card" data-category="web-design">
+        <img src="images/WHITELOGOTEST2025.png" alt="Freelancer 2" class="freelancer-image">
+        <div class="freelancer-info">
+          <h2>John Smith</h2>
+          <p class="freelancer-title">Web Developer</p>
+          <p class="freelancer-description">Expert in front-end development and responsive design.</p>
+          <div class="freelancer-rating">
+            <span class="stars">★★★★☆</span>
+            <span class="rating">4.7</span>
+            <span class="reviews">(18 reviews)</span>
+          </div>
+          <div class="freelancer-pricing">
+            <span class="price">Starting at $75</span>
+          </div>
+          <a href="freelancer-profile.html" class="cta-button">View Profile</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer will be injected here -->
+  <div id="footer"></div>
+
+  <!-- Include JavaScript -->
+  <script src="./script.js"></script>
+  <script>
+    // Load the header, navigation, and footer
+    fetch("./header.html")
+      .then((response) => response.text())
+      .then((data) => {
+        document.getElementById("header").innerHTML = data;
+      });
+
+    fetch("./nav.html")
+      .then((response) => response.text())
+      .then((data) => {
+        document.getElementById("nav").innerHTML = data;
+      });
+
+    fetch("./footer.html")
+      .then((response) => response.text())
+      .then((data) => {
+        document.getElementById("footer").innerHTML = data;
+      });
+
+    // Category Tabs Functionality
+    const tabs = document.querySelectorAll('.tab');
+    const freelancerCards = document.querySelectorAll('.freelancer-card');
+
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        // Remove active class from all tabs
+        tabs.forEach(t => t.classList.remove('active'));
+        // Add active class to the clicked tab
+        tab.classList.add('active');
+
+        // Get the selected category
+        const category = tab.getAttribute('data-category');
+
+        // Filter freelancer cards
+        freelancerCards.forEach(card => {
+          if (category === 'all' || card.getAttribute('data-category') === category) {
+            card.style.display = 'block';
+          } else {
+            card.style.display = 'none';
+          }
+        });
+      });
+    });
+  </script>
+</body>
+</html>

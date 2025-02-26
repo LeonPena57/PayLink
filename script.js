@@ -172,3 +172,48 @@ window.addEventListener("load", () => {
 });
 
 // CUSTOM BRANDING END ------------------------------------//
+
+// ACTIVE PAGE //
+
+// script.js
+document.addEventListener('DOMContentLoaded', () => {
+  // Load the header
+  fetch("./header.html")
+    .then((response) => response.text())
+    .then((data) => {
+      document.getElementById("header").innerHTML = data;
+
+      // Set the active class on the current page's navigation link
+      let currentPage = window.location.pathname.split('/').pop() || 'index.html';
+      
+      // Remove query parameters and trailing slashes
+      currentPage = currentPage.split('?')[0]; // Remove query parameters
+      currentPage = currentPage.split('#')[0]; // Remove hash fragments
+      currentPage = currentPage.replace(/\/$/, ''); // Remove trailing slashes
+
+      const navLinks = document.querySelectorAll('.desktop-nav .nav-link');
+
+      console.log("Current Page:", currentPage); // Debugging
+
+      navLinks.forEach(link => {
+        let linkHref = link.getAttribute('href');
+        let linkPage = linkHref.split('/').pop(); // Extract the page name from the href
+
+        // Remove query parameters and trailing slashes from linkPage
+        linkPage = linkPage.split('?')[0]; // Remove query parameters
+        linkPage = linkPage.split('#')[0]; // Remove hash fragments
+        linkPage = linkPage.replace(/\/$/, ''); // Remove trailing slashes
+
+        console.log("Link Page:", linkPage); // Debugging
+
+        // Check if the link's page matches the current page
+        if (linkPage === currentPage) {
+          link.classList.add('active');
+        } else {
+          link.classList.remove('active');
+        }
+      });
+    });
+});
+
+// END ACTIVE PAGE ------------------------------------------------- //
