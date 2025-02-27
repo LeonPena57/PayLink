@@ -7,6 +7,10 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./styles.css">
   <link rel="stylesheet" href="./index.css">
+  <!-- Firebase App (the core Firebase SDK) -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <!-- Firebase Auth -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
 </head>
 <body>
   <!-- Header will be injected here -->
@@ -20,8 +24,8 @@
         <h1>Freelancer Payments Made <span class="highlight">Easy</span></h1>
         <p>Upload, charge, and deliver your services seamlessly with Paylink.</p>
         <div class="cta-buttons">
-          <a href="signup.html" class="cta-button">Get Started</a>
-          <a href="login.html" class="cta-button secondary">Log In</a>
+          <button id="signup-button" class="cta-button">Get Started</button>
+          <button id="login-button" class="cta-button secondary">Log In</button>
         </div>
       </div>
       <div class="hero-image">
@@ -77,61 +81,34 @@
   <div id="footer"></div>
   <div id="nav"></div>
 
+  <!-- Authentication Modal -->
+  <div id="auth-modal" class="modal">
+    <div class="modal-content">
+      <span class="close-modal">&times;</span>
+      <h2 id="modal-title">Sign Up</h2>
+      <form id="auth-form">
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" placeholder="Enter your email" required>
+        </div>
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" placeholder="Enter your password" required>
+        </div>
+        <button type="submit" id="auth-submit-button">Sign Up</button>
+      </form>
+      <div class="auth-providers">
+        <button id="google-signin" class="auth-provider-button">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" alt="Google Logo">
+          Continue with Google
+        </button>
+      </div>
+      <p id="auth-toggle-text">Already have an account? <a href="#" id="auth-toggle-link">Log In</a></p>
+    </div>
+  </div>
+
   <!-- Include JavaScript -->
+  <script type="module" src="./firebase-config.js"></script>
   <script src="./script.js"></script>
-  <script>
-    // Load the header, navigation, and footer
-    fetch("./header.html")
-      .then((response) => response.text())
-      .then((data) => {
-        document.getElementById("header").innerHTML = data;
-        // Add light/dark mode toggle functionality
-        const modeToggle = document.createElement('div');
-        modeToggle.className = 'mode-toggle';
-        document.querySelector('header').appendChild(modeToggle);
-
-        const toggle = document.getElementById('mode-toggle');
-        toggle.addEventListener('change', () => {
-          document.body.classList.toggle('light-mode');
-        });
-      });
-
-    fetch("./nav.html")
-      .then((response) => response.text())
-      .then((data) => {
-        document.getElementById("nav").innerHTML = data;
-      });
-
-    fetch("./footer.html")
-      .then((response) => response.text())
-      .then((data) => {
-        document.getElementById("footer").innerHTML = data;
-      });
-
-    // Category Tabs Functionality
-    const tabs = document.querySelectorAll('.tab');
-    const freelancerCards = document.querySelectorAll('.freelancer-card');
-
-    tabs.forEach(tab => {
-      tab.addEventListener('click', () => {
-        // Remove active class from all tabs
-        tabs.forEach(t => t.classList.remove('active'));
-        // Add active class to the clicked tab
-        tab.classList.add('active');
-
-        // Get the selected category
-        const category = tab.getAttribute('data-category');
-
-        // Filter freelancer cards
-        freelancerCards.forEach(card => {
-          if (category === 'all' || card.getAttribute('data-category') === category) {
-            card.style.display = 'block';
-          } else {
-            card.style.display = 'none';
-          }
-        });
-      });
-    });
-  </script>
 </body>
 </html>

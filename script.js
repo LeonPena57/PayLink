@@ -46,62 +46,64 @@ const dragDropArea = document.getElementById("dragDropArea");
 const fileList = document.getElementById("fileList");
 const fab = document.getElementById("fab");
 
-// Prevent default drag behaviors
-["dragenter", "dragover", "dragleave", "drop"].forEach((eventName) => {
-  dragDropArea.addEventListener(eventName, preventDefaults, false);
-  document.body.addEventListener(eventName, preventDefaults, false); // Prevent default behavior globally
-});
+if (dragDropArea && fileList && fab) {
+  // Prevent default drag behaviors
+  ["dragenter", "dragover", "dragleave", "drop"].forEach((eventName) => {
+    dragDropArea.addEventListener(eventName, preventDefaults, false);
+    document.body.addEventListener(eventName, preventDefaults, false); // Prevent default behavior globally
+  });
 
-function preventDefaults(e) {
-  e.preventDefault();
-  e.stopPropagation();
-}
+  function preventDefaults(e) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
 
-// Highlight drop area when dragging over
-["dragenter", "dragover"].forEach((eventName) => {
-  dragDropArea.addEventListener(eventName, () => dragDropArea.classList.add("dragover"), false);
-});
+  // Highlight drop area when dragging over
+  ["dragenter", "dragover"].forEach((eventName) => {
+    dragDropArea.addEventListener(eventName, () => dragDropArea.classList.add("dragover"), false);
+  });
 
-["dragleave", "drop"].forEach((eventName) => {
-  dragDropArea.addEventListener(eventName, () => dragDropArea.classList.remove("dragover"), false);
-});
+  ["dragleave", "drop"].forEach((eventName) => {
+    dragDropArea.addEventListener(eventName, () => dragDropArea.classList.remove("dragover"), false);
+  });
 
-// Handle dropped files
-dragDropArea.addEventListener("drop", handleDrop, false);
+  // Handle dropped files
+  dragDropArea.addEventListener("drop", handleDrop, false);
 
-function handleDrop(e) {
-  const files = e.dataTransfer.files;
-  handleFiles(files);
-}
+  function handleDrop(e) {
+    const files = e.dataTransfer.files;
+    handleFiles(files);
+  }
 
-// Handle file selection via FAB
-fab.addEventListener("click", () => {
-  const fileInput = document.createElement("input");
-  fileInput.type = "file";
-  fileInput.multiple = true;
-  fileInput.click();
-  fileInput.addEventListener("change", (e) => handleFiles(e.target.files));
-});
+  // Handle file selection via FAB
+  fab.addEventListener("click", () => {
+    const fileInput = document.createElement("input");
+    fileInput.type = "file";
+    fileInput.multiple = true;
+    fileInput.click();
+    fileInput.addEventListener("change", (e) => handleFiles(e.target.files));
+  });
 
-// Process and display files
-function handleFiles(files) {
-  for (const file of files) {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => {
-      const fileItem = document.createElement("div");
-      fileItem.className = "file-item";
+  // Process and display files
+  function handleFiles(files) {
+    for (const file of files) {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => {
+        const fileItem = document.createElement("div");
+        fileItem.className = "file-item";
 
-      const fileIcon = document.createElement("img");
-      fileIcon.src = "assets/file-icon.png"; // Placeholder file icon
-      fileItem.appendChild(fileIcon);
+        const fileIcon = document.createElement("img");
+        fileIcon.src = "assets/file-icon.png"; // Placeholder file icon
+        fileItem.appendChild(fileIcon);
 
-      const fileName = document.createElement("p");
-      fileName.textContent = file.name;
-      fileItem.appendChild(fileName);
+        const fileName = document.createElement("p");
+        fileName.textContent = file.name;
+        fileItem.appendChild(fileName);
 
-      fileList.appendChild(fileItem);
-    };
+        fileList.appendChild(fileItem);
+      };
+    }
   }
 }
 
@@ -117,7 +119,7 @@ const customDomain = document.getElementById("customDomain");
 const saveDomain = document.getElementById("saveDomain");
 
 // Handle Logo Upload
-if (logoUpload) {
+if (logoUpload && logoPreview) {
   logoUpload.addEventListener("change", (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -143,7 +145,7 @@ if (colorPicker) {
 }
 
 // Handle Custom Domain
-if (saveDomain) {
+if (saveDomain && customDomain) {
   saveDomain.addEventListener("click", () => {
     const domain = customDomain.value.trim();
     if (domain) {

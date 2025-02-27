@@ -8,6 +8,14 @@
   <link href="https://fonts.googleapis.com/css2?family=Contrail+One&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./styles.css">
   <link rel="stylesheet" href="./account.css">
+  <!-- Firebase App (the core Firebase SDK) -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <!-- Firebase Auth -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+  <!-- Firebase Firestore -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+  <!-- Firebase Storage -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
 </head>
 <body>
   <!-- Header will be injected here -->
@@ -15,193 +23,209 @@
 
   <!-- Main Content -->
   <main class="account-page">
-    <!-- Banner -->
-    <div class="banner">
-      <img src="/images/YTBANNEER-min.jpg" alt="Banner" class="banner-image">
-      <button class="edit-button" aria-label="Edit Banner">Edit</button>
+    <!-- Auth Container - shown when not logged in -->
+    <div id="auth-container" class="auth-container" style="display: none;">
+      <div class="auth-box">
+        <h2>Please Sign In</h2>
+        <p>You need to be logged in to view your account</p>
+        <button id="login-btn" class="auth-button">Log In</button>
+        <button id="signup-btn" class="auth-button secondary">Sign Up</button>
+      </div>
     </div>
 
-    <!-- Profile Section -->
-    <section class="profile-section">
-      <div class="profile-picture">
-        <img src="/images/WHITELOGOTEST2025.png" alt="Profile Picture" class="profile-image">
+    <!-- Profile Container - shown when logged in -->
+    <div id="profile-container" style="display: none;">
+      <!-- Banner -->
+      <div class="banner">
+        <img id="banner-image" src="/images/YTBANNEER-min.jpg" alt="Banner" class="banner-image">
+        <button id="edit-banner-btn" class="edit-button" aria-label="Edit Banner">Edit</button>
+        <input type="file" id="banner-upload" accept="image/*" style="display: none;">
       </div>
-      <article class="profile-info">
-        <h1 class="username">John Doe</h1>
-        <button class="edit-profile" aria-label="Edit Profile">Edit Profile</button>
-      </article>
-    </section>
 
-    <!-- Tabs -->
-    <nav class="tabs" role="tablist">
-      <div class="tab active" role="tab" aria-selected="true">Portfolio</div>
-      <div class="tab" role="tab">Services</div>
-      <div class="tab" role="tab">Clients</div>
-      <div class="tab" role="tab">FAQ</div>
-      <div class="tab" role="tab">Contact</div>
-    </nav>
-
-    <!-- Tab Content -->
-    <div class="tab-content">
-      <!-- Portfolio Tab -->
-      <section class="tab-pane active" id="portfolio" role="tabpanel">
-        <div class="portfolio-promo">
-          <img src="assets/portfolio-promo.jpg" alt="Portfolio Promo">
-          <div class="overlay">
-            <h2>Web Design & Development</h2>
+      <!-- Profile Section -->
+      <section class="profile-section">
+        <div class="profile-picture">
+          <img id="profile-image" src="/images/WHITELOGOTEST2025.png" alt="Profile Picture" class="profile-image">
+          <div id="profile-upload-overlay" class="profile-upload-overlay">
+            <span>Change</span>
           </div>
+          <input type="file" id="profile-upload" accept="image/*" style="display: none;">
         </div>
-        <div class="portfolio-images">
-          <img src="assets/portfolio-1.jpg" alt="Portfolio 1">
-          <img src="assets/portfolio-2.jpg" alt="Portfolio 2">
-          <img src="assets/portfolio-3.jpg" alt="Portfolio 3">
-          <img src="assets/portfolio-4.jpg" alt="Portfolio 4">
-        </div>
+        <article class="profile-info">
+          <h1 id="username-display" class="username">Loading...</h1>
+          <button id="edit-profile-btn" class="edit-profile" aria-label="Edit Profile">Edit Profile</button>
+        </article>
       </section>
 
-      <!-- Services Tab -->
-      <section class="tab-pane" id="services" role="tabpanel">
-        <div class="services-promo">
-          <img src="assets/services-promo.jpg" alt="Services Promo">
-          <div class="overlay">
-            <h2>Our Services</h2>
-          </div>
+      <!-- Edit Profile Modal -->
+      <div id="edit-profile-modal" class="modal">
+        <div class="modal-content">
+          <span class="close-modal">&times;</span>
+          <h2>Edit Profile</h2>
+          <form id="profile-form">
+            <div class="form-group">
+              <label for="display-name">Display Name</label>
+              <input type="text" id="display-name" name="displayName" placeholder="Your name">
+            </div>
+            <div class="form-group">
+              <label for="bio">Bio</label>
+              <textarea id="bio" name="bio" placeholder="Tell us about yourself"></textarea>
+            </div>
+            <div class="form-group">
+              <label for="email">Email</label>
+              <input type="email" id="email" name="email" readonly>
+            </div>
+            <button type="submit" class="submit-button">Save Changes</button>
+          </form>
         </div>
-        <div class="services-grid">
-          <img src="assets/service-1.jpg" alt="Service 1">
-          <img src="assets/service-2.jpg" alt="Service 2">
-          <img src="assets/service-3.jpg" alt="Service 3">
-          <img src="assets/service-4.jpg" alt="Service 4">
-        </div>
-        <div class="services-stats">
-          <div class="stat">
-            <h3>Reviews</h3>
-            <p>★★★★★</p>
-          </div>
-          <div class="stat">
-            <h3>Orders</h3>
-            <p>1,234</p>
-          </div>
-        </div>
-        <div class="services-social">
-          <img src="assets/social-1.png" alt="Social 1">
-          <img src="assets/social-2.png" alt="Social 2">
-          <img src="assets/social-3.png" alt="Social 3">
-          <img src="assets/social-4.png" alt="Social 4">
-        </div>
-      </section>
+      </div>
 
-      <!-- Clients Tab -->
-      <section class="tab-pane" id="clients" role="tabpanel">
-        <h2>Clients</h2>
-        <div class="clients-list">
-          <div class="client-card">
-            <img src="assets/client-1.jpg" alt="Client 1">
-            <div class="client-info">
-              <h3>Jane Doe</h3>
-              <p>Graphic Designer</p>
-            </div>
-            <div class="client-stats">
-              <p>12 Orders</p>
-            </div>
-          </div>
-          <div class="client-card">
-            <img src="assets/client-2.jpg" alt="Client 2">
-            <div class="client-info">
-              <h3>John Smith</h3>
-              <p>Web Developer</p>
-            </div>
-            <div class="client-stats">
-              <p>8 Orders</p>
-            </div>
-          </div>
-          <div class="client-card">
-            <img src="assets/client-3.jpg" alt="Client 3">
-            <div class="client-info">
-              <h3>Emily Johnson</h3>
-              <p>Marketing Specialist</p>
-            </div>
-            <div class="client-stats">
-              <p>15 Orders</p>
-            </div>
-          </div>
-          <div class="client-card">
-            <img src="assets/client-4.jpg" alt="Client 4">
-            <div class="client-info">
-              <h3>Michael Brown</h3>
-              <p>UI/UX Designer</p>
-            </div>
-            <div class="client-stats">
-              <p>10 Orders</p>
-            </div>
-          </div>
-        </div>
-      </section>
+      <!-- Tabs -->
+      <nav class="tabs" role="tablist">
+        <div class="tab active" role="tab" aria-selected="true" data-tab="portfolio">Portfolio</div>
+        <div class="tab" role="tab" data-tab="services">Services</div>
+        <div class="tab" role="tab" data-tab="clients">Clients</div>
+        <div class="tab" role="tab" data-tab="faq">FAQ</div>
+        <div class="tab" role="tab" data-tab="contact">Contact</div>
+      </nav>
 
-      <!-- FAQ Tab -->
-      <section class="tab-pane" id="faq" role="tabpanel">
-        <h2>FAQ</h2>
-        <p>Have questions? Check out my frequently asked questions to learn more about my process, pricing, and availability.</p>
-      </section>
+      <!-- Tab Content -->
+      <div class="tab-content">
+        <!-- Portfolio Tab -->
+        <section class="tab-pane active" id="portfolio" role="tabpanel">
+          <div class="portfolio-promo">
+            <img src="assets/portfolio-promo.jpg" alt="Portfolio Promo">
+            <div class="overlay">
+              <h2>Web Design & Development</h2>
+            </div>
+          </div>
+          <div id="portfolio-images" class="portfolio-images">
+            <!-- Portfolio items will be loaded here -->
+            <div class="portfolio-add">
+              <button id="add-portfolio-btn" class="add-button">+ Add Portfolio Item</button>
+              <input type="file" id="portfolio-upload" accept="image/*" style="display: none;">
+            </div>
+          </div>
+        </section>
 
-      <!-- Contact Tab -->
-      <section class="tab-pane" id="contact" role="tabpanel">
-        <h2>Contact</h2>
-        <p>Feel free to reach out to me for inquiries or collaborations. I'm always excited to hear about new projects!</p>
-      </section>
+        <!-- Services Tab -->
+        <section class="tab-pane" id="services" role="tabpanel">
+          <div class="services-promo">
+            <img src="assets/services-promo.jpg" alt="Services Promo">
+            <div class="overlay">
+              <h2>Our Services</h2>
+            </div>
+          </div>
+          <div id="services-grid" class="services-grid">
+            <!-- Services will be loaded here -->
+            <div class="service-add">
+              <button id="add-service-btn" class="add-button">+ Add Service</button>
+            </div>
+          </div>
+          <div class="services-stats">
+            <div class="stat">
+              <h3>Reviews</h3>
+              <p id="reviews-stat">★★★★★</p>
+            </div>
+            <div class="stat">
+              <h3>Orders</h3>
+              <p id="orders-stat">0</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Clients Tab -->
+        <section class="tab-pane" id="clients" role="tabpanel">
+          <h2>Clients</h2>
+          <div id="clients-list" class="clients-list">
+            <!-- Clients will be loaded here -->
+          </div>
+        </section>
+
+        <!-- FAQ Tab -->
+        <section class="tab-pane" id="faq" role="tabpanel">
+          <h2>FAQ</h2>
+          <div id="faq-container">
+            <button id="add-faq-btn" class="add-button">+ Add FAQ</button>
+          </div>
+        </section>
+
+        <!-- Contact Tab -->
+        <section class="tab-pane" id="contact" role="tabpanel">
+          <h2>Contact</h2>
+          <form id="contact-form" class="contact-form">
+            <div class="form-group">
+              <label for="contact-email">Email</label>
+              <input type="email" id="contact-email" name="contactEmail">
+            </div>
+            <div class="form-group">
+              <label for="contact-phone">Phone</label>
+              <input type="tel" id="contact-phone" name="contactPhone">
+            </div>
+            <div class="form-group">
+              <label for="contact-social">Social Media</label>
+              <input type="text" id="contact-social" name="contactSocial" placeholder="Instagram, Twitter, etc.">
+            </div>
+            <button type="submit" class="submit-button">Save Contact Info</button>
+          </form>
+        </section>
+      </div>
+    </div>
+
+    <!-- Add Service Modal -->
+    <div id="add-service-modal" class="modal">
+      <div class="modal-content">
+        <span class="close-modal">&times;</span>
+        <h2>Add Service</h2>
+        <form id="service-form">
+          <div class="form-group">
+            <label for="service-title">Service Title</label>
+            <input type="text" id="service-title" name="serviceTitle" placeholder="What service do you offer?">
+          </div>
+          <div class="form-group">
+            <label for="service-description">Description</label>
+            <textarea id="service-description" name="serviceDescription" placeholder="Describe your service"></textarea>
+          </div>
+          <div class="form-group">
+            <label for="service-price">Price</label>
+            <input type="text" id="service-price" name="servicePrice" placeholder="$">
+          </div>
+          <div class="form-group">
+            <label for="service-image">Image</label>
+            <input type="file" id="service-image" name="serviceImage" accept="image/*">
+          </div>
+          <button type="submit" class="submit-button">Add Service</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Add FAQ Modal -->
+    <div id="add-faq-modal" class="modal">
+      <div class="modal-content">
+        <span class="close-modal">&times;</span>
+        <h2>Add FAQ</h2>
+        <form id="faq-form">
+          <div class="form-group">
+            <label for="faq-question">Question</label>
+            <input type="text" id="faq-question" name="faqQuestion" placeholder="What do people ask you?">
+          </div>
+          <div class="form-group">
+            <label for="faq-answer">Answer</label>
+            <textarea id="faq-answer" name="faqAnswer" placeholder="Your answer"></textarea>
+          </div>
+          <button type="submit" class="submit-button">Add FAQ</button>
+        </form>
+      </div>
     </div>
   </main>
 
-<!-- Footer will be injected here -->
-<div id="footer"></div>
-<div id="nav"></div>
+  <!-- Footer and Nav will be injected here -->
+  <div id="footer"></div>
+  <div id="nav"></div>
 
-<!-- Include JavaScript -->
-<script src="./script.js"></script>
-<script>
-  // Load the header, navigation, and footer
-  fetch("./header.html")
-    .then((response) => response.text())
-    .then((data) => {
-      document.getElementById("header").innerHTML = data;
-    });
-
-  fetch("./nav.html")
-    .then((response) => response.text())
-    .then((data) => {
-      document.getElementById("nav").innerHTML = data;
-    });
-
-  fetch("./footer.html")
-    .then((response) => response.text())
-    .then((data) => {
-      document.getElementById("footer").innerHTML = data;
-    });
-
-  // Category Tabs Functionality
-  const tabs = document.querySelectorAll('.tab');
-  const freelancerCards = document.querySelectorAll('.freelancer-card');
-
-  tabs.forEach(tab => {
-    tab.addEventListener('click', () => {
-      // Remove active class from all tabs
-      tabs.forEach(t => t.classList.remove('active'));
-      // Add active class to the clicked tab
-      tab.classList.add('active');
-
-      // Get the selected category
-      const category = tab.getAttribute('data-category');
-
-      // Filter freelancer cards
-      freelancerCards.forEach(card => {
-        if (category === 'all' || card.getAttribute('data-category') === category) {
-          card.style.display = 'block';
-        } else {
-          card.style.display = 'none';
-        }
-      });
-    });
-  });
-</script>
+  <!-- Include JavaScript -->
+  <script src="./script.js"></script>
+  <script type="module" src="./firebase-config.js"></script>
+  <script type="module" src="./account.js"></script>
 </body>
 </html>
