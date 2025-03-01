@@ -7,10 +7,10 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./styles.css">
   <link rel="stylesheet" href="./index.css">
-  <!-- Firebase App (the core Firebase SDK) -->
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-  <!-- Firebase Auth -->
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+
+  <!-- Firebase SDK -->
+  <script type="module" src="./firebase-config.js"></script>
+  <script type="module" src="./script.js"></script>
 </head>
 <body>
   <!-- Header will be injected here -->
@@ -107,8 +107,40 @@
     </div>
   </div>
 
-  <!-- Include JavaScript -->
-  <script type="module" src="./firebase-config.js"></script>
-  <script src="./script.js"></script>
+  <!-- Logout Button -->
+  <button id="logout-button" class="cta-button secondary" style="display:none;">Logout</button>
+
+  <!-- JavaScript to open modal on button click -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const signupButton = document.getElementById('signup-button');
+      const loginButton = document.getElementById('login-button');
+      const authModal = document.getElementById('auth-modal');
+      const closeModal = document.querySelector('.close-modal');
+
+      signupButton.addEventListener('click', () => {
+        document.getElementById('modal-title').textContent = "Sign Up";
+        document.getElementById('auth-submit-button').textContent = "Sign Up";
+        authModal.style.display = 'block';
+      });
+
+      loginButton.addEventListener('click', () => {
+        document.getElementById('modal-title').textContent = "Log In";
+        document.getElementById('auth-submit-button').textContent = "Log In";
+        authModal.style.display = 'block';
+      });
+
+      closeModal.addEventListener('click', () => {
+        authModal.style.display = 'none';
+      });
+
+      window.addEventListener('click', (event) => {
+        if (event.target === authModal) {
+          authModal.style.display = 'none';
+        }
+      });
+    });
+  </script>
+
 </body>
 </html>

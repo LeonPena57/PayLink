@@ -3,6 +3,72 @@ function toggleMode() {
   document.body.classList.toggle('light-mode');
 }
 
+// FIRE BASE //
+
+import { auth, googleProvider } from "./firebase-config.js";
+import { signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "firebase/auth";
+
+document.addEventListener('DOMContentLoaded', () => {
+  const authForm = document.getElementById('auth-form');
+  const googleSignInButton = document.getElementById('google-signin');
+  const logoutButton = document.getElementById('logout-button');
+
+  // Handle Email/Password Sign Up & Login
+  authForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    const isSignUp = document.getElementById('auth-submit-button').textContent === "Sign Up";
+
+    try {
+      if (isSignUp) {
+        await createUserWithEmailAndPassword(auth, email, password);
+        alert("Account created successfully!");
+      } else {
+        await signInWithEmailAndPassword(auth, email, password);
+        alert("Logged in successfully!");
+      }
+      location.reload();
+    } catch (error) {
+      alert(error.message);
+    }
+  });
+
+  // Handle Google Sign-In
+  googleSignInButton.addEventListener('click', async () => {
+    try {
+      await signInWithPopup(auth, googleProvider);
+      alert("Logged in with Google!");
+      location.reload();
+    } catch (error) {
+      console.error(error);
+      alert("Google Sign-In Failed: " + error.message);
+    }
+  });
+
+  // Handle Logout
+  logoutButton.addEventListener('click', async () => {
+    await signOut(auth);
+    alert("Logged out successfully!");
+    location.reload();
+  });
+
+  // Monitor Auth State
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      logoutButton.style.display = "block";
+      console.log(`User logged in: ${user.email}`);
+    } else {
+      logoutButton.style.display = "none";
+    }
+  });
+});
+
+
+// END FIRE BASE //
+
+
 // Navigation Logic
 document.addEventListener("DOMContentLoaded", function () {
   const navButtons = document.querySelectorAll(".nav-button");
