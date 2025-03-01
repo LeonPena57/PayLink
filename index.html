@@ -78,8 +78,56 @@
   </main>
 
   <!-- Footer will be injected here -->
-  <div id="footer"></div>
-  <div id="nav"></div>
+<div id="footer"></div>
+<div id="nav"></div>
+
+<!-- Include JavaScript -->
+<script src="./script.js"></script>
+<script>
+  // Load the header, navigation, and footer
+  fetch("./header.html")
+    .then((response) => response.text())
+    .then((data) => {
+      document.getElementById("header").innerHTML = data;
+    });
+
+  fetch("./nav.html")
+    .then((response) => response.text())
+    .then((data) => {
+      document.getElementById("nav").innerHTML = data;
+    });
+
+  fetch("./footer.html")
+    .then((response) => response.text())
+    .then((data) => {
+      document.getElementById("footer").innerHTML = data;
+    });
+
+  // Category Tabs Functionality
+  const tabs = document.querySelectorAll('.tab');
+  const freelancerCards = document.querySelectorAll('.freelancer-card');
+
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      // Remove active class from all tabs
+      tabs.forEach(t => t.classList.remove('active'));
+      // Add active class to the clicked tab
+      tab.classList.add('active');
+
+      // Get the selected category
+      const category = tab.getAttribute('data-category');
+
+      // Filter freelancer cards
+      freelancerCards.forEach(card => {
+        if (category === 'all' || card.getAttribute('data-category') === category) {
+          card.style.display = 'block';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    });
+  });
+</script>
 
   <!-- Authentication Modal -->
   <div id="auth-modal" class="modal">
@@ -118,6 +166,7 @@
       const authModal = document.getElementById('auth-modal');
       const closeModal = document.querySelector('.close-modal');
 
+      // Show modal when "Get Started" or "Log In" is clicked
       signupButton.addEventListener('click', () => {
         document.getElementById('modal-title').textContent = "Sign Up";
         document.getElementById('auth-submit-button').textContent = "Sign Up";
@@ -130,10 +179,12 @@
         authModal.style.display = 'block';
       });
 
+      // Close modal when "X" is clicked
       closeModal.addEventListener('click', () => {
         authModal.style.display = 'none';
       });
 
+      // Close modal when clicking outside of it
       window.addEventListener('click', (event) => {
         if (event.target === authModal) {
           authModal.style.display = 'none';
