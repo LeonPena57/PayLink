@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { FileCard, FileItem } from "@/components/features/FileCard";
 import { PaymentModal } from "@/components/features/PaymentModal";
 import { Plus, UploadCloud, Search, SlidersHorizontal, LayoutGrid, List, File as FileIcon, MoreHorizontal, ArrowDown, Folder, ChevronRight, ArrowLeft } from "lucide-react";
@@ -50,7 +50,7 @@ const MOCK_FOLDERS: CommissionFolder[] = [
   }
 ];
 
-export default function ClientDrivePage() {
+function DriveContent() {
   const searchParams = useSearchParams();
   const [activeFolderId, setActiveFolderId] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<FileItem | null>(null);
@@ -270,5 +270,17 @@ export default function ClientDrivePage() {
         file={selectedFile}
       />
     </div>
+  );
+}
+
+export default function DrivePage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+      </div>
+    }>
+      <DriveContent />
+    </Suspense>
   );
 }
