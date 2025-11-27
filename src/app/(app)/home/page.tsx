@@ -1,0 +1,643 @@
+"use client";
+
+import { useState, useEffect, useRef } from "react";
+import {
+    Grid as GridIcon,
+    ShoppingBag,
+    Package,
+    MoreHorizontal,
+    MapPin,
+    Check,
+    Plus,
+    ArrowLeft,
+    TrendingUp,
+    RefreshCw,
+    Star,
+    Home,
+    FileText,
+    QrCode,
+    Settings,
+    MessageCircle,
+    Bell,
+    Search,
+    UserPlus,
+    ChevronRight,
+    LogOut,
+    Shield,
+    HelpCircle,
+    CreditCard,
+    Heart,
+    Share2,
+    Repeat,
+    Camera,
+    PenTool,
+    Monitor,
+    DollarSign,
+    Send,
+    X,
+    Image as ImageIcon,
+    Sun,
+    Moon,
+    Edit3
+} from "lucide-react";
+import Link from "next/link";
+import clsx from "clsx";
+import { useUserMode, useUser } from "@/context/UserContext";
+import { supabase } from "@/lib/supabase/client";
+
+const PROFILE_TABS = ["HOME", "SERVICES", "PORTFOLIO", "SHOP"];
+const TAGS = ["All", "Digital Art", "Graphic Design", "Photography", "3D Modeling", "Animation"];
+
+export default function HomePage() {
+    const { userMode } = useUserMode();
+    const { user, profile, uploadAvatar, uploadBanner, isConfigured } = useUser();
+    const [activeProfileTab, setActiveProfileTab] = useState("HOME");
+    const [isFollowing, setIsFollowing] = useState(false);
+    const [searchQuery, setSearchQuery] = useState("");
+    const [activeTag, setActiveTag] = useState("All");
+
+    // Upload States
+    const [isUploadingBanner, setIsUploadingBanner] = useState(false);
+    const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+    const bannerInputRef = useRef<HTMLInputElement>(null);
+    const avatarInputRef = useRef<HTMLInputElement>(null);
+
+    const handleBannerClick = () => bannerInputRef.current?.click();
+    const handleAvatarClick = () => avatarInputRef.current?.click();
+
+    const handleBannerChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setIsUploadingBanner(true);
+            await uploadBanner(file);
+            setIsUploadingBanner(false);
+        }
+    };
+
+    const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setIsUploadingAvatar(true);
+            await uploadAvatar(file);
+            setIsUploadingAvatar(false);
+        }
+    };
+
+    // Mock Data for Demo Parity
+    const feedItems = [
+        {
+            id: 1,
+            user: { name: "Neon Arts", handle: "@neonarts", avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=100&auto=format&fit=crop" },
+            image: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop",
+            caption: "Just finished this cyberpunk character commission! 🦾",
+            tags: ["Digital Art", "Cyberpunk"],
+            likes: 1240,
+            comments: 45
+        },
+        {
+            id: 2,
+            user: { name: "Studio G", handle: "@studiog", avatar: "https://images.unsplash.com/photo-1527980965255-d3b416303d12?q=80&w=100&auto=format&fit=crop" },
+            image: "https://images.unsplash.com/photo-1614728853913-1e22ba6e8a1e?q=80&w=2670&auto=format&fit=crop",
+            caption: "New 3D weapon pack available in my shop now! 🔫",
+            tags: ["3D Modeling", "Game Assets"],
+            likes: 856,
+            comments: 23
+        },
+        {
+            id: 3,
+            user: { name: "Pixel Perfect", handle: "@pixelperfect", avatar: "https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=100&auto=format&fit=crop" },
+            image: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=2670&auto=format&fit=crop",
+            caption: "Retro vibes only. 🕹️",
+            tags: ["Photography", "Retro"],
+            likes: 2100,
+            comments: 89
+        }
+    ];
+
+    const portfolioItems = [
+        { id: 1, title: "Stream Overlay Package", image_url: "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=2670&auto=format&fit=crop" },
+        { id: 2, title: "Esports Mascot Logo", image_url: "https://images.unsplash.com/photo-1626785774573-4b799314346d?q=80&w=2670&auto=format&fit=crop" },
+        { id: 3, title: "Cyberpunk Character Art", image_url: "https://images.unsplash.com/photo-1563089145-599997674d42?q=80&w=2670&auto=format&fit=crop" },
+        { id: 4, title: "Abstract 3D Render", image_url: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop" },
+        { id: 5, title: "Minimalist Poster", image_url: "https://images.unsplash.com/photo-1572044162444-ad60f128bdea?q=80&w=2670&auto=format&fit=crop" },
+        { id: 6, title: "Neon Cityscape", image_url: "https://images.unsplash.com/photo-1555680202-c86f0e12f086?q=80&w=2670&auto=format&fit=crop" }
+    ];
+
+    const services = [
+        { id: 1, title: "Logo Design", price: 150, icon: PenTool, previews: ["https://images.unsplash.com/photo-1626785774573-4b799314346d?q=80&w=2670&auto=format&fit=crop", "https://images.unsplash.com/photo-1560157368-946d9c8f7cb6?q=80&w=2671&auto=format&fit=crop"] },
+        { id: 2, title: "Stream Package", price: 300, icon: Monitor, previews: ["https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=2670&auto=format&fit=crop", "https://images.unsplash.com/photo-1511512578047-dfb367046420?q=80&w=2671&auto=format&fit=crop"] },
+        { id: 3, title: "Photography Session", price: 200, icon: Camera, previews: ["https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=2670&auto=format&fit=crop", "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?q=80&w=2528&auto=format&fit=crop"] }
+    ];
+
+    const filteredFeed = feedItems.filter(item => {
+        const matchesTag = activeTag === "All" || item.tags.includes(activeTag);
+        const matchesSearch = item.caption.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            item.user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            item.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
+        return matchesTag && matchesSearch;
+    });
+
+    const accentColor = profile?.accent_color || "#3b82f6";
+
+    return (
+        <div className="min-h-screen bg-gray-50 dark:bg-[#1a1a1a] text-gray-900 dark:text-white pb-32 selection:bg-red-500/30 transition-colors duration-300 font-sans">
+
+            <input type="file" ref={bannerInputRef} onChange={handleBannerChange} className="hidden" accept="image/*" />
+            <input type="file" ref={avatarInputRef} onChange={handleAvatarChange} className="hidden" accept="image/*" />
+
+            {userMode === "SELLER" ? (
+                /* SELLER DASHBOARD */
+                <>
+                    {/* Profile Header */}
+                    <div className="relative group pb-4">
+                        {/* Immersive Banner */}
+                        <div className="h-48 md:h-80 w-full relative overflow-hidden group/banner">
+                            {profile?.banner_url ? (
+                                <img src={profile.banner_url} alt="Banner" className="w-full h-full object-cover" />
+                            ) : (
+                                <div className="w-full h-full bg-gradient-to-b from-gray-200 to-gray-300 dark:from-[#2a2a2a] dark:to-[#1a1a1a]" />
+                            )}
+                            <div className="absolute inset-0 bg-gradient-to-b from-transparent to-gray-50 dark:to-[#1a1a1a]" />
+
+                            {/* Upload Banner Button (Hidden by default, visible on hover) */}
+                            <button
+                                onClick={handleBannerClick}
+                                className="absolute top-4 right-4 p-2 bg-black/50 rounded-full text-white opacity-0 group-hover/banner:opacity-100 transition-opacity hover:bg-black/70"
+                            >
+                                <Camera className="w-5 h-5" />
+                            </button>
+                            {isUploadingBanner && (
+                                <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-50">
+                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 -mt-20 md:-mt-32">
+                            <div className="flex flex-col md:flex-row items-end gap-6 md:gap-8">
+                                {/* Avatar */}
+                                <div className="relative shrink-0 mx-auto md:mx-0 group/avatar">
+                                    <div className="w-32 h-32 md:w-48 md:h-48 rounded-3xl p-1 bg-white dark:bg-[#1a1a1a] shadow-2xl">
+                                        <div className="w-full h-full rounded-2xl overflow-hidden relative border-2 border-gray-200 dark:border-[#333]">
+                                            {profile?.avatar_url ? (
+                                                <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+                                            ) : (
+                                                <div className="w-full h-full bg-gray-200 dark:bg-[#333] flex items-center justify-center text-4xl font-bold text-gray-400">
+                                                    {profile?.full_name?.[0] || "?"}
+                                                </div>
+                                            )}
+
+                                            {/* Upload Avatar Overlay */}
+                                            <div
+                                                onClick={handleAvatarClick}
+                                                className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-opacity cursor-pointer"
+                                            >
+                                                <Camera className="w-8 h-8 text-white" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {profile?.verification_status === 'verified' && (
+                                        <div className="absolute -bottom-2 -right-2 bg-white dark:bg-[#1a1a1a] p-1.5 rounded-full shadow-lg border border-gray-200 dark:border-[#333]">
+                                            <div className="text-white p-1 rounded-full bg-red-500">
+                                                <Check className="w-3 h-3 stroke-[4]" />
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Profile Info */}
+                                <div className="flex-1 flex flex-col md:flex-row items-end justify-between gap-6 w-full text-center md:text-left pb-2">
+                                    <div className="space-y-2 flex-1 w-full">
+                                        <div className="flex flex-col md:flex-row items-center md:items-start gap-4 justify-between">
+                                            <div>
+                                                <h1 className="text-3xl md:text-5xl font-black tracking-tight leading-none mb-1 text-gray-900 dark:text-white">
+                                                    {profile?.full_name || "New User"}
+                                                </h1>
+                                                <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 text-gray-500 dark:text-gray-400 font-medium text-sm md:text-base">
+                                                    <span className="text-gray-400 dark:text-gray-300">@{profile?.username || "username"}</span>
+                                                    {profile?.location && (
+                                                        <>
+                                                            <span className="hidden md:inline">•</span>
+                                                            <span className="flex items-center gap-1">
+                                                                <MapPin className="w-4 h-4" />
+                                                                {profile.location}
+                                                            </span>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <button
+                                                    onClick={() => setIsFollowing(!isFollowing)}
+                                                    className={clsx(
+                                                        "px-6 py-2 rounded-full font-bold text-sm transition-all flex items-center gap-2",
+                                                        isFollowing
+                                                            ? "bg-gray-100 dark:bg-[#333] text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-[#444]"
+                                                            : "bg-gray-900 dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200"
+                                                    )}
+                                                >
+                                                    {isFollowing ? (
+                                                        <>
+                                                            <Check className="w-4 h-4" />
+                                                            Following
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <UserPlus className="w-4 h-4" />
+                                                            Follow
+                                                        </>
+                                                    )}
+                                                </button>
+                                                <button className="p-2 rounded-full bg-gray-100 dark:bg-[#333] text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-[#444] transition-colors">
+                                                    <DollarSign className="w-5 h-5 text-green-500 dark:text-green-400" />
+                                                </button>
+                                                <button className="p-2 rounded-full bg-gray-100 dark:bg-[#333] text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-[#444] transition-colors">
+                                                    <Star className="w-5 h-5 text-yellow-500 dark:text-yellow-400 fill-current" />
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <p className="text-sm md:text-base text-gray-500 dark:text-gray-400 max-w-2xl leading-relaxed font-medium">
+                                            {profile?.bio || "No bio yet."}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Navigation Tabs (Mobile Only in Demo, but we might want them everywhere?) 
+                                The demo hides them on desktop? Let's check demo code.
+                                Line 495: className="md:hidden mt-8 border-b border-[#333]"
+                                Yes, demo hides tabs on desktop. But where are they on desktop?
+                                Ah, the demo has a separate `activeAppTab` header. 
+                                But `activeProfileTab` is for the profile content.
+                                Wait, does the demo show profile content tabs on desktop?
+                                Looking at demo code... it seems the tabs are ONLY visible on mobile (md:hidden).
+                                This implies desktop view might show everything or have a different layout?
+                                Actually, looking at the code, `activeProfileTab` controls the content below.
+                                If the tabs are hidden on desktop, how does a desktop user switch tabs?
+                                Maybe the demo assumes a single view on desktop or I missed something.
+                                Let's look at `demo/page.tsx` again.
+                                Line 495 is `md:hidden`.
+                                I don't see a `md:flex` version of these tabs.
+                                This might be a bug in the demo or a design choice where desktop shows all?
+                                No, the content below checks `activeProfileTab`.
+                                So if tabs are hidden, desktop users are stuck on "HOME".
+                                I will make them visible on desktop too for usability, or check if I missed a desktop tab section.
+                                I'll make them visible everywhere for now to ensure functionality.
+                            */}
+                            <div className="mt-8 border-b border-gray-200 dark:border-[#333]">
+                                <div className="flex gap-4 overflow-x-auto max-w-full pb-px no-scrollbar px-4 md:px-0">
+                                    {PROFILE_TABS.map((tab) => (
+                                        <button
+                                            key={tab}
+                                            onClick={() => setActiveProfileTab(tab)}
+                                            className={clsx(
+                                                "py-3 px-4 text-xs font-bold tracking-widest border-b-[3px] transition-all flex items-center gap-2 uppercase min-w-max",
+                                                activeProfileTab === tab
+                                                    ? "text-gray-900 dark:text-white border-red-500"
+                                                    : "border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                                            )}
+                                        >
+                                            {tab === "HOME" && <Home className="w-4 h-4" />}
+                                            {tab === "SERVICES" && <MoreHorizontal className="w-4 h-4" />}
+                                            {tab === "PORTFOLIO" && <GridIcon className="w-4 h-4" />}
+                                            {tab === "SHOP" && <ShoppingBag className="w-4 h-4" />}
+                                            {tab}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Dashboard Content */}
+                    <div className="max-w-7xl mx-auto mt-6 px-4 pb-20">
+                        {activeProfileTab === "HOME" && (
+                            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-6">
+                                {/* Revenue Chart Section */}
+                                <div className="bg-white dark:bg-[#222] border border-gray-200 dark:border-[#333] rounded-2xl p-6 relative overflow-hidden">
+                                    <div className="flex justify-between items-center mb-6">
+                                        <h3 className="text-xl font-bold italic tracking-wider text-gray-900 dark:text-white">REVENUE</h3>
+                                        <div className="flex items-center gap-2 text-xs font-bold bg-gray-100 dark:bg-[#333] px-3 py-1 rounded-full text-green-500 dark:text-green-400">
+                                            <div className="w-2 h-2 rounded-full bg-green-500 dark:bg-green-400 animate-pulse" />
+                                            2025
+                                        </div>
+                                    </div>
+
+                                    <div className="h-48 w-full relative">
+                                        <svg className="w-full h-full overflow-visible" preserveAspectRatio="none" viewBox="0 0 200 50">
+                                            <defs>
+                                                <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
+                                                    <stop offset="0%" stopColor="#4ade80" stopOpacity="0.2" />
+                                                    <stop offset="100%" stopColor="#4ade80" stopOpacity="0" />
+                                                </linearGradient>
+                                            </defs>
+                                            {/* Grid Lines */}
+                                            <line x1="0" y1="12.5" x2="200" y2="12.5" stroke="currentColor" strokeOpacity="0.1" strokeWidth="0.2" className="text-gray-500" />
+                                            <line x1="0" y1="25" x2="200" y2="25" stroke="currentColor" strokeOpacity="0.1" strokeWidth="0.2" className="text-gray-500" />
+                                            <line x1="0" y1="37.5" x2="200" y2="37.5" stroke="currentColor" strokeOpacity="0.1" strokeWidth="0.2" className="text-gray-500" />
+
+                                            <line x1="40" y1="0" x2="40" y2="50" stroke="currentColor" strokeOpacity="0.1" strokeWidth="0.2" className="text-gray-500" />
+                                            <line x1="80" y1="0" x2="80" y2="50" stroke="currentColor" strokeOpacity="0.1" strokeWidth="0.2" className="text-gray-500" />
+                                            <line x1="120" y1="0" x2="120" y2="50" stroke="currentColor" strokeOpacity="0.1" strokeWidth="0.2" className="text-gray-500" />
+                                            <line x1="160" y1="0" x2="160" y2="50" stroke="currentColor" strokeOpacity="0.1" strokeWidth="0.2" className="text-gray-500" />
+
+                                            <path
+                                                d="M0,40 C20,35 40,25 60,28 C80,31 100,20 120,22 C140,24 160,10 180,12 L200,5 L200,50 L0,50 Z"
+                                                fill="url(#chartGradient)"
+                                            />
+                                            <path
+                                                d="M0,40 C20,35 40,25 60,28 C80,31 100,20 120,22 C140,24 160,10 180,12 L200,5"
+                                                fill="none"
+                                                stroke="#4ade80"
+                                                strokeWidth="0.5"
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                            />
+                                            <circle cx="60" cy="28" r="1" fill="#fff" className="dark:fill-white fill-gray-900" />
+                                            <circle cx="120" cy="22" r="1" fill="#fff" className="dark:fill-white fill-gray-900" />
+                                            <circle cx="180" cy="12" r="1" fill="#fff" className="dark:fill-white fill-gray-900" />
+                                        </svg>
+                                    </div>
+                                </div>
+
+                                {/* Overview Cards */}
+                                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                    <div className="lg:col-span-2 bg-white dark:bg-[#222] border border-gray-200 dark:border-[#333] rounded-2xl p-6">
+                                        <div className="flex justify-between items-center mb-6">
+                                            <h4 className="text-sm font-bold text-gray-500 dark:text-gray-400 italic">Orders - This week</h4>
+                                        </div>
+                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                            <div className="bg-gray-50 dark:bg-[#2a2a2a] rounded-xl p-4 flex flex-col items-center justify-center aspect-[4/3]">
+                                                <TrendingUp className="w-6 h-6 text-gray-900 dark:text-white mb-2" />
+                                                <span className="text-2xl font-bold text-gray-900 dark:text-white">5</span>
+                                            </div>
+                                            <div className="bg-gray-50 dark:bg-[#2a2a2a] rounded-xl p-4 flex flex-col items-center justify-center aspect-[4/3]">
+                                                <UserPlus className="w-6 h-6 text-blue-500 dark:text-blue-400 mb-2" />
+                                                <span className="text-2xl font-bold text-gray-900 dark:text-white">100</span>
+                                            </div>
+                                            <div className="bg-gray-50 dark:bg-[#2a2a2a] rounded-xl p-4 flex flex-col items-center justify-center aspect-[4/3]">
+                                                <Star className="w-6 h-6 text-yellow-500 dark:text-yellow-400 mb-2 fill-current" />
+                                                <span className="text-2xl font-bold text-gray-900 dark:text-white">4.7</span>
+                                            </div>
+                                            <div className="bg-gray-50 dark:bg-[#2a2a2a] rounded-xl p-4 flex flex-col items-center justify-center aspect-[4/3]">
+                                                <RefreshCw className="w-6 h-6 text-gray-900 dark:text-white mb-2" />
+                                                <span className="text-2xl font-bold text-gray-900 dark:text-white">32</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-white dark:bg-[#222] border border-gray-200 dark:border-[#333] rounded-2xl p-6 flex flex-col justify-between">
+                                        <div>
+                                            <h4 className="text-sm font-bold text-gray-500 dark:text-gray-400 italic mb-6">Earnings</h4>
+                                            <div className="space-y-4">
+                                                <div className="bg-gray-50 dark:bg-[#2a2a2a] rounded-xl p-6 text-center">
+                                                    <span className="text-xs text-gray-500 dark:text-gray-400 block mb-1">This Week</span>
+                                                    <span className="text-3xl font-black text-gray-900 dark:text-white tracking-tight">$147.45</span>
+                                                </div>
+                                                <div className="bg-gray-50 dark:bg-[#2a2a2a] rounded-xl p-6 text-center">
+                                                    <span className="text-xs text-gray-500 dark:text-gray-400 block mb-1">Total</span>
+                                                    <span className="text-3xl font-black text-gray-900 dark:text-white tracking-tight">$12,525.45</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {activeProfileTab === "SERVICES" && (
+                            <div className="p-4 md:p-6 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                <div className="space-y-4">
+                                    <h3 className="text-xl font-bold text-gray-900 dark:text-white px-1">Active Services</h3>
+                                    <div className="space-y-4">
+                                        {services.map((service) => (
+                                            <div key={service.id} className="bg-white dark:bg-[#222] border border-gray-200 dark:border-[#333] rounded-2xl p-4">
+                                                <div className="flex items-start justify-between mb-4">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-10 h-10 bg-gray-100 dark:bg-[#333] rounded-full flex items-center justify-center text-gray-900 dark:text-white">
+                                                            <service.icon className="w-5 h-5" />
+                                                        </div>
+                                                        <div>
+                                                            <h4 className="font-bold text-gray-900 dark:text-white">{service.title}</h4>
+                                                            <p className="text-sm text-green-500 dark:text-green-400 font-bold">Starting at ${service.price}</p>
+                                                        </div>
+                                                    </div>
+                                                    <button className="text-gray-400 hover:text-gray-900 dark:hover:text-white">
+                                                        <MoreHorizontal className="w-5 h-5" />
+                                                    </button>
+                                                </div>
+                                                <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
+                                                    {service.previews.map((preview, idx) => (
+                                                        <div key={idx} className="w-32 h-20 flex-shrink-0 rounded-lg overflow-hidden border border-gray-200 dark:border-[#333]">
+                                                            <img src={preview} alt="Preview" className="w-full h-full object-cover" />
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {activeProfileTab === "PORTFOLIO" && (
+                            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                <div className="grid grid-cols-3 gap-0.5 md:gap-4">
+                                    {portfolioItems.map((item) => (
+                                        <div key={item.id} className="aspect-square relative group cursor-pointer bg-gray-100 dark:bg-[#222]">
+                                            <img
+                                                src={item.image_url}
+                                                alt={item.title}
+                                                className="w-full h-full object-cover"
+                                            />
+                                            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                <Heart className="w-6 h-6 text-white fill-white" />
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {activeProfileTab === "SHOP" && (
+                            <div className="p-4 md:p-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                <div className="flex flex-col items-center justify-center py-20 text-center space-y-4 border-2 border-dashed border-gray-200 dark:border-[#333] rounded-3xl bg-gray-50/50 dark:bg-[#222]/30">
+                                    <div className="w-16 h-16 bg-gray-100 dark:bg-[#2a2a2a] rounded-full flex items-center justify-center">
+                                        <ShoppingBag className="w-8 h-8 text-gray-500" />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-xl font-bold text-gray-900 dark:text-white">Shop Demo</h3>
+                                        <p className="text-gray-500 dark:text-gray-400 max-w-sm mx-auto mt-2">
+                                            This is where your digital products would appear.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </>
+            ) : (
+                /* BUYER FEED */
+                <div className="pt-20 px-4 pb-32 max-w-6xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        {/* Main Feed Column */}
+                        <div className="lg:col-span-2 space-y-6">
+                            {/* Mobile Header & Search (Hidden on Desktop) */}
+                            <div className="lg:hidden flex flex-col gap-4 mb-6">
+                                <div className="flex items-center justify-between">
+                                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">For You</h1>
+                                </div>
+
+                                {/* Search & Tags */}
+                                <div className="space-y-3">
+                                    <div className="relative">
+                                        <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+                                        <input
+                                            type="text"
+                                            placeholder="Search creators, tags..."
+                                            value={searchQuery}
+                                            onChange={(e) => setSearchQuery(e.target.value)}
+                                            className="w-full bg-white dark:bg-[#222] border border-gray-200 dark:border-[#333] rounded-xl pl-9 pr-4 py-3 text-sm focus:outline-none focus:border-blue-500 transition-all text-gray-900 dark:text-white placeholder-gray-500"
+                                        />
+                                    </div>
+                                    <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
+                                        {TAGS.map(tag => (
+                                            <button
+                                                key={tag}
+                                                onClick={() => setActiveTag(tag)}
+                                                className={clsx(
+                                                    "px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-colors",
+                                                    activeTag === tag
+                                                        ? "bg-gray-900 dark:bg-white text-white dark:text-black"
+                                                        : "bg-white dark:bg-[#222] text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-[#333]"
+                                                )}
+                                            >
+                                                {tag}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Feed Items */}
+                            <div className="space-y-6">
+                                {filteredFeed.map((item) => (
+                                    <div key={item.id} className="bg-white dark:bg-[#222] border border-gray-200 dark:border-[#333] rounded-3xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                                        <div className="p-4 flex items-center justify-between">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 rounded-full overflow-hidden ring-2 ring-gray-100 dark:ring-[#333]">
+                                                    <img src={item.user.avatar} alt={item.user.name} className="w-full h-full object-cover" />
+                                                </div>
+                                                <div>
+                                                    <div className="font-bold text-gray-900 dark:text-white text-sm">{item.user.name}</div>
+                                                    <div className="text-xs text-gray-500">{item.user.handle}</div>
+                                                </div>
+                                            </div>
+                                            <button className="text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
+                                                <MoreHorizontal className="w-5 h-5" />
+                                            </button>
+                                        </div>
+
+                                        <div className="aspect-square w-full bg-gray-100 dark:bg-[#1a1a1a]">
+                                            <img src={item.image} alt="Post" className="w-full h-full object-cover" />
+                                        </div>
+
+                                        <div className="p-4">
+                                            <div className="flex items-center gap-4 mb-3">
+                                                <button className="text-gray-900 dark:text-white hover:scale-110 transition-transform">
+                                                    <Heart className="w-6 h-6" />
+                                                </button>
+                                                <button className="text-gray-900 dark:text-white hover:scale-110 transition-transform">
+                                                    <MessageCircle className="w-6 h-6" />
+                                                </button>
+                                                <button className="text-gray-900 dark:text-white hover:scale-110 transition-transform">
+                                                    <Share2 className="w-6 h-6" />
+                                                </button>
+                                            </div>
+                                            <div className="font-bold text-sm mb-1 text-gray-900 dark:text-white">{item.likes.toLocaleString()} likes</div>
+                                            <p className="text-sm text-gray-600 dark:text-gray-300">
+                                                <span className="font-bold text-gray-900 dark:text-white mr-2">{item.user.handle}</span>
+                                                {item.caption}
+                                            </p>
+                                            <div className="flex flex-wrap gap-2 mt-3">
+                                                {item.tags.map(tag => (
+                                                    <span key={tag} className="text-[10px] font-bold text-blue-500 dark:text-blue-400 bg-blue-500/10 px-2 py-1 rounded-md">
+                                                        #{tag}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                            <div className="text-xs text-gray-500 mt-2 cursor-pointer hover:text-gray-900 dark:hover:text-gray-300">View all {item.comments} comments</div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Desktop Sidebar (Right) */}
+                        <div className="hidden lg:block space-y-6">
+                            {/* Desktop Search & Tags */}
+                            <div className="bg-white dark:bg-[#222] border border-gray-200 dark:border-[#333] rounded-3xl p-6 sticky top-24">
+                                <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Explore</h2>
+                                <div className="space-y-4">
+                                    <div className="relative">
+                                        <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+                                        <input
+                                            type="text"
+                                            placeholder="Search creators, tags..."
+                                            value={searchQuery}
+                                            onChange={(e) => setSearchQuery(e.target.value)}
+                                            className="w-full bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#333] rounded-xl pl-9 pr-4 py-3 text-sm focus:outline-none focus:border-blue-500 transition-all text-gray-900 dark:text-white placeholder-gray-500"
+                                        />
+                                    </div>
+                                    <div className="flex flex-wrap gap-2">
+                                        {TAGS.map(tag => (
+                                            <button
+                                                key={tag}
+                                                onClick={() => setActiveTag(tag)}
+                                                className={clsx(
+                                                    "px-4 py-1.5 rounded-full text-xs font-bold transition-colors",
+                                                    activeTag === tag
+                                                        ? "bg-gray-900 dark:bg-white text-white dark:text-black"
+                                                        : "bg-gray-50 dark:bg-[#1a1a1a] text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-[#333] hover:bg-gray-100 dark:hover:bg-[#333]"
+                                                )}
+                                            >
+                                                {tag}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Suggested Creators */}
+                            <div className="bg-white dark:bg-[#222] border border-gray-200 dark:border-[#333] rounded-3xl p-6 sticky top-[280px]">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h2 className="text-lg font-bold text-gray-900 dark:text-white">Suggested</h2>
+                                    <button className="text-xs font-bold text-blue-500 hover:text-blue-400">See All</button>
+                                </div>
+                                <div className="space-y-4">
+                                    {feedItems.map((item) => (
+                                        <div key={item.id} className="flex items-center justify-between">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 rounded-full overflow-hidden ring-1 ring-gray-100 dark:ring-[#333]">
+                                                    <img src={item.user.avatar} alt={item.user.name} className="w-full h-full object-cover" />
+                                                </div>
+                                                <div>
+                                                    <div className="font-bold text-gray-900 dark:text-white text-sm">{item.user.name}</div>
+                                                    <div className="text-xs text-gray-500">{item.user.handle}</div>
+                                                </div>
+                                            </div>
+                                            <button className="text-xs font-bold bg-gray-900 dark:bg-white text-white dark:text-black px-3 py-1.5 rounded-full hover:opacity-90 transition-opacity">
+                                                Follow
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}

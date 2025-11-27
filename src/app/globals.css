@@ -1,0 +1,110 @@
+@import "tailwindcss";
+@plugin "tailwindcss-animate";
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: var(--font-manrope);
+  --font-header: var(--font-roboto-condensed);
+
+  /* Map CSS variables to Tailwind colors */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-border: var(--border);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+
+  --radius-card: 1.5rem;
+  --radius-button: 9999px;
+}
+
+:root {
+  /* Apple Light Mode */
+  --background: #F5F5F7;
+  --foreground: #1D1D1F;
+
+  --card: #FFFFFF;
+  --card-foreground: #1D1D1F;
+
+  --border: #D2D2D7;
+
+  --primary: #0071E3;
+  --primary-foreground: #FFFFFF;
+
+  --muted: #E5E5EA;
+  --muted-foreground: #86868B;
+
+  --accent: #F2F2F7;
+  --accent-foreground: #1D1D1F;
+
+  --destructive: #FF3B30;
+  --destructive-foreground: #FFFFFF;
+
+  --success: #34C759;
+  --warning: #FF9500;
+}
+
+.dark {
+  /* Apple Dark Mode */
+  --background: #000000;
+  --foreground: #F5F5F7;
+
+  --card: #1C1C1E;
+  --card-foreground: #FFFFFF;
+
+  --border: #38383A;
+
+  --primary: #0A84FF;
+  --primary-foreground: #FFFFFF;
+
+  --muted: #2C2C2E;
+  --muted-foreground: #8E8E93;
+
+  --accent: #1C1C1E;
+  --accent-foreground: #FFFFFF;
+
+  --destructive: #FF453A;
+  --destructive-foreground: #FFFFFF;
+
+  --success: #30D158;
+  --warning: #FF9F0A;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--muted-foreground);
+  border-radius: 9999px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+  opacity: 0.5;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--foreground);
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
