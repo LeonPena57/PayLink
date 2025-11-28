@@ -7,6 +7,7 @@ import clsx from "clsx";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "next-themes";
+import { useUser } from "@/context/UserContext";
 
 export function Navigation() {
     const pathname = usePathname();
@@ -15,6 +16,7 @@ export function Navigation() {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     const { theme, setTheme } = useTheme();
+    const { user, profile } = useUser();
     const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
@@ -107,9 +109,13 @@ export function Navigation() {
                         <QrCode className="w-5 h-5" />
                     </Link>
                     <Link href="/settings" className="w-8 h-8 rounded-full overflow-hidden border border-gray-200 dark:border-[#333] hover:ring-2 ring-blue-500 transition-all">
-                        <div className="w-full h-full bg-gray-200 dark:bg-gray-800 flex items-center justify-center">
-                            <User className="w-4 h-4 text-gray-500" />
-                        </div>
+                        {profile?.avatar_url ? (
+                            <img src={profile.avatar_url} alt="User" className="w-full h-full object-cover" />
+                        ) : (
+                            <div className="w-full h-full bg-gray-200 dark:bg-gray-800 flex items-center justify-center">
+                                <User className="w-4 h-4 text-gray-500" />
+                            </div>
+                        )}
                     </Link>
                 </div>
             </header>
@@ -166,9 +172,13 @@ export function Navigation() {
                     )}
                 >
                     <div className="w-6 h-6 rounded-full overflow-hidden border border-current">
-                        <div className="w-full h-full bg-white/20 flex items-center justify-center">
-                            <User className="w-4 h-4 text-white" />
-                        </div>
+                        {profile?.avatar_url ? (
+                            <img src={profile.avatar_url} alt="User" className="w-full h-full object-cover" />
+                        ) : (
+                            <div className="w-full h-full bg-white/20 flex items-center justify-center">
+                                <User className="w-4 h-4 text-white" />
+                            </div>
+                        )}
                     </div>
                     <span className="text-[10px] font-bold">ACCOUNT</span>
                 </Link>

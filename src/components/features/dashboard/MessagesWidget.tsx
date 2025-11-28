@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useSearchParams } from "next/navigation";
 import { MoreVertical, User, ChevronRight, Send, Plus, ArrowLeft } from "lucide-react";
 import clsx from "clsx";
 import { supabase } from "@/lib/supabase/client";
@@ -28,6 +29,9 @@ interface Conversation {
 
 export function MessagesWidget() {
     const { user } = useUser();
+    const searchParams = useSearchParams();
+    const chatWithUserId = searchParams.get("chat_with");
+
     const [conversations, setConversations] = useState<Conversation[]>([]);
     const [activeConversation, setActiveConversation] = useState<Conversation | null>(null);
     const [messages, setMessages] = useState<Message[]>([]);
@@ -61,6 +65,24 @@ export function MessagesWidget() {
             };
         }
     }, [activeConversation]);
+
+    // Handle chat_with param
+    useEffect(() => {
+        if (user && chatWithUserId && !loading) {
+            // Check if we already have a conversation with this user
+            const existingConvo = conversations.find(c => c.other_user?.id === chatWithUserId);
+            if (existingConvo) {
+                setActiveConversation(existingConvo);
+            } else {
+                // If not found in loaded conversations, try to create/find one
+                // We only do this if conversations are loaded (loading is false)
+                // But wait, if conversations are empty, we might still need to create one.
+                // startConversation handles finding or creating.
+                startConversation(chatWithUserId);
+            }
+        }
+    }, [user, chatWithUserId, loading, conversations]);
+
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -190,9 +212,17 @@ export function MessagesWidget() {
             // Refresh list and open
             await fetchConversations();
             const otherUser = searchResults.find(r => r.id === otherUserId);
+            // If we came from URL, we might not have searchResults.
+            // We should fetch the other user profile if missing.
+            let targetUser = otherUser || null;
+            if (!targetUser) {
+                const { data: profile } = await supabase.from('profiles').select('*').eq('id', otherUserId).single();
+                if (profile) targetUser = profile;
+            }
+
             setActiveConversation({
                 id: convo.id,
-                other_user: otherUser || null,
+                other_user: targetUser,
                 last_message: null
             });
             setIsNewChatOpen(false);

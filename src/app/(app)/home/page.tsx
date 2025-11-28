@@ -44,6 +44,23 @@ export default function HomePage() {
     const [searchQuery, setSearchQuery] = useState("");
     const [activeTag, setActiveTag] = useState("All");
     const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
+    const [stats, setStats] = useState({ followers: 0, following: 0, is_following: false });
+
+    useEffect(() => {
+        if (profile) {
+            fetchStats();
+        }
+    }, [profile]);
+
+    const fetchStats = async () => {
+        if (!profile) return;
+        const { data, error } = await supabase
+            .rpc('get_profile_stats', { target_user_id: profile.id });
+
+        if (data) {
+            setStats(data);
+        }
+    };
 
     // Upload States
     const [isUploadingBanner, setIsUploadingBanner] = useState(false);
@@ -73,10 +90,13 @@ export default function HomePage() {
     };
 
     // Mock Data for Demo Parity
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const feedItems: any[] = [];
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const portfolioItems: any[] = [];
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const services: any[] = [];
 
     const filteredFeed = feedItems.filter(item => {
@@ -106,12 +126,14 @@ export default function HomePage() {
 
             {userMode === "SELLER" ? (
                 /* SELLER DASHBOARD */
-                <>
+                <div>
                     {/* Profile Header */}
                     <div className="relative group pb-4">
                         {/* Immersive Banner */}
-                        <div className="h-48 md:h-80 w-full relative overflow-hidden group/banner rounded-b-3xl">
+                        {/* Immersive Banner */}
+                        <div className="h-48 md:h-80 w-full relative overflow-hidden group/banner">
                             {profile?.banner_url ? (
+                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                 <img src={profile.banner_url} alt="Banner" className="w-full h-full object-cover" />
                             ) : (
                                 <div className="w-full h-full bg-gradient-to-b from-gray-200 to-gray-300 dark:from-[#2a2a2a] dark:to-[#1a1a1a]" />
@@ -179,8 +201,8 @@ export default function HomePage() {
                                 </div>
 
                                 {/* Profile Info */}
-                                <div className="flex-1 flex flex-col md:flex-row items-end justify-between gap-6 w-full text-center md:text-left pb-2">
-                                    <div className="space-y-2 flex-1 w-full">
+                                <div className="flex-1 flex flex-col md:flex-row items-end justify-between gap-6 w-full text-center md:text-left pb-2 min-w-0">
+                                    <div className="space-y-2 flex-1 w-full min-w-0">
                                         <div className="flex flex-col md:flex-row items-center md:items-start gap-4 justify-between">
                                             <div>
                                                 <h1 className="text-3xl md:text-5xl font-black tracking-tight leading-none mb-1 text-gray-900 dark:text-white">
@@ -198,66 +220,44 @@ export default function HomePage() {
                                                         </>
                                                     )}
                                                 </div>
+                                                {/* Stats */}
+                                                <div className="flex items-center justify-center md:justify-start gap-6 mt-2 text-sm font-medium">
+                                                    <div className="flex items-center gap-1">
+                                                        <span className="text-gray-900 dark:text-white font-bold">{stats.followers}</span>
+                                                        <span className="text-gray-500 dark:text-gray-400">Followers</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-1">
+                                                        <span className="text-gray-900 dark:text-white font-bold">{stats.following}</span>
+                                                        <span className="text-gray-500 dark:text-gray-400">Following</span>
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <div className="flex items-center gap-2">
-                                                <button
-                                                    onClick={() => setIsFollowing(!isFollowing)}
-                                                    className={clsx(
-                                                        "px-6 py-2 rounded-full font-bold text-sm transition-all flex items-center gap-2",
-                                                        isFollowing
-                                                            ? "bg-gray-100 dark:bg-[#333] text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-[#444]"
-                                                            : "bg-gray-900 dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200"
-                                                    )}
-                                                >
-                                                    {isFollowing ? (
-                                                        <>
-                                                            <Check className="w-4 h-4" />
-                                                            Following
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            <UserPlus className="w-4 h-4" />
-                                                            Follow
-                                                        </>
-                                                    )}
-                                                </button>
-                                                <button className="p-2 rounded-full bg-gray-100 dark:bg-[#333] text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-[#444] transition-colors">
-                                                    <DollarSign className="w-5 h-5 text-green-500 dark:text-green-400" />
-                                                </button>
-                                                <button className="p-2 rounded-full bg-gray-100 dark:bg-[#333] text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-[#444] transition-colors">
-                                                    <Star className="w-5 h-5 text-yellow-500 dark:text-yellow-400 fill-current" />
-                                                </button>
+
+                                            {/* Navigation Tabs */}
+                                            <div className="mt-8 border-b border-gray-200 dark:border-[#333] w-full md:w-auto">
+                                                <div className="flex gap-4 overflow-x-auto w-full pb-px px-4 md:px-0 no-scrollbar justify-start">
+                                                    {PROFILE_TABS.map((tab) => (
+                                                        <button
+                                                            key={tab}
+                                                            onClick={() => setActiveProfileTab(tab)}
+                                                            className={clsx(
+                                                                "py-3 px-4 text-xs font-bold tracking-widest border-b-[3px] transition-all flex items-center gap-2 uppercase min-w-max",
+                                                                activeProfileTab === tab
+                                                                    ? "text-gray-900 dark:text-white border-red-500"
+                                                                    : "border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                                                            )}
+                                                        >
+                                                            {tab === "HOME" && <Home className="w-4 h-4" />}
+                                                            {tab === "SERVICES" && <MoreHorizontal className="w-4 h-4" />}
+                                                            {tab === "PORTFOLIO" && <GridIcon className="w-4 h-4" />}
+                                                            {tab === "SHOP" && <ShoppingBag className="w-4 h-4" />}
+                                                            {tab}
+                                                        </button>
+                                                    ))}
+                                                </div>
                                             </div>
                                         </div>
-
-                                        <p className="text-sm md:text-base text-gray-500 dark:text-gray-400 max-w-2xl leading-relaxed font-medium">
-                                            {profile?.bio || "No bio yet."}
-                                        </p>
                                     </div>
-                                </div>
-                            </div>
-
-                            {/* Navigation Tabs */}
-                            <div className="mt-8 border-b border-gray-200 dark:border-[#333]">
-                                <div className="flex gap-4 overflow-x-auto max-w-full pb-px no-scrollbar px-4 md:px-0">
-                                    {PROFILE_TABS.map((tab) => (
-                                        <button
-                                            key={tab}
-                                            onClick={() => setActiveProfileTab(tab)}
-                                            className={clsx(
-                                                "py-3 px-4 text-xs font-bold tracking-widest border-b-[3px] transition-all flex items-center gap-2 uppercase min-w-max",
-                                                activeProfileTab === tab
-                                                    ? "text-gray-900 dark:text-white border-red-500"
-                                                    : "border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
-                                            )}
-                                        >
-                                            {tab === "HOME" && <Home className="w-4 h-4" />}
-                                            {tab === "SERVICES" && <MoreHorizontal className="w-4 h-4" />}
-                                            {tab === "PORTFOLIO" && <GridIcon className="w-4 h-4" />}
-                                            {tab === "SHOP" && <ShoppingBag className="w-4 h-4" />}
-                                            {tab}
-                                        </button>
-                                    ))}
                                 </div>
                             </div>
                         </div>
@@ -353,7 +353,7 @@ export default function HomePage() {
                                                         </button>
                                                     </div>
                                                     <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
-                                                        {service.previews.map((preview: any, idx: number) => (
+                                                        {service.previews.map((preview: string, idx: number) => (
                                                             <div key={idx} className="w-32 h-20 flex-shrink-0 rounded-lg overflow-hidden border border-gray-200 dark:border-[#333]">
                                                                 <img src={preview} alt="Preview" className="w-full h-full object-cover" />
                                                             </div>
@@ -412,7 +412,7 @@ export default function HomePage() {
                             </div>
                         )}
                     </div>
-                </>
+                </div>
             ) : (
                 /* BUYER FEED */
                 <div className="pt-20 px-4 pb-32 max-w-6xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">

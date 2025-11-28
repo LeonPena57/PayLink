@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import { useUser } from "@/context/UserContext";
 import { MapPin, Link as LinkIcon, Twitter, Instagram, Twitch, Grid as GridIcon, ShoppingBag, Package, Heart, UserPlus, UserCheck, MessageCircle } from "lucide-react";
@@ -8,6 +9,7 @@ import clsx from "clsx";
 import Link from "next/link";
 
 export default function PublicProfilePage({ params }: { params: { username: string } }) {
+    const router = useRouter();
     const { user: currentUser } = useUser();
     const [profile, setProfile] = useState<any>(null);
     const [portfolioItems, setPortfolioItems] = useState<any[]>([]);
@@ -15,15 +17,17 @@ export default function PublicProfilePage({ params }: { params: { username: stri
     const [isFollowing, setIsFollowing] = useState(false);
     const [activeTab, setActiveTab] = useState("PORTFOLIO");
 
+    const [stats, setStats] = useState({ followers: 0, following: 0, is_following: false });
+
     useEffect(() => {
         fetchProfile();
     }, [params.username]);
 
     useEffect(() => {
-        if (currentUser && profile) {
-            checkFollowStatus();
+        if (profile) {
+            fetchStats();
         }
-    }, [currentUser, profile]);
+    }, [profile, currentUser]); // Re-fetch if user changes (login/logout)
 
     const fetchProfile = async () => {
         setLoading(true);
@@ -35,7 +39,6 @@ export default function PublicProfilePage({ params }: { params: { username: stri
             .single();
 
         if (profileError || !profileData) {
-            // Handle 404 or error
             setLoading(false);
             return;
         }
@@ -53,22 +56,25 @@ export default function PublicProfilePage({ params }: { params: { username: stri
         setLoading(false);
     };
 
-    const checkFollowStatus = async () => {
-        if (!currentUser || !profile) return;
+    const fetchStats = async () => {
+        if (!profile) return;
 
+        // Use the RPC function we created
         const { data, error } = await supabase
-            .from('follows')
-            .select('*')
-            .eq('follower_id', currentUser.id)
-            .eq('following_id', profile.id)
-            .single();
+            .rpc('get_profile_stats', { target_user_id: profile.id });
 
-        if (data) setIsFollowing(true);
-        else setIsFollowing(false);
+        if (data) {
+            setStats(data);
+            setIsFollowing(data.is_following);
+        }
     };
 
     const handleFollowToggle = async () => {
-        if (!currentUser) return; // Prompt login?
+        if (!currentUser) {
+            // Redirect to login or show auth modal
+            alert("Please login to follow users.");
+            return;
+        }
 
         if (isFollowing) {
             // Unfollow
@@ -78,7 +84,10 @@ export default function PublicProfilePage({ params }: { params: { username: stri
                 .eq('follower_id', currentUser.id)
                 .eq('following_id', profile.id);
 
-            if (!error) setIsFollowing(false);
+            if (!error) {
+                setIsFollowing(false);
+                setStats(prev => ({ ...prev, followers: prev.followers - 1 }));
+            }
         } else {
             // Follow
             const { error } = await supabase
@@ -88,7 +97,10 @@ export default function PublicProfilePage({ params }: { params: { username: stri
                     following_id: profile.id
                 });
 
-            if (!error) setIsFollowing(true);
+            if (!error) {
+                setIsFollowing(true);
+                setStats(prev => ({ ...prev, followers: prev.followers + 1 }));
+            }
         }
     };
 
@@ -116,6 +128,7 @@ export default function PublicProfilePage({ params }: { params: { username: stri
     const isOwner = currentUser?.id === profile.id;
 
     // Group portfolio items by section
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const portfolioSections = portfolioItems.reduce((acc: any, item: any) => {
         const section = item.section || 'General';
         if (!acc[section]) acc[section] = [];
@@ -133,6 +146,7 @@ export default function PublicProfilePage({ params }: { params: { username: stri
                         <div className="absolute inset-0">
                             <img src={profile.banner_url} alt="Profile Banner" className="w-full h-full object-cover" />
                             <div className="absolute inset-0 bg-black/20" />
+                            <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
                         </div>
                     ) : (
                         <>
@@ -165,8 +179,8 @@ export default function PublicProfilePage({ params }: { params: { username: stri
                         </div>
 
                         {/* Profile Info */}
-                        <div className="flex-1 flex flex-col md:flex-row items-end justify-between gap-6 w-full text-center md:text-left pb-4">
-                            <div className="space-y-4 flex-1 w-full">
+                        <div className="flex-1 flex flex-col md:flex-row items-end justify-between gap-6 w-full text-center md:text-left pb-4 min-w-0">
+                            <div className="space-y-4 flex-1 w-full min-w-0">
                                 <div>
                                     <h1 className="text-4xl md:text-6xl font-black text-foreground tracking-tight leading-none mb-2">
                                         {profile.full_name || "No Name"}
@@ -182,6 +196,18 @@ export default function PublicProfilePage({ params }: { params: { username: stri
                                                 </span>
                                             </>
                                         )}
+                                    </div>
+
+                                    {/* Stats */}
+                                    <div className="flex items-center justify-center md:justify-start gap-6 mt-2 text-sm font-medium">
+                                        <div className="flex items-center gap-1">
+                                            <span className="text-foreground font-bold">{stats.followers}</span>
+                                            <span className="text-muted-foreground">Followers</span>
+                                        </div>
+                                        <div className="flex items-center gap-1">
+                                            <span className="text-foreground font-bold">{stats.following}</span>
+                                            <span className="text-muted-foreground">Following</span>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -238,8 +264,12 @@ export default function PublicProfilePage({ params }: { params: { username: stri
                                             </>
                                         )}
                                     </button>
-                                    <button className="p-3 bg-card border border-border rounded-xl text-foreground hover:bg-muted transition-all shadow-lg active:scale-95">
+                                    <button
+                                        onClick={() => router.push(`/messages?chat_with=${profile.id}`)}
+                                        className="px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-all shadow-lg active:scale-95 bg-card border border-border text-foreground hover:bg-muted"
+                                    >
                                         <MessageCircle className="w-5 h-5" />
+                                        Message
                                     </button>
                                 </div>
                             )}
@@ -248,7 +278,7 @@ export default function PublicProfilePage({ params }: { params: { username: stri
 
                     {/* Navigation Tabs */}
                     <div className="mt-12 border-b border-border">
-                        <div className="flex gap-8 overflow-x-auto max-w-full pb-px no-scrollbar justify-center md:justify-start">
+                        <div className="flex gap-8 overflow-x-auto max-w-full pb-px no-scrollbar justify-start">
                             {["PORTFOLIO", "SHOP"].map((tab) => (
                                 <button
                                     key={tab}
@@ -291,6 +321,7 @@ export default function PublicProfilePage({ params }: { params: { username: stri
                                 </div>
                             </div>
                         ) : (
+                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
                             Object.entries(portfolioSections).map(([sectionName, items]: [string, any]) => (
                                 <div key={sectionName} className="space-y-4">
                                     <h3 className="text-xl font-bold text-foreground px-1 flex items-center gap-2">
@@ -298,6 +329,7 @@ export default function PublicProfilePage({ params }: { params: { username: stri
                                         {sectionName}
                                     </h3>
                                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
+                                        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                                         {items.map((item: any) => (
                                             <div key={item.id} className="group relative aspect-square rounded-2xl overflow-hidden cursor-pointer bg-muted border border-border shadow-sm hover:shadow-md transition-all">
                                                 <img
