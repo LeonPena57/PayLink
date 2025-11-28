@@ -1,39 +1,19 @@
 "use client";
 
-import { TrendingUp } from "lucide-react";
+import { TrendingUp, BarChart3 } from "lucide-react";
 
 export function RevenueGraph() {
     return (
         <div className="h-full flex flex-col p-4">
             <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-bold text-foreground">Revenue</h3>
-                <TrendingUp className="text-[#30D158] w-5 h-5" />
+                <TrendingUp className="text-muted-foreground w-5 h-5" />
             </div>
-            <div className="flex-1 flex items-end justify-center relative text-primary">
-                {/* Mock Chart */}
-                <svg className="w-full h-32 overflow-visible" viewBox="0 0 100 50" preserveAspectRatio="none">
-                    <defs>
-                        <linearGradient id="gradient" x1="0" x2="0" y1="0" y2="1">
-                            <stop offset="0%" stopColor="currentColor" stopOpacity="0.5" />
-                            <stop offset="100%" stopColor="currentColor" stopOpacity="0" />
-                        </linearGradient>
-                    </defs>
-                    <path
-                        d="M0 50 L0 30 Q 20 10, 40 30 T 80 20 T 100 5 L 100 50 Z"
-                        fill="url(#gradient)"
-                    />
-                    <path
-                        d="M0 30 Q 20 10, 40 30 T 80 20 T 100 5"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                    />
-                </svg>
-                {/* Tooltip placeholder */}
-                <div className="absolute top-0 right-10 bg-popover text-xs px-2 py-1 rounded border border-border text-primary shadow-sm">
-                    $2.4k
+            <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground gap-2">
+                <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
+                    <BarChart3 className="w-6 h-6 opacity-50" />
                 </div>
+                <span className="text-sm font-medium">No data available</span>
             </div>
         </div>
     );

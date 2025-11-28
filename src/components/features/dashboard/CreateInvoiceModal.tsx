@@ -32,7 +32,7 @@ export function CreateInvoiceModal({ isOpen, onClose }: CreateInvoiceModalProps)
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.95, y: 20 }}
                         transition={{ type: "spring", duration: 0.5 }}
-                        className="fixed z-[70] left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl bg-card border border-border rounded-3xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col"
+                        className="fixed z-[70] left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[95%] md:w-full max-w-2xl bg-card border border-border rounded-3xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col"
                     >
                         {/* Header */}
                         <div className="p-6 border-b border-border flex justify-between items-center bg-muted/30">
@@ -52,7 +52,7 @@ export function CreateInvoiceModal({ isOpen, onClose }: CreateInvoiceModalProps)
                         </div>
 
                         {/* Content Placeholder */}
-                        <div className="flex-1 overflow-y-auto p-12 flex flex-col items-center justify-center text-center space-y-6">
+                        <div className="flex-1 overflow-y-auto p-8 md:p-12 flex flex-col items-center justify-center text-center space-y-6">
                             <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mb-2">
                                 <FileText className="w-10 h-10 text-primary" />
                             </div>
@@ -61,7 +61,7 @@ export function CreateInvoiceModal({ isOpen, onClose }: CreateInvoiceModalProps)
                                 This feature is currently being built. Soon you'll be able to create professional invoices, set milestones, and track payments directly from here.
                             </p>
 
-                            <div className="grid grid-cols-2 gap-4 w-full max-w-md mt-8">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-md mt-8">
                                 <div className="p-4 bg-muted/50 rounded-xl border border-border flex flex-col items-center gap-2">
                                     <DollarSign className="w-6 h-6 text-green-500" />
                                     <span className="font-medium text-foreground">Milestone Payments</span>
@@ -74,16 +74,16 @@ export function CreateInvoiceModal({ isOpen, onClose }: CreateInvoiceModalProps)
                         </div>
 
                         {/* Footer */}
-                        <div className="p-6 border-t border-border bg-muted/30 flex justify-end gap-3">
+                        <div className="p-6 border-t border-border bg-muted/30 flex flex-col md:flex-row justify-end gap-3">
                             <button
                                 onClick={onClose}
-                                className="px-5 py-2.5 rounded-xl font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                                className="w-full md:w-auto px-5 py-2.5 rounded-xl font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors order-2 md:order-1"
                             >
                                 Close
                             </button>
                             <button
                                 onClick={onClose}
-                                className="px-5 py-2.5 bg-primary text-primary-foreground rounded-xl font-bold shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all"
+                                className="w-full md:w-auto px-5 py-2.5 bg-primary text-primary-foreground rounded-xl font-bold shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all order-1 md:order-2"
                             >
                                 Notify Me When Ready
                             </button>

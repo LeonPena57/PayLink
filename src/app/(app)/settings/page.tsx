@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
 import { useUserMode, useUser } from "@/context/UserContext";
-import { Moon, Sun, Monitor, User, Bell, Shield, LogOut, ChevronRight, CreditCard, Globe, HelpCircle, Crown, X, Check, Mail, Lock, Smartphone, Trash2, LayoutGrid } from "lucide-react";
+import { Moon, Sun, Monitor, User, Bell, Shield, LogOut, ChevronRight, CreditCard, Globe, HelpCircle, Crown, X, Check, Mail, Lock, Smartphone, Trash2, LayoutGrid, ArrowLeft } from "lucide-react";
 import clsx from "clsx";
 import { SubscriptionModal } from "@/components/features/dashboard/SubscriptionModal";
 import { VerificationModal } from "@/components/features/dashboard/VerificationModal";
@@ -53,6 +53,7 @@ export default function SettingsPage() {
     const router = useRouter();
     const [mounted, setMounted] = useState(false);
     const [activeTab, setActiveTab] = useState("general");
+    const [mobileView, setMobileView] = useState<string | null>(null);
 
     // Modal States
     const [isSubscriptionOpen, setIsSubscriptionOpen] = useState(false);
@@ -106,8 +107,18 @@ export default function SettingsPage() {
         { id: "support", label: "Support", icon: HelpCircle },
     ];
 
+    const handleTabClick = (tabId: string) => {
+        setActiveTab(tabId);
+        // On mobile, switch to the view
+        if (window.innerWidth < 768) {
+            setMobileView(tabId);
+        }
+    };
+
     const renderContent = () => {
-        switch (activeTab) {
+        const currentTabId = mobileView || activeTab;
+
+        switch (currentTabId) {
             case "general":
                 return (
                     <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
@@ -316,31 +327,51 @@ export default function SettingsPage() {
             <SubscriptionModal isOpen={isSubscriptionOpen} onClose={() => setIsSubscriptionOpen(false)} />
             <VerificationModal isOpen={isVerificationOpen} onClose={() => setIsVerificationOpen(false)} />
 
-            <h1 className="text-3xl font-bold text-foreground mb-8 md:mb-10">Settings</h1>
+            {/* Mobile Header (Only visible when drilling down) */}
+            {mobileView && (
+                <div className="md:hidden mb-6 flex items-center gap-2">
+                    <button onClick={() => setMobileView(null)} className="p-2 -ml-2 hover:bg-muted rounded-full transition-colors">
+                        <ArrowLeft className="w-6 h-6" />
+                    </button>
+                    <h1 className="text-xl font-bold">Back to Settings</h1>
+                </div>
+            )}
+
+            {/* Main Title (Hidden on mobile drill-down) */}
+            {!mobileView && (
+                <h1 className="text-3xl font-bold text-foreground mb-8 md:mb-10">Settings</h1>
+            )}
 
             <div className="flex flex-col md:flex-row gap-8">
                 {/* Sidebar (Desktop) / List (Mobile) */}
-                <div className="w-full md:w-64 shrink-0 space-y-2">
+                <div className={clsx(
+                    "w-full md:w-64 shrink-0 space-y-2",
+                    mobileView ? "hidden md:block" : "block"
+                )}>
                     {tabs.map((tab) => (
                         <button
                             key={tab.id}
-                            onClick={() => setActiveTab(tab.id)}
+                            onClick={() => handleTabClick(tab.id)}
                             className={clsx(
-                                "w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all",
+                                "w-full flex items-center justify-between px-4 py-3 rounded-xl font-medium transition-all group",
                                 activeTab === tab.id
-                                    ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
-                                    : "hover:bg-muted text-muted-foreground hover:text-foreground"
+                                    ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20 md:bg-primary md:text-primary-foreground"
+                                    : "bg-card border border-border md:border-transparent md:bg-transparent hover:bg-muted text-muted-foreground hover:text-foreground"
                             )}
                         >
-                            <tab.icon className="w-5 h-5" />
-                            {tab.label}
+                            <div className="flex items-center gap-3">
+                                <tab.icon className="w-5 h-5" />
+                                {tab.label}
+                            </div>
+                            {/* Chevron for mobile list feeling */}
+                            <ChevronRight className={clsx("w-4 h-4 md:hidden", activeTab === tab.id ? "text-primary-foreground" : "text-muted-foreground")} />
                         </button>
                     ))}
 
-                    <div className="pt-4 mt-4 border-t border-border">
+                    <div className="pt-4 mt-4 md:border-t border-border">
                         <button
                             onClick={handleSignOut}
-                            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-red-500 hover:bg-red-500/10 transition-colors"
+                            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-red-500 bg-card border border-border md:border-transparent md:bg-transparent hover:bg-red-500/10 transition-colors"
                         >
                             <LogOut className="w-5 h-5" />
                             Log Out
@@ -349,7 +380,10 @@ export default function SettingsPage() {
                 </div>
 
                 {/* Content Area */}
-                <div className="flex-1 min-h-[500px]">
+                <div className={clsx(
+                    "flex-1 min-h-[500px]",
+                    mobileView ? "block" : "hidden md:block"
+                )}>
                     {renderContent()}
                 </div>
             </div>

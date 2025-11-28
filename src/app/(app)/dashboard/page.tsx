@@ -20,10 +20,19 @@ import { supabase } from "@/lib/supabase/client";
 const SELLER_TABS = ["SERVICES", "PORTFOLIO", "SHOP"];
 const BUYER_TABS = ["ORDERS", "SAVED", "FOLLOWING"];
 
+import { useSearchParams } from "next/navigation";
+
 export default function DashboardPage() {
     const { userMode, toggleUserMode, profile, uploadAvatar, uploadBanner, loading } = useUser();
     const { user } = useUser(); // Need user object for ID
-    const [activeTab, setActiveTab] = useState(userMode === "SELLER" ? "SERVICES" : "ORDERS");
+    const searchParams = useSearchParams();
+    const tabParam = searchParams.get("tab");
+
+    const [activeTab, setActiveTab] = useState(
+        tabParam && (userMode === "SELLER" ? SELLER_TABS : BUYER_TABS).includes(tabParam)
+            ? tabParam
+            : (userMode === "SELLER" ? "SERVICES" : "ORDERS")
+    );
     const { theme, setTheme } = useTheme();
     const [mounted, setMounted] = useState(false);
 
