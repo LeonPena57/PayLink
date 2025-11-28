@@ -21,7 +21,7 @@ const SELLER_TABS = ["SERVICES", "PORTFOLIO", "SHOP"];
 const BUYER_TABS = ["ORDERS", "SAVED", "FOLLOWING"];
 
 export default function DashboardPage() {
-    const { userMode, toggleUserMode, profile, uploadAvatar, uploadBanner } = useUser();
+    const { userMode, toggleUserMode, profile, uploadAvatar, uploadBanner, loading } = useUser();
     const { user } = useUser(); // Need user object for ID
     const [activeTab, setActiveTab] = useState(userMode === "SELLER" ? "SERVICES" : "ORDERS");
     const { theme, setTheme } = useTheme();
@@ -108,78 +108,6 @@ export default function DashboardPage() {
         return acc;
     }, {});
 
-    // ... (rest of the component)
-
-    {
-        activeTab === "PORTFOLIO" && (
-            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-8">
-                {loadingPortfolio ? (
-                    <div className="flex justify-center py-20">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                    </div>
-                ) : portfolioItems.length === 0 ? (
-                    <div className="p-4 md:p-6">
-                        <div className="flex flex-col items-center justify-center py-20 text-center space-y-4 border-2 border-dashed border-border rounded-3xl bg-muted/30">
-                            <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center">
-                                <GridIcon className="w-8 h-8 text-muted-foreground" />
-                            </div>
-                            <div>
-                                <h3 className="text-xl font-bold text-foreground">No Portfolio Items</h3>
-                                <p className="text-muted-foreground max-w-sm mx-auto mt-2">
-                                    Showcase your best work to attract more clients.
-                                </p>
-                            </div>
-                            <button
-                                onClick={() => setIsAddProjectOpen(true)}
-                                className="px-6 py-2 bg-primary text-primary-foreground rounded-full font-bold shadow-lg hover:scale-105 transition-all"
-                            >
-                                Add Project
-                            </button>
-                        </div>
-                    </div>
-                ) : (
-                    Object.entries(portfolioSections).map(([sectionName, items]: [string, any]) => (
-                        <div key={sectionName} className="space-y-4">
-                            <h3 className="text-xl font-bold text-foreground px-1 flex items-center gap-2">
-                                <span className="w-1 h-6 bg-primary rounded-full" />
-                                {sectionName}
-                            </h3>
-                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
-                                {items.map((item: any) => (
-                                    <div key={item.id} className="group relative aspect-square rounded-2xl overflow-hidden cursor-pointer bg-muted border border-border shadow-sm hover:shadow-md transition-all">
-                                        <img
-                                            src={item.image_url}
-                                            alt={item.title}
-                                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                                        />
-                                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4">
-                                            <h4 className="text-white font-bold text-sm truncate">{item.title}</h4>
-                                            {item.description && <p className="text-white/70 text-xs truncate">{item.description}</p>}
-                                        </div>
-                                    </div>
-                                ))}
-                                {/* Add Item Button for this section (optional, or global add) */}
-                            </div>
-                        </div>
-                    ))
-                )}
-
-                {/* Global Add Project Button if items exist */}
-                {portfolioItems.length > 0 && (
-                    <div className="flex justify-center pt-8">
-                        <button
-                            onClick={() => setIsAddProjectOpen(true)}
-                            className="px-6 py-3 bg-muted hover:bg-muted/80 text-foreground rounded-xl font-bold transition-colors flex items-center gap-2"
-                        >
-                            <Plus className="w-5 h-5" />
-                            Add New Project
-                        </button>
-                    </div>
-                )}
-            </div>
-        )
-    }
-
     const handleShareProfile = () => {
         navigator.clipboard.writeText(`https://paylink.com/${profile?.username || "user"}`);
         setIsCopied(true);
@@ -218,8 +146,16 @@ export default function DashboardPage() {
     const accentColor = profile?.accent_color || "#3b82f6";
     const tabs = userMode === "SELLER" ? SELLER_TABS : BUYER_TABS;
 
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-background flex items-center justify-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+        );
+    }
+
     return (
-        <div className="min-h-screen bg-background pb-32 selection:bg-primary/30 transition-colors duration-300">
+        <div className="min-h-screen bg-background pb-32 selection:bg-primary/30 transition-colors duration-300 pt-20">
             {/* Modals */}
             <EditProfileModal isOpen={isEditProfileOpen} onClose={() => setIsEditProfileOpen(false)} />
             <CreateInvoiceModal isOpen={isCreateInvoiceOpen} onClose={() => setIsCreateInvoiceOpen(false)} />

@@ -84,40 +84,57 @@ export function EditProfileModal({ isOpen, onClose }: EditProfileModalProps) {
         <AnimatePresence>
             {isOpen && (
                 <>
-                    {/* Backdrop */}
+                    {/* Backdrop (Desktop only) */}
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         onClick={onClose}
-                        className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[60]"
+                        className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[60] hidden md:block"
                     />
 
                     {/* Modal */}
                     <motion.div
-                        initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                        transition={{ type: "spring", duration: 0.5 }}
-                        className="fixed z-[70] left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg bg-card border border-border rounded-3xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col"
+                        initial={{ opacity: 0, y: "100%" }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: "100%" }}
+                        transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                        className="fixed z-[70] inset-0 md:inset-auto md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 w-full md:max-w-lg bg-card md:border border-border md:rounded-3xl shadow-2xl overflow-hidden flex flex-col h-full md:h-auto md:max-h-[90vh]"
                     >
                         {/* Header */}
-                        <div className="p-6 border-b border-border flex justify-between items-center bg-muted/30">
-                            <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
-                                <User className="w-5 h-5 text-primary" />
-                                Edit Profile
-                            </h2>
+                        <div className="p-4 md:p-6 border-b border-border flex justify-between items-center bg-muted/30 shrink-0">
+                            <div className="flex items-center gap-3">
+                                <button
+                                    onClick={onClose}
+                                    className="md:hidden p-2 -ml-2 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                                >
+                                    <X className="w-6 h-6" />
+                                </button>
+                                <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+                                    <User className="w-5 h-5 text-primary hidden md:block" />
+                                    Edit Profile
+                                </h2>
+                            </div>
                             <button
                                 onClick={onClose}
-                                className="p-2 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                                className="hidden md:block p-2 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
                             >
                                 <X className="w-5 h-5" />
+                            </button>
+                            {/* Mobile Save Button in Header */}
+                            <button
+                                type="submit"
+                                form="edit-profile-form"
+                                disabled={isSaving}
+                                className="md:hidden text-primary font-bold text-sm disabled:opacity-50"
+                            >
+                                {isSaving ? "Saving..." : "Save"}
                             </button>
                         </div>
 
                         {/* Form */}
-                        <div className="p-6 overflow-y-auto custom-scrollbar">
-                            <form id="edit-profile-form" onSubmit={handleSubmit} className="space-y-6">
+                        <div className="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-6">
+                            <form id="edit-profile-form" onSubmit={handleSubmit} className="space-y-6 pb-20 md:pb-0">
                                 <div className="space-y-4">
                                     <div className="space-y-2">
                                         <label className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Display Name</label>
@@ -229,8 +246,8 @@ export function EditProfileModal({ isOpen, onClose }: EditProfileModalProps) {
                             </form>
                         </div>
 
-                        {/* Footer */}
-                        <div className="p-6 border-t border-border bg-muted/30 flex justify-end gap-3">
+                        {/* Footer (Desktop Only) */}
+                        <div className="hidden md:flex p-6 border-t border-border bg-muted/30 justify-end gap-3 shrink-0">
                             <button
                                 onClick={onClose}
                                 className="px-5 py-2.5 rounded-xl font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"

@@ -38,6 +38,9 @@ import {
     Image as ImageIcon,
     Sun,
     Moon,
+    Twitter,
+    Instagram,
+    Twitch,
     Edit3
 } from "lucide-react";
 import Link from "next/link";
@@ -50,7 +53,7 @@ const TAGS = ["All", "Digital Art", "Graphic Design", "Photography", "3D Modelin
 
 export default function HomePage() {
     const { userMode } = useUserMode();
-    const { user, profile, uploadAvatar, uploadBanner, isConfigured } = useUser();
+    const { user, profile, uploadAvatar, uploadBanner, isConfigured, loading } = useUser();
     const [activeProfileTab, setActiveProfileTab] = useState("HOME");
     const [isFollowing, setIsFollowing] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
@@ -139,8 +142,16 @@ export default function HomePage() {
 
     const accentColor = profile?.accent_color || "#3b82f6";
 
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-gray-50 dark:bg-[#1a1a1a] flex items-center justify-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-white"></div>
+            </div>
+        );
+    }
+
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-[#1a1a1a] text-gray-900 dark:text-white pb-32 selection:bg-red-500/30 transition-colors duration-300 font-sans">
+        <div className="min-h-screen bg-gray-50 dark:bg-[#1a1a1a] text-gray-900 dark:text-white pb-32 selection:bg-red-500/30 transition-colors duration-300 font-sans pt-20">
 
             <input type="file" ref={bannerInputRef} onChange={handleBannerChange} className="hidden" accept="image/*" />
             <input type="file" ref={avatarInputRef} onChange={handleAvatarChange} className="hidden" accept="image/*" />
@@ -151,7 +162,7 @@ export default function HomePage() {
                     {/* Profile Header */}
                     <div className="relative group pb-4">
                         {/* Immersive Banner */}
-                        <div className="h-48 md:h-80 w-full relative overflow-hidden group/banner">
+                        <div className="h-48 md:h-80 w-full relative overflow-hidden group/banner rounded-b-3xl">
                             {profile?.banner_url ? (
                                 <img src={profile.banner_url} alt="Banner" className="w-full h-full object-cover" />
                             ) : (
@@ -159,10 +170,29 @@ export default function HomePage() {
                             )}
                             <div className="absolute inset-0 bg-gradient-to-b from-transparent to-gray-50 dark:to-[#1a1a1a]" />
 
+                            {/* Social Icons Overlay (Top Right) */}
+                            <div className="absolute top-6 right-6 flex items-center gap-4 z-20">
+                                {profile?.social_links?.twitch && (
+                                    <a href={`https://twitch.tv/${profile.social_links.twitch}`} target="_blank" className="text-white/80 hover:text-white transition-colors hover:scale-110 transform">
+                                        <Twitch className="w-6 h-6" />
+                                    </a>
+                                )}
+                                {profile?.social_links?.instagram && (
+                                    <a href={`https://instagram.com/${profile.social_links.instagram}`} target="_blank" className="text-white/80 hover:text-white transition-colors hover:scale-110 transform">
+                                        <Instagram className="w-6 h-6" />
+                                    </a>
+                                )}
+                                {profile?.social_links?.twitter && (
+                                    <a href={`https://twitter.com/${profile.social_links.twitter}`} target="_blank" className="text-white/80 hover:text-white transition-colors hover:scale-110 transform">
+                                        <Twitter className="w-6 h-6" />
+                                    </a>
+                                )}
+                            </div>
+
                             {/* Upload Banner Button (Hidden by default, visible on hover) */}
                             <button
                                 onClick={handleBannerClick}
-                                className="absolute top-4 right-4 p-2 bg-black/50 rounded-full text-white opacity-0 group-hover/banner:opacity-100 transition-opacity hover:bg-black/70"
+                                className="absolute top-4 left-4 p-2 bg-black/50 rounded-full text-white opacity-0 group-hover/banner:opacity-100 transition-opacity hover:bg-black/70 z-30"
                             >
                                 <Camera className="w-5 h-5" />
                             </button>
@@ -264,27 +294,7 @@ export default function HomePage() {
                                 </div>
                             </div>
 
-                            {/* Navigation Tabs (Mobile Only in Demo, but we might want them everywhere?) 
-                                The demo hides them on desktop? Let's check demo code.
-                                Line 495: className="md:hidden mt-8 border-b border-[#333]"
-                                Yes, demo hides tabs on desktop. But where are they on desktop?
-                                Ah, the demo has a separate `activeAppTab` header. 
-                                But `activeProfileTab` is for the profile content.
-                                Wait, does the demo show profile content tabs on desktop?
-                                Looking at demo code... it seems the tabs are ONLY visible on mobile (md:hidden).
-                                This implies desktop view might show everything or have a different layout?
-                                Actually, looking at the code, `activeProfileTab` controls the content below.
-                                If the tabs are hidden on desktop, how does a desktop user switch tabs?
-                                Maybe the demo assumes a single view on desktop or I missed something.
-                                Let's look at `demo/page.tsx` again.
-                                Line 495 is `md:hidden`.
-                                I don't see a `md:flex` version of these tabs.
-                                This might be a bug in the demo or a design choice where desktop shows all?
-                                No, the content below checks `activeProfileTab`.
-                                So if tabs are hidden, desktop users are stuck on "HOME".
-                                I will make them visible on desktop too for usability, or check if I missed a desktop tab section.
-                                I'll make them visible everywhere for now to ensure functionality.
-                            */}
+                            {/* Navigation Tabs */}
                             <div className="mt-8 border-b border-gray-200 dark:border-[#333]">
                                 <div className="flex gap-4 overflow-x-auto max-w-full pb-px no-scrollbar px-4 md:px-0">
                                     {PROFILE_TABS.map((tab) => (
