@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { ServicesWidget } from "@/components/features/dashboard/ServicesWidget";
 import { EditProfileModal } from "@/components/features/dashboard/EditProfileModal";
 import { CreateInvoiceModal } from "@/components/features/dashboard/CreateInvoiceModal";
@@ -22,7 +22,7 @@ const BUYER_TABS = ["ORDERS", "SAVED", "FOLLOWING"];
 
 import { useSearchParams } from "next/navigation";
 
-export default function DashboardPage() {
+function DashboardContent() {
     const { userMode, toggleUserMode, profile, uploadAvatar, uploadBanner, loading } = useUser();
     const { user } = useUser(); // Need user object for ID
     const searchParams = useSearchParams();
@@ -572,5 +572,17 @@ export default function DashboardPage() {
                 )}
             </div>
         </div>
+    );
+}
+
+export default function DashboardPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen bg-background flex items-center justify-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+        }>
+            <DashboardContent />
+        </Suspense>
     );
 }

@@ -83,7 +83,7 @@ export default function HomePage() {
         const matchesTag = activeTag === "All" || item.tags.includes(activeTag);
         const matchesSearch = item.caption.toLowerCase().includes(searchQuery.toLowerCase()) ||
             item.user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            item.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
+            item.tags.some((tag: string) => tag.toLowerCase().includes(searchQuery.toLowerCase()));
         return matchesTag && matchesSearch;
     });
 
@@ -498,7 +498,7 @@ export default function HomePage() {
                                                     {item.caption}
                                                 </p>
                                                 <div className="flex flex-wrap gap-2 mt-3">
-                                                    {item.tags.map(tag => (
+                                                    {item.tags.map((tag: string) => (
                                                         <span key={tag} className="text-[10px] font-bold text-blue-500 dark:text-blue-400 bg-blue-500/10 px-2 py-1 rounded-md">
                                                             #{tag}
                                                         </span>
