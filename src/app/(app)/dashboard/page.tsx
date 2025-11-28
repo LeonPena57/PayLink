@@ -155,7 +155,7 @@ export default function DashboardPage() {
     }
 
     return (
-        <div className="min-h-screen bg-background pb-32 selection:bg-primary/30 transition-colors duration-300 pt-20">
+        <div className="min-h-screen bg-background pb-32 selection:bg-primary/30 transition-colors duration-300">
             {/* Modals */}
             <EditProfileModal isOpen={isEditProfileOpen} onClose={() => setIsEditProfileOpen(false)} />
             <CreateInvoiceModal isOpen={isCreateInvoiceOpen} onClose={() => setIsCreateInvoiceOpen(false)} />

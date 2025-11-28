@@ -87,50 +87,11 @@ export default function HomePage() {
     };
 
     // Mock Data for Demo Parity
-    const feedItems = [
-        {
-            id: 1,
-            user: { name: "Neon Arts", handle: "@neonarts", avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=100&auto=format&fit=crop" },
-            image: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop",
-            caption: "Just finished this cyberpunk character commission! 🦾",
-            tags: ["Digital Art", "Cyberpunk"],
-            likes: 1240,
-            comments: 45
-        },
-        {
-            id: 2,
-            user: { name: "Studio G", handle: "@studiog", avatar: "https://images.unsplash.com/photo-1527980965255-d3b416303d12?q=80&w=100&auto=format&fit=crop" },
-            image: "https://images.unsplash.com/photo-1614728853913-1e22ba6e8a1e?q=80&w=2670&auto=format&fit=crop",
-            caption: "New 3D weapon pack available in my shop now! 🔫",
-            tags: ["3D Modeling", "Game Assets"],
-            likes: 856,
-            comments: 23
-        },
-        {
-            id: 3,
-            user: { name: "Pixel Perfect", handle: "@pixelperfect", avatar: "https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=100&auto=format&fit=crop" },
-            image: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=2670&auto=format&fit=crop",
-            caption: "Retro vibes only. 🕹️",
-            tags: ["Photography", "Retro"],
-            likes: 2100,
-            comments: 89
-        }
-    ];
+    const feedItems: any[] = [];
 
-    const portfolioItems = [
-        { id: 1, title: "Stream Overlay Package", image_url: "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=2670&auto=format&fit=crop" },
-        { id: 2, title: "Esports Mascot Logo", image_url: "https://images.unsplash.com/photo-1626785774573-4b799314346d?q=80&w=2670&auto=format&fit=crop" },
-        { id: 3, title: "Cyberpunk Character Art", image_url: "https://images.unsplash.com/photo-1563089145-599997674d42?q=80&w=2670&auto=format&fit=crop" },
-        { id: 4, title: "Abstract 3D Render", image_url: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop" },
-        { id: 5, title: "Minimalist Poster", image_url: "https://images.unsplash.com/photo-1572044162444-ad60f128bdea?q=80&w=2670&auto=format&fit=crop" },
-        { id: 6, title: "Neon Cityscape", image_url: "https://images.unsplash.com/photo-1555680202-c86f0e12f086?q=80&w=2670&auto=format&fit=crop" }
-    ];
+    const portfolioItems: any[] = [];
 
-    const services = [
-        { id: 1, title: "Logo Design", price: 150, icon: PenTool, previews: ["https://images.unsplash.com/photo-1626785774573-4b799314346d?q=80&w=2670&auto=format&fit=crop", "https://images.unsplash.com/photo-1560157368-946d9c8f7cb6?q=80&w=2671&auto=format&fit=crop"] },
-        { id: 2, title: "Stream Package", price: 300, icon: Monitor, previews: ["https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=2670&auto=format&fit=crop", "https://images.unsplash.com/photo-1511512578047-dfb367046420?q=80&w=2671&auto=format&fit=crop"] },
-        { id: 3, title: "Photography Session", price: 200, icon: Camera, previews: ["https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=2670&auto=format&fit=crop", "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?q=80&w=2528&auto=format&fit=crop"] }
-    ];
+    const services: any[] = [];
 
     const filteredFeed = feedItems.filter(item => {
         const matchesTag = activeTag === "All" || item.tags.includes(activeTag);
@@ -151,7 +112,7 @@ export default function HomePage() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-[#1a1a1a] text-gray-900 dark:text-white pb-32 selection:bg-red-500/30 transition-colors duration-300 font-sans pt-20">
+        <div className="min-h-screen bg-gray-50 dark:bg-[#1a1a1a] text-gray-900 dark:text-white pb-32 selection:bg-red-500/30 transition-colors duration-300 font-sans">
 
             <input type="file" ref={bannerInputRef} onChange={handleBannerChange} className="hidden" accept="image/*" />
             <input type="file" ref={avatarInputRef} onChange={handleAvatarChange} className="hidden" accept="image/*" />
@@ -380,19 +341,19 @@ export default function HomePage() {
                                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                             <div className="bg-gray-50 dark:bg-[#2a2a2a] rounded-xl p-4 flex flex-col items-center justify-center aspect-[4/3]">
                                                 <TrendingUp className="w-6 h-6 text-gray-900 dark:text-white mb-2" />
-                                                <span className="text-2xl font-bold text-gray-900 dark:text-white">5</span>
+                                                <span className="text-2xl font-bold text-gray-900 dark:text-white">0</span>
                                             </div>
                                             <div className="bg-gray-50 dark:bg-[#2a2a2a] rounded-xl p-4 flex flex-col items-center justify-center aspect-[4/3]">
                                                 <UserPlus className="w-6 h-6 text-blue-500 dark:text-blue-400 mb-2" />
-                                                <span className="text-2xl font-bold text-gray-900 dark:text-white">100</span>
+                                                <span className="text-2xl font-bold text-gray-900 dark:text-white">0</span>
                                             </div>
                                             <div className="bg-gray-50 dark:bg-[#2a2a2a] rounded-xl p-4 flex flex-col items-center justify-center aspect-[4/3]">
                                                 <Star className="w-6 h-6 text-yellow-500 dark:text-yellow-400 mb-2 fill-current" />
-                                                <span className="text-2xl font-bold text-gray-900 dark:text-white">4.7</span>
+                                                <span className="text-2xl font-bold text-gray-900 dark:text-white">0.0</span>
                                             </div>
                                             <div className="bg-gray-50 dark:bg-[#2a2a2a] rounded-xl p-4 flex flex-col items-center justify-center aspect-[4/3]">
                                                 <RefreshCw className="w-6 h-6 text-gray-900 dark:text-white mb-2" />
-                                                <span className="text-2xl font-bold text-gray-900 dark:text-white">32</span>
+                                                <span className="text-2xl font-bold text-gray-900 dark:text-white">0</span>
                                             </div>
                                         </div>
                                     </div>
@@ -403,11 +364,11 @@ export default function HomePage() {
                                             <div className="space-y-4">
                                                 <div className="bg-gray-50 dark:bg-[#2a2a2a] rounded-xl p-6 text-center">
                                                     <span className="text-xs text-gray-500 dark:text-gray-400 block mb-1">This Week</span>
-                                                    <span className="text-3xl font-black text-gray-900 dark:text-white tracking-tight">$147.45</span>
+                                                    <span className="text-3xl font-black text-gray-900 dark:text-white tracking-tight">$0.00</span>
                                                 </div>
                                                 <div className="bg-gray-50 dark:bg-[#2a2a2a] rounded-xl p-6 text-center">
                                                     <span className="text-xs text-gray-500 dark:text-gray-400 block mb-1">Total</span>
-                                                    <span className="text-3xl font-black text-gray-900 dark:text-white tracking-tight">$12,525.45</span>
+                                                    <span className="text-3xl font-black text-gray-900 dark:text-white tracking-tight">$0.00</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -421,31 +382,37 @@ export default function HomePage() {
                                 <div className="space-y-4">
                                     <h3 className="text-xl font-bold text-gray-900 dark:text-white px-1">Active Services</h3>
                                     <div className="space-y-4">
-                                        {services.map((service) => (
-                                            <div key={service.id} className="bg-white dark:bg-[#222] border border-gray-200 dark:border-[#333] rounded-2xl p-4">
-                                                <div className="flex items-start justify-between mb-4">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="w-10 h-10 bg-gray-100 dark:bg-[#333] rounded-full flex items-center justify-center text-gray-900 dark:text-white">
-                                                            <service.icon className="w-5 h-5" />
+                                        {services.length > 0 ? (
+                                            services.map((service) => (
+                                                <div key={service.id} className="bg-white dark:bg-[#222] border border-gray-200 dark:border-[#333] rounded-2xl p-4">
+                                                    <div className="flex items-start justify-between mb-4">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="w-10 h-10 bg-gray-100 dark:bg-[#333] rounded-full flex items-center justify-center text-gray-900 dark:text-white">
+                                                                <service.icon className="w-5 h-5" />
+                                                            </div>
+                                                            <div>
+                                                                <h4 className="font-bold text-gray-900 dark:text-white">{service.title}</h4>
+                                                                <p className="text-sm text-green-500 dark:text-green-400 font-bold">Starting at ${service.price}</p>
+                                                            </div>
                                                         </div>
-                                                        <div>
-                                                            <h4 className="font-bold text-gray-900 dark:text-white">{service.title}</h4>
-                                                            <p className="text-sm text-green-500 dark:text-green-400 font-bold">Starting at ${service.price}</p>
-                                                        </div>
+                                                        <button className="text-gray-400 hover:text-gray-900 dark:hover:text-white">
+                                                            <MoreHorizontal className="w-5 h-5" />
+                                                        </button>
                                                     </div>
-                                                    <button className="text-gray-400 hover:text-gray-900 dark:hover:text-white">
-                                                        <MoreHorizontal className="w-5 h-5" />
-                                                    </button>
+                                                    <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
+                                                        {service.previews.map((preview: any, idx: number) => (
+                                                            <div key={idx} className="w-32 h-20 flex-shrink-0 rounded-lg overflow-hidden border border-gray-200 dark:border-[#333]">
+                                                                <img src={preview} alt="Preview" className="w-full h-full object-cover" />
+                                                            </div>
+                                                        ))}
+                                                    </div>
                                                 </div>
-                                                <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
-                                                    {service.previews.map((preview, idx) => (
-                                                        <div key={idx} className="w-32 h-20 flex-shrink-0 rounded-lg overflow-hidden border border-gray-200 dark:border-[#333]">
-                                                            <img src={preview} alt="Preview" className="w-full h-full object-cover" />
-                                                        </div>
-                                                    ))}
-                                                </div>
+                                            ))
+                                        ) : (
+                                            <div className="text-center py-10 text-gray-500 dark:text-gray-400">
+                                                No services available.
                                             </div>
-                                        ))}
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -454,18 +421,24 @@ export default function HomePage() {
                         {activeProfileTab === "PORTFOLIO" && (
                             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                                 <div className="grid grid-cols-3 gap-0.5 md:gap-4">
-                                    {portfolioItems.map((item) => (
-                                        <div key={item.id} className="aspect-square relative group cursor-pointer bg-gray-100 dark:bg-[#222]">
-                                            <img
-                                                src={item.image_url}
-                                                alt={item.title}
-                                                className="w-full h-full object-cover"
-                                            />
-                                            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                                <Heart className="w-6 h-6 text-white fill-white" />
+                                    {portfolioItems.length > 0 ? (
+                                        portfolioItems.map((item) => (
+                                            <div key={item.id} className="aspect-square relative group cursor-pointer bg-gray-100 dark:bg-[#222]">
+                                                <img
+                                                    src={item.image_url}
+                                                    alt={item.title}
+                                                    className="w-full h-full object-cover"
+                                                />
+                                                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                    <Heart className="w-6 h-6 text-white fill-white" />
+                                                </div>
                                             </div>
+                                        ))
+                                    ) : (
+                                        <div className="col-span-full text-center py-10 text-gray-500 dark:text-gray-400">
+                                            No portfolio items yet.
                                         </div>
-                                    ))}
+                                    )}
                                 </div>
                             </div>
                         )}

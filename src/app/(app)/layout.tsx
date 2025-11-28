@@ -8,9 +8,9 @@ export default function AppLayout({
 }>) {
     return (
         <UserProvider>
-            <div className="flex flex-col md:flex-row h-screen overflow-hidden">
+            <div className="flex flex-col h-screen overflow-hidden">
                 <Navigation />
-                <main className="flex-1 w-full h-full overflow-y-auto relative pt-16 md:pt-0">
+                <main className="flex-1 w-full h-full overflow-y-auto relative bg-gray-50 dark:bg-[#1a1a1a]">
                     {children}
                 </main>
             </div>

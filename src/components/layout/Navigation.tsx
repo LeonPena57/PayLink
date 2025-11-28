@@ -39,7 +39,7 @@ export function Navigation() {
         { name: "Shop", href: "/shop", icon: ShoppingBag },
         { name: "Files", href: "/drive", icon: FolderOpen },
         { name: "Orders", href: "/receipts", icon: Receipt },
-        { name: "Account", href: "/dashboard", icon: User },
+        { name: "Account", href: "/settings", icon: User },
         { name: "Settings", href: "/settings", icon: Settings },
     ];
 
@@ -49,7 +49,7 @@ export function Navigation() {
         { name: "QR Code", href: "/qr", icon: QrCode },
         { name: "Create", href: "/create", icon: Plus },
         { name: "Orders", href: "/receipts", icon: Receipt },
-        { name: "Account", href: "/dashboard", icon: User },
+        { name: "Account", href: "/settings", icon: User },
     ];
 
     return (
@@ -97,7 +97,7 @@ export function Navigation() {
                     <Link href="/qr" className="p-2 text-gray-400 hover:text-black dark:hover:text-white transition-colors">
                         <QrCode className="w-5 h-5" />
                     </Link>
-                    <Link href="/dashboard" className="w-8 h-8 rounded-full overflow-hidden border border-gray-200 dark:border-[#333] hover:ring-2 ring-blue-500 transition-all">
+                    <Link href="/settings" className="w-8 h-8 rounded-full overflow-hidden border border-gray-200 dark:border-[#333] hover:ring-2 ring-blue-500 transition-all">
                         <div className="w-full h-full bg-gray-200 dark:bg-gray-800 flex items-center justify-center">
                             <User className="w-4 h-4 text-gray-500" />
                         </div>
@@ -150,10 +150,10 @@ export function Navigation() {
                     <span className="text-[10px] font-bold">MESSAGES</span>
                 </Link>
                 <Link
-                    href="/dashboard"
+                    href="/settings"
                     className={clsx(
                         "flex flex-col items-center gap-1 transition-colors",
-                        pathname === "/dashboard" ? "text-white" : "text-blue-200 hover:text-white"
+                        pathname === "/settings" ? "text-white" : "text-blue-200 hover:text-white"
                     )}
                 >
                     <div className="w-6 h-6 rounded-full overflow-hidden border border-current">
