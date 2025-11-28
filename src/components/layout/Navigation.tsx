@@ -91,6 +91,15 @@ export function Navigation() {
                         >
                             CREATE
                         </Link>
+                        <Link
+                            href="/messages"
+                            className={clsx(
+                                "text-sm font-bold transition-colors hover:text-black dark:hover:text-white",
+                                pathname === "/messages" ? "text-black dark:text-white" : "text-gray-500 dark:text-gray-400"
+                            )}
+                        >
+                            MESSAGES
+                        </Link>
                     </nav>
                 </div>
                 <div className="flex items-center gap-4">

@@ -4,40 +4,20 @@ import { useState, useEffect, useRef } from "react";
 import {
     Grid as GridIcon,
     ShoppingBag,
-    Package,
     MoreHorizontal,
     MapPin,
     Check,
-    Plus,
-    ArrowLeft,
     TrendingUp,
     RefreshCw,
     Star,
     Home,
-    FileText,
-    QrCode,
-    Settings,
     MessageCircle,
-    Bell,
     Search,
     UserPlus,
-    ChevronRight,
-    LogOut,
-    Shield,
-    HelpCircle,
-    CreditCard,
     Heart,
     Share2,
-    Repeat,
     Camera,
-    PenTool,
-    Monitor,
     DollarSign,
-    Send,
-    X,
-    Image as ImageIcon,
-    Sun,
-    Moon,
     Twitter,
     Instagram,
     Twitch,
@@ -52,6 +32,10 @@ import { supabase } from "@/lib/supabase/client";
 const PROFILE_TABS = ["HOME", "SERVICES", "PORTFOLIO", "SHOP"];
 const TAGS = ["All", "Digital Art", "Graphic Design", "Photography", "3D Modeling", "Animation"];
 
+import { EditProfileModal } from "@/components/features/dashboard/EditProfileModal";
+
+
+
 export default function HomePage() {
     const { userMode } = useUserMode();
     const { user, profile, uploadAvatar, uploadBanner, isConfigured, loading } = useUser();
@@ -59,6 +43,7 @@ export default function HomePage() {
     const [isFollowing, setIsFollowing] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
     const [activeTag, setActiveTag] = useState("All");
+    const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
 
     // Upload States
     const [isUploadingBanner, setIsUploadingBanner] = useState(false);
@@ -115,6 +100,7 @@ export default function HomePage() {
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-[#1a1a1a] text-gray-900 dark:text-white pb-32 selection:bg-red-500/30 transition-colors duration-300 font-sans">
 
+            <EditProfileModal isOpen={isEditProfileOpen} onClose={() => setIsEditProfileOpen(false)} />
             <input type="file" ref={bannerInputRef} onChange={handleBannerChange} className="hidden" accept="image/*" />
             <input type="file" ref={avatarInputRef} onChange={handleAvatarChange} className="hidden" accept="image/*" />
 
@@ -151,18 +137,13 @@ export default function HomePage() {
                                 )}
                             </div>
 
-                            {/* Upload Banner Button (Hidden by default, visible on hover) */}
+                            {/* Edit Profile Button (Replaces Camera) */}
                             <button
-                                onClick={handleBannerClick}
+                                onClick={() => setIsEditProfileOpen(true)}
                                 className="absolute top-4 left-4 p-2 bg-black/50 rounded-full text-white opacity-0 group-hover/banner:opacity-100 transition-opacity hover:bg-black/70 z-30"
                             >
-                                <Camera className="w-5 h-5" />
+                                <Edit3 className="w-5 h-5" />
                             </button>
-                            {isUploadingBanner && (
-                                <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-50">
-                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
-                                </div>
-                            )}
                         </div>
 
                         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 -mt-20 md:-mt-32">
@@ -296,40 +277,11 @@ export default function HomePage() {
                                         </div>
                                     </div>
 
-                                    <div className="h-48 w-full relative">
-                                        <svg className="w-full h-full overflow-visible" preserveAspectRatio="none" viewBox="0 0 200 50">
-                                            <defs>
-                                                <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
-                                                    <stop offset="0%" stopColor="#4ade80" stopOpacity="0.2" />
-                                                    <stop offset="100%" stopColor="#4ade80" stopOpacity="0" />
-                                                </linearGradient>
-                                            </defs>
-                                            {/* Grid Lines */}
-                                            <line x1="0" y1="12.5" x2="200" y2="12.5" stroke="currentColor" strokeOpacity="0.1" strokeWidth="0.2" className="text-gray-500" />
-                                            <line x1="0" y1="25" x2="200" y2="25" stroke="currentColor" strokeOpacity="0.1" strokeWidth="0.2" className="text-gray-500" />
-                                            <line x1="0" y1="37.5" x2="200" y2="37.5" stroke="currentColor" strokeOpacity="0.1" strokeWidth="0.2" className="text-gray-500" />
-
-                                            <line x1="40" y1="0" x2="40" y2="50" stroke="currentColor" strokeOpacity="0.1" strokeWidth="0.2" className="text-gray-500" />
-                                            <line x1="80" y1="0" x2="80" y2="50" stroke="currentColor" strokeOpacity="0.1" strokeWidth="0.2" className="text-gray-500" />
-                                            <line x1="120" y1="0" x2="120" y2="50" stroke="currentColor" strokeOpacity="0.1" strokeWidth="0.2" className="text-gray-500" />
-                                            <line x1="160" y1="0" x2="160" y2="50" stroke="currentColor" strokeOpacity="0.1" strokeWidth="0.2" className="text-gray-500" />
-
-                                            <path
-                                                d="M0,40 C20,35 40,25 60,28 C80,31 100,20 120,22 C140,24 160,10 180,12 L200,5 L200,50 L0,50 Z"
-                                                fill="url(#chartGradient)"
-                                            />
-                                            <path
-                                                d="M0,40 C20,35 40,25 60,28 C80,31 100,20 120,22 C140,24 160,10 180,12 L200,5"
-                                                fill="none"
-                                                stroke="#4ade80"
-                                                strokeWidth="0.5"
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                            />
-                                            <circle cx="60" cy="28" r="1" fill="#fff" className="dark:fill-white fill-gray-900" />
-                                            <circle cx="120" cy="22" r="1" fill="#fff" className="dark:fill-white fill-gray-900" />
-                                            <circle cx="180" cy="12" r="1" fill="#fff" className="dark:fill-white fill-gray-900" />
-                                        </svg>
+                                    <div className="h-48 w-full relative flex items-center justify-center bg-gray-50 dark:bg-[#1a1a1a] rounded-xl border border-dashed border-gray-200 dark:border-[#333]">
+                                        <div className="text-center">
+                                            <p className="text-gray-400 dark:text-gray-500 font-bold">No Data Available</p>
+                                            <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Revenue data will appear here once you start selling.</p>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -506,55 +458,73 @@ export default function HomePage() {
 
                             {/* Feed Items */}
                             <div className="space-y-6">
-                                {filteredFeed.map((item) => (
-                                    <div key={item.id} className="bg-white dark:bg-[#222] border border-gray-200 dark:border-[#333] rounded-3xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                                        <div className="p-4 flex items-center justify-between">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 rounded-full overflow-hidden ring-2 ring-gray-100 dark:ring-[#333]">
-                                                    <img src={item.user.avatar} alt={item.user.name} className="w-full h-full object-cover" />
+                                {filteredFeed.length > 0 ? (
+                                    filteredFeed.map((item) => (
+                                        <div key={item.id} className="bg-white dark:bg-[#222] border border-gray-200 dark:border-[#333] rounded-3xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                                            <div className="p-4 flex items-center justify-between">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-10 h-10 rounded-full overflow-hidden ring-2 ring-gray-100 dark:ring-[#333]">
+                                                        <img src={item.user.avatar} alt={item.user.name} className="w-full h-full object-cover" />
+                                                    </div>
+                                                    <div>
+                                                        <div className="font-bold text-gray-900 dark:text-white text-sm">{item.user.name}</div>
+                                                        <div className="text-xs text-gray-500">{item.user.handle}</div>
+                                                    </div>
                                                 </div>
-                                                <div>
-                                                    <div className="font-bold text-gray-900 dark:text-white text-sm">{item.user.name}</div>
-                                                    <div className="text-xs text-gray-500">{item.user.handle}</div>
-                                                </div>
-                                            </div>
-                                            <button className="text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
-                                                <MoreHorizontal className="w-5 h-5" />
-                                            </button>
-                                        </div>
-
-                                        <div className="aspect-square w-full bg-gray-100 dark:bg-[#1a1a1a]">
-                                            <img src={item.image} alt="Post" className="w-full h-full object-cover" />
-                                        </div>
-
-                                        <div className="p-4">
-                                            <div className="flex items-center gap-4 mb-3">
-                                                <button className="text-gray-900 dark:text-white hover:scale-110 transition-transform">
-                                                    <Heart className="w-6 h-6" />
-                                                </button>
-                                                <button className="text-gray-900 dark:text-white hover:scale-110 transition-transform">
-                                                    <MessageCircle className="w-6 h-6" />
-                                                </button>
-                                                <button className="text-gray-900 dark:text-white hover:scale-110 transition-transform">
-                                                    <Share2 className="w-6 h-6" />
+                                                <button className="text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
+                                                    <MoreHorizontal className="w-5 h-5" />
                                                 </button>
                                             </div>
-                                            <div className="font-bold text-sm mb-1 text-gray-900 dark:text-white">{item.likes.toLocaleString()} likes</div>
-                                            <p className="text-sm text-gray-600 dark:text-gray-300">
-                                                <span className="font-bold text-gray-900 dark:text-white mr-2">{item.user.handle}</span>
-                                                {item.caption}
+
+                                            <div className="aspect-square w-full bg-gray-100 dark:bg-[#1a1a1a]">
+                                                <img src={item.image} alt="Post" className="w-full h-full object-cover" />
+                                            </div>
+
+                                            <div className="p-4">
+                                                <div className="flex items-center gap-4 mb-3">
+                                                    <button className="text-gray-900 dark:text-white hover:scale-110 transition-transform">
+                                                        <Heart className="w-6 h-6" />
+                                                    </button>
+                                                    <button className="text-gray-900 dark:text-white hover:scale-110 transition-transform">
+                                                        <MessageCircle className="w-6 h-6" />
+                                                    </button>
+                                                    <button className="text-gray-900 dark:text-white hover:scale-110 transition-transform">
+                                                        <Share2 className="w-6 h-6" />
+                                                    </button>
+                                                </div>
+                                                <div className="font-bold text-sm mb-1 text-gray-900 dark:text-white">{item.likes.toLocaleString()} likes</div>
+                                                <p className="text-sm text-gray-600 dark:text-gray-300">
+                                                    <span className="font-bold text-gray-900 dark:text-white mr-2">{item.user.handle}</span>
+                                                    {item.caption}
+                                                </p>
+                                                <div className="flex flex-wrap gap-2 mt-3">
+                                                    {item.tags.map(tag => (
+                                                        <span key={tag} className="text-[10px] font-bold text-blue-500 dark:text-blue-400 bg-blue-500/10 px-2 py-1 rounded-md">
+                                                            #{tag}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                                <div className="text-xs text-gray-500 mt-2 cursor-pointer hover:text-gray-900 dark:hover:text-gray-300">View all {item.comments} comments</div>
+                                            </div>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div className="flex flex-col items-center justify-center py-20 text-center space-y-6 border-2 border-dashed border-gray-200 dark:border-[#333] rounded-3xl bg-gray-50/50 dark:bg-[#222]/30">
+                                        <div className="w-20 h-20 bg-gray-100 dark:bg-[#2a2a2a] rounded-full flex items-center justify-center animate-pulse">
+                                            <Search className="w-10 h-10 text-gray-400" />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">No Posts Yet</h3>
+                                            <p className="text-gray-500 dark:text-gray-400 max-w-md mx-auto leading-relaxed">
+                                                Your feed is currently empty. Follow creators or explore tags to see amazing work here.
                                             </p>
-                                            <div className="flex flex-wrap gap-2 mt-3">
-                                                {item.tags.map(tag => (
-                                                    <span key={tag} className="text-[10px] font-bold text-blue-500 dark:text-blue-400 bg-blue-500/10 px-2 py-1 rounded-md">
-                                                        #{tag}
-                                                    </span>
-                                                ))}
-                                            </div>
-                                            <div className="text-xs text-gray-500 mt-2 cursor-pointer hover:text-gray-900 dark:hover:text-gray-300">View all {item.comments} comments</div>
                                         </div>
+                                        <button className="px-8 py-3 bg-gray-900 dark:bg-white text-white dark:text-black rounded-full font-bold shadow-lg hover:scale-105 transition-transform flex items-center gap-2">
+                                            <UserPlus className="w-5 h-5" />
+                                            Find Creators
+                                        </button>
                                     </div>
-                                ))}
+                                )}
                             </div>
                         </div>
 
