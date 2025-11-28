@@ -108,7 +108,7 @@ export function Navigation() {
                     <Link href="/qr" className="p-2 text-gray-400 hover:text-black dark:hover:text-white transition-colors">
                         <QrCode className="w-5 h-5" />
                     </Link>
-                    <Link href="/settings" className="w-8 h-8 rounded-full overflow-hidden border border-gray-200 dark:border-[#333] hover:ring-2 ring-blue-500 transition-all">
+                    <Link href={user ? "/settings" : "/login"} className="w-8 h-8 rounded-full overflow-hidden border border-gray-200 dark:border-[#333] hover:ring-2 ring-blue-500 transition-all">
                         {profile?.avatar_url ? (
                             <img src={profile.avatar_url} alt="User" className="w-full h-full object-cover" />
                         ) : (
@@ -129,7 +129,7 @@ export function Navigation() {
                         pathname === "/home" ? "text-white" : "text-blue-200 hover:text-white"
                     )}
                 >
-                    <Home className="w-6 h-6" />
+                    <Home className="w-6 h-6 shrink-0" fill={pathname === "/home" ? "currentColor" : "none"} />
                     <span className="text-[10px] font-bold">HOME</span>
                 </Link>
                 <Link
@@ -139,7 +139,11 @@ export function Navigation() {
                         pathname === "/receipts" ? "text-white" : "text-blue-200 hover:text-white"
                     )}
                 >
-                    <Receipt className="w-6 h-6" />
+                    <Receipt
+                        className="w-6 h-6 shrink-0"
+                        fill={pathname === "/receipts" ? "white" : "none"}
+                        stroke={pathname === "/receipts" ? "#2563eb" : "currentColor"}
+                    />
                     <span className="text-[10px] font-bold">ORDERS</span>
                 </Link>
                 <Link
@@ -149,8 +153,8 @@ export function Navigation() {
                         pathname === "/create" ? "text-white" : "text-blue-200 hover:text-white"
                     )}
                 >
-                    <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-lg shadow-blue-900/20">
-                        <Plus className="w-5 h-5 text-blue-600" />
+                    <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-lg shadow-blue-900/20 shrink-0">
+                        <Plus className="w-5 h-5 text-blue-600" strokeWidth={4} />
                     </div>
                     <span className="text-[10px] font-bold">CREATE</span>
                 </Link>
@@ -161,26 +165,26 @@ export function Navigation() {
                         pathname === "/messages" ? "text-white" : "text-blue-200 hover:text-white"
                     )}
                 >
-                    <MessageCircle className="w-6 h-6" />
+                    <MessageCircle className="w-6 h-6 shrink-0" fill={pathname === "/messages" ? "currentColor" : "none"} />
                     <span className="text-[10px] font-bold">MESSAGES</span>
                 </Link>
                 <Link
-                    href="/settings"
+                    href={user ? "/settings" : "/login"}
                     className={clsx(
                         "flex flex-col items-center gap-1 transition-colors",
                         pathname === "/settings" ? "text-white" : "text-blue-200 hover:text-white"
                     )}
                 >
-                    <div className="w-6 h-6 rounded-full overflow-hidden border border-current">
+                    <div className={clsx("w-6 h-6 rounded-full overflow-hidden border border-current shrink-0", pathname === "/settings" ? "ring-2 ring-white" : "")}>
                         {profile?.avatar_url ? (
                             <img src={profile.avatar_url} alt="User" className="w-full h-full object-cover" />
                         ) : (
                             <div className="w-full h-full bg-white/20 flex items-center justify-center">
-                                <User className="w-4 h-4 text-white" />
+                                <User className="w-4 h-4 text-white" fill={pathname === "/settings" ? "currentColor" : "none"} />
                             </div>
                         )}
                     </div>
-                    <span className="text-[10px] font-bold">ACCOUNT</span>
+                    <span className="text-[10px] font-bold">{user ? "ACCOUNT" : "LOGIN"}</span>
                 </Link>
             </div>
         </>

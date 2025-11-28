@@ -7,6 +7,7 @@ import { useUser } from "@/context/UserContext";
 import { MapPin, Link as LinkIcon, Twitter, Instagram, Twitch, Grid as GridIcon, ShoppingBag, Package, Heart, UserPlus, UserCheck, MessageCircle } from "lucide-react";
 import clsx from "clsx";
 import Link from "next/link";
+import { PostModal } from "@/components/features/PostModal";
 
 export default function PublicProfilePage({ params }: { params: { username: string } }) {
     const router = useRouter();
@@ -18,6 +19,15 @@ export default function PublicProfilePage({ params }: { params: { username: stri
     const [activeTab, setActiveTab] = useState("PORTFOLIO");
 
     const [stats, setStats] = useState({ followers: 0, following: 0, is_following: false });
+
+    // Post Modal State
+    const [selectedPost, setSelectedPost] = useState<any>(null);
+    const [isPostModalOpen, setIsPostModalOpen] = useState(false);
+
+    const handlePostClick = (post: any) => {
+        setSelectedPost(post);
+        setIsPostModalOpen(true);
+    };
 
     useEffect(() => {
         fetchProfile();
@@ -138,6 +148,14 @@ export default function PublicProfilePage({ params }: { params: { username: stri
 
     return (
         <div className="min-h-screen bg-background pb-32">
+            <PostModal
+                isOpen={isPostModalOpen}
+                onClose={() => setIsPostModalOpen(false)}
+                post={selectedPost}
+                onUpdate={(updatedPost) => {
+                    setPortfolioItems(prev => prev.map(item => item.id === updatedPost.id ? { ...item, ...updatedPost } : item));
+                }}
+            />
             {/* Profile Header */}
             <div className="relative group pb-4">
                 {/* Banner */}
@@ -145,8 +163,8 @@ export default function PublicProfilePage({ params }: { params: { username: stri
                     {profile.banner_url ? (
                         <div className="absolute inset-0">
                             <img src={profile.banner_url} alt="Profile Banner" className="w-full h-full object-cover" />
-                            <div className="absolute inset-0 bg-black/20" />
-                            <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
+                            <div className="absolute inset-0 dark:bg-black/20" />
+                            <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
                         </div>
                     ) : (
                         <>
@@ -219,20 +237,20 @@ export default function PublicProfilePage({ params }: { params: { username: stri
                                 <div className="flex flex-col md:flex-row items-center gap-4 pt-2">
                                     <div className="flex flex-wrap items-center justify-center md:justify-start gap-3">
                                         {profile.social_links?.twitter && (
-                                            <a href={`https://twitter.com/${profile.social_links.twitter}`} target="_blank" className="px-4 py-2 bg-card border border-border rounded-xl hover:border-blue-400/50 hover:bg-blue-400/5 hover:text-[#1DA1F2] transition-all flex items-center gap-2 font-bold text-sm">
-                                                <Twitter className="w-4 h-4" />
+                                            <a href={`https://twitter.com/${profile.social_links.twitter}`} target="_blank" className="px-4 py-2 bg-muted/40 border border-border/50 rounded-xl hover:border-blue-400/50 hover:bg-blue-400/10 hover:text-[#1DA1F2] text-muted-foreground hover:scale-105 transition-all flex items-center gap-2 font-bold text-sm">
+                                                <Twitter className="w-4 h-4" fill="currentColor" />
                                                 Twitter
                                             </a>
                                         )}
                                         {profile.social_links?.instagram && (
-                                            <a href={`https://instagram.com/${profile.social_links.instagram}`} target="_blank" className="px-4 py-2 bg-card border border-border rounded-xl hover:border-pink-500/50 hover:bg-pink-500/5 hover:text-[#E1306C] transition-all flex items-center gap-2 font-bold text-sm">
+                                            <a href={`https://instagram.com/${profile.social_links.instagram}`} target="_blank" className="px-4 py-2 bg-muted/40 border border-border/50 rounded-xl hover:border-pink-500/50 hover:bg-pink-500/10 hover:text-[#E1306C] text-muted-foreground hover:scale-105 transition-all flex items-center gap-2 font-bold text-sm">
                                                 <Instagram className="w-4 h-4" />
                                                 Instagram
                                             </a>
                                         )}
                                         {profile.social_links?.twitch && (
-                                            <a href={`https://twitch.tv/${profile.social_links.twitch}`} target="_blank" className="px-4 py-2 bg-card border border-border rounded-xl hover:border-purple-500/50 hover:bg-purple-500/5 hover:text-[#9146FF] transition-all flex items-center gap-2 font-bold text-sm">
-                                                <Twitch className="w-4 h-4" />
+                                            <a href={`https://twitch.tv/${profile.social_links.twitch}`} target="_blank" className="px-4 py-2 bg-muted/40 border border-border/50 rounded-xl hover:border-purple-500/50 hover:bg-purple-500/10 hover:text-[#9146FF] text-muted-foreground hover:scale-105 transition-all flex items-center gap-2 font-bold text-sm">
+                                                <Twitch className="w-4 h-4" fill="currentColor" />
                                                 Twitch
                                             </a>
                                         )}
@@ -331,7 +349,11 @@ export default function PublicProfilePage({ params }: { params: { username: stri
                                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
                                         {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                                         {items.map((item: any) => (
-                                            <div key={item.id} className="group relative aspect-square rounded-2xl overflow-hidden cursor-pointer bg-muted border border-border shadow-sm hover:shadow-md transition-all">
+                                            <div
+                                                key={item.id}
+                                                onClick={() => handlePostClick(item)}
+                                                className="group relative aspect-square rounded-2xl overflow-hidden cursor-pointer bg-muted border border-border shadow-sm hover:shadow-md transition-all"
+                                            >
                                                 <img
                                                     src={item.image_url}
                                                     alt={item.title}
@@ -340,6 +362,16 @@ export default function PublicProfilePage({ params }: { params: { username: stri
                                                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4">
                                                     <h4 className="text-white font-bold text-sm truncate">{item.title}</h4>
                                                     {item.description && <p className="text-white/70 text-xs truncate">{item.description}</p>}
+                                                    <div className="flex items-center gap-3 mt-2">
+                                                        <div className="flex items-center gap-1 text-white/90 text-xs font-bold">
+                                                            <Heart className="w-3 h-3 fill-white" />
+                                                            {item.likes || 0}
+                                                        </div>
+                                                        <div className="flex items-center gap-1 text-white/90 text-xs font-bold">
+                                                            <MessageCircle className="w-3 h-3 fill-white" />
+                                                            {item.comments || 0}
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
                                         ))}

@@ -2,12 +2,16 @@
 -- This script drops existing tables to ensure a clean slate and avoids "column does not exist" errors.
 
 -- DROP TABLES (Cascade to remove dependent policies and foreign keys)
+drop table if exists product_files cascade;
+drop table if exists product_images cascade;
+drop table if exists products cascade;
 drop table if exists seller_metrics cascade;
 drop table if exists order_files cascade;
 drop table if exists transactions cascade;
 drop table if exists orders cascade;
 drop table if exists service_tiers cascade;
 drop table if exists services cascade;
+drop table if exists invoices cascade;
 drop type if exists order_status cascade;
 
 -- RECREATE TABLES
@@ -63,6 +67,58 @@ create policy "Sellers can manage tiers for their services"
     )
   );
 
+-- 1.5 Products
+create table products (
+  id uuid default gen_random_uuid() primary key,
+  seller_id uuid references auth.users(id) not null,
+  title text not null,
+  description text not null,
+  price decimal(10, 2) not null,
+  thumbnail_url text,
+  file_url text, -- For digital downloads
+  is_active boolean default true,
+  created_at timestamp with time zone default timezone('utc'::text, now()),
+  updated_at timestamp with time zone default timezone('utc'::text, now())
+);
+
+alter table products enable row level security;
+
+create policy "Public products are viewable by everyone"
+  on products for select using (true);
+
+create policy "Sellers can insert their own products"
+  on products for insert with check (auth.uid() = seller_id);
+
+create policy "Sellers can update their own products"
+  on products for update using (auth.uid() = seller_id);
+
+-- Moved product_files and product_images to after transactions to resolve dependency issues
+
+-- 1.6 Invoices
+create table invoices (
+  id uuid default gen_random_uuid() primary key,
+  seller_id uuid references auth.users(id) not null,
+  client_email text,
+  amount decimal(10, 2) not null,
+  currency text default 'USD',
+  due_date date,
+  description text,
+  status text default 'pending', -- 'pending', 'paid', 'cancelled'
+  created_at timestamp with time zone default timezone('utc'::text, now()),
+  updated_at timestamp with time zone default timezone('utc'::text, now())
+);
+
+alter table invoices enable row level security;
+
+create policy "Sellers can view their own invoices"
+  on invoices for select using (auth.uid() = seller_id);
+
+create policy "Sellers can insert their own invoices"
+  on invoices for insert with check (auth.uid() = seller_id);
+
+create policy "Sellers can update their own invoices"
+  on invoices for update using (auth.uid() = seller_id);
+
 -- 2. Orders & State Machine
 create type order_status as enum (
   'incomplete', 'active', 'delivered', 'in_revision', 'completed', 'cancelled', 'disputed'
@@ -117,6 +173,64 @@ create policy "Users can view transactions for their orders"
       select 1 from orders
       where orders.id = transactions.order_id
       and (orders.buyer_id = auth.uid() or orders.seller_id = auth.uid())
+    )
+  );
+
+-- 3.5 Product Images & Files (Moved here to avoid dependency errors)
+create table product_images (
+  id uuid default gen_random_uuid() primary key,
+  product_id uuid references products(id) on delete cascade not null,
+  image_url text not null,
+  display_order integer default 0,
+  created_at timestamp with time zone default timezone('utc'::text, now())
+);
+
+alter table product_images enable row level security;
+
+create policy "Public product images are viewable by everyone"
+  on product_images for select using (true);
+
+create policy "Sellers can manage their product images"
+  on product_images for all using (
+    exists (
+      select 1 from products
+      where products.id = product_images.product_id
+      and products.seller_id = auth.uid()
+    )
+  );
+
+create table product_files (
+  id uuid default gen_random_uuid() primary key,
+  product_id uuid references products(id) on delete cascade not null,
+  file_url text not null,
+  file_name text not null,
+  file_size bigint,
+  created_at timestamp with time zone default timezone('utc'::text, now())
+);
+
+alter table product_files enable row level security;
+
+create policy "Sellers can manage their product files"
+  on product_files for all using (
+    exists (
+      select 1 from products
+      where products.id = product_files.product_id
+      and products.seller_id = auth.uid()
+    )
+  );
+
+create policy "Buyers can view files of purchased products"
+  on product_files for select using (
+    exists (
+      select 1 from transactions
+      join orders on orders.id = transactions.order_id
+      where false -- Placeholder for future logic linking orders to products
+    )
+    or
+    exists (
+      select 1 from products
+      where products.id = product_files.product_id
+      and products.seller_id = auth.uid()
     )
   );
 
@@ -218,4 +332,25 @@ begin
 exception
   when duplicate_object then null;
   when others then null;
+end $$;
+
+-- 7. Storage (Fix for "Bucket not found")
+insert into storage.buckets (id, name, public)
+values ('public-images', 'public-images', true)
+on conflict (id) do nothing;
+
+-- Storage Policies (Idempotent)
+do $$
+begin
+  if not exists (select 1 from pg_policies where policyname = 'Public Access' and tablename = 'objects' and schemaname = 'storage') then
+    create policy "Public Access"
+      on storage.objects for select
+      using ( bucket_id = 'public-images' );
+  end if;
+
+  if not exists (select 1 from pg_policies where policyname = 'Authenticated Upload' and tablename = 'objects' and schemaname = 'storage') then
+    create policy "Authenticated Upload"
+      on storage.objects for insert
+      with check ( bucket_id = 'public-images' and auth.role() = 'authenticated' );
+  end if;
 end $$;

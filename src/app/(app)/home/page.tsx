@@ -33,6 +33,7 @@ const PROFILE_TABS = ["HOME", "SERVICES", "PORTFOLIO", "SHOP"];
 const TAGS = ["All", "Digital Art", "Graphic Design", "Photography", "3D Modeling", "Animation"];
 
 import { EditProfileModal } from "@/components/features/dashboard/EditProfileModal";
+import { PostModal } from "@/components/features/PostModal";
 
 
 
@@ -45,6 +46,17 @@ export default function HomePage() {
     const [activeTag, setActiveTag] = useState("All");
     const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
     const [stats, setStats] = useState({ followers: 0, following: 0, is_following: false });
+
+    // Post Modal State
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [selectedPost, setSelectedPost] = useState<any>(null);
+    const [isPostModalOpen, setIsPostModalOpen] = useState(false);
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const handlePostClick = (post: any) => {
+        setSelectedPost(post);
+        setIsPostModalOpen(true);
+    };
 
     useEffect(() => {
         if (profile) {
@@ -89,15 +101,109 @@ export default function HomePage() {
         }
     };
 
-    // Mock Data for Demo Parity
+    // Fetch Feed Items (All Portfolio Items for now, simulating a public feed)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const feedItems: any[] = [];
+    const [feedItems, setFeedItems] = useState<any[]>([]);
+    const [loadingFeed, setLoadingFeed] = useState(false);
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const portfolioItems: any[] = [];
+    useEffect(() => {
+        if (userMode === "BUYER") {
+            fetchFeed();
+        }
+    }, [userMode]);
 
+    const fetchFeed = async () => {
+        setLoadingFeed(true);
+        // Fetch all portfolio items, ordering by newest first
+        const { data, error } = await supabase
+            .from('portfolio_items')
+            .select(`
+                *,
+                profiles (
+                    id,
+                    username,
+                    full_name,
+                    avatar_url
+                )
+            `)
+            .order('created_at', { ascending: false })
+            .limit(50);
+
+        if (data) {
+            // Transform data to match the feed UI structure
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const formattedFeed = data.map((item: any) => ({
+                ...item,
+                user: {
+                    name: item.profiles?.full_name || "Unknown User",
+                    handle: `@${item.profiles?.username || "unknown"}`,
+                    avatar: item.profiles?.avatar_url || "https://github.com/shadcn.png",
+                    username: item.profiles?.username
+                },
+                image: item.image_url,
+                caption: item.description || item.title,
+                likes: 0, // Will be fetched/updated via modal
+                comments: 0, // Will be fetched/updated via modal
+                tags: item.section ? [item.section] : ["Creative"] // Use section as tag
+            }));
+            setFeedItems(formattedFeed);
+        }
+        setLoadingFeed(false);
+    };
+
+    // Seller Dashboard Data
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const services: any[] = [];
+    const [portfolioItems, setPortfolioItems] = useState<any[]>([]);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [services, setServices] = useState<any[]>([]);
+
+    useEffect(() => {
+        if (userMode === "SELLER" && profile) {
+            fetchSellerData();
+        }
+    }, [userMode, profile]);
+
+    const fetchSellerData = async () => {
+        // Fetch Portfolio
+        const { data: portfolio } = await supabase
+            .from('portfolio_items')
+            .select('*')
+            .eq('user_id', profile!.id)
+            .order('created_at', { ascending: false });
+
+        if (portfolio) {
+            // Attach current user profile to items so PostModal has data
+            const formattedPortfolio = portfolio.map(item => ({
+                ...item,
+                user: {
+                    name: profile?.full_name || "Me",
+                    handle: `@${profile?.username}`,
+                    avatar: profile?.avatar_url || "https://github.com/shadcn.png",
+                    username: profile?.username
+                },
+                // Ensure image_url is present (it should be from DB)
+                image_url: item.image_url
+            }));
+            setPortfolioItems(formattedPortfolio);
+        }
+
+        // Fetch Services
+        const { data: servicesData } = await supabase
+            .from('services')
+            .select('*')
+            .eq('seller_id', profile!.id)
+            .order('created_at', { ascending: false });
+
+        if (servicesData) {
+            // Mock previews for now as the schema might not have it or it's a different structure
+            const formattedServices = servicesData.map(s => ({
+                ...s,
+                icon: ShoppingBag, // Default icon
+                previews: s.image_url ? [s.image_url] : []
+            }));
+            setServices(formattedServices);
+        }
+    };
 
     const filteredFeed = feedItems.filter(item => {
         const matchesTag = activeTag === "All" || item.tags.includes(activeTag);
@@ -121,6 +227,15 @@ export default function HomePage() {
         <div className="min-h-screen bg-gray-50 dark:bg-[#1a1a1a] text-gray-900 dark:text-white pb-32 selection:bg-red-500/30 transition-colors duration-300 font-sans">
 
             <EditProfileModal isOpen={isEditProfileOpen} onClose={() => setIsEditProfileOpen(false)} />
+            <PostModal
+                isOpen={isPostModalOpen}
+                onClose={() => setIsPostModalOpen(false)}
+                post={selectedPost}
+                onUpdate={(updatedPost) => {
+                    setFeedItems(prev => prev.map(item => item.id === updatedPost.id ? { ...item, ...updatedPost } : item));
+                    setPortfolioItems(prev => prev.map(item => item.id === updatedPost.id ? { ...item, ...updatedPost } : item));
+                }}
+            />
             <input type="file" ref={bannerInputRef} onChange={handleBannerChange} className="hidden" accept="image/*" />
             <input type="file" ref={avatarInputRef} onChange={handleAvatarChange} className="hidden" accept="image/*" />
 
@@ -136,9 +251,9 @@ export default function HomePage() {
                                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                 <img src={profile.banner_url} alt="Banner" className="w-full h-full object-cover" />
                             ) : (
-                                <div className="w-full h-full bg-gradient-to-b from-gray-200 to-gray-300 dark:from-[#2a2a2a] dark:to-[#1a1a1a]" />
+                                <div className="w-full h-full bg-gradient-to-b from-gray-100 to-gray-200 dark:from-[#2a2a2a] dark:to-[#1a1a1a]" />
                             )}
-                            <div className="absolute inset-0 bg-gradient-to-b from-transparent to-gray-50 dark:to-[#1a1a1a]" />
+                            <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-background" />
 
                             {/* Social Icons Overlay (Top Right) */}
                             <div className="absolute top-6 right-6 flex items-center gap-4 z-20">
@@ -376,7 +491,11 @@ export default function HomePage() {
                                 <div className="grid grid-cols-3 gap-0.5 md:gap-4">
                                     {portfolioItems.length > 0 ? (
                                         portfolioItems.map((item) => (
-                                            <div key={item.id} className="aspect-square relative group cursor-pointer bg-gray-100 dark:bg-[#222]">
+                                            <div
+                                                key={item.id}
+                                                onClick={() => handlePostClick(item)}
+                                                className="aspect-square relative group cursor-pointer bg-gray-100 dark:bg-[#222]"
+                                            >
                                                 <img
                                                     src={item.image_url}
                                                     alt={item.title}
@@ -476,23 +595,34 @@ export default function HomePage() {
                                                 </button>
                                             </div>
 
-                                            <div className="aspect-square w-full bg-gray-100 dark:bg-[#1a1a1a]">
+                                            <div
+                                                className="aspect-square w-full bg-gray-100 dark:bg-[#1a1a1a] cursor-pointer"
+                                                onClick={() => handlePostClick(item)}
+                                            >
                                                 <img src={item.image} alt="Post" className="w-full h-full object-cover" />
                                             </div>
 
                                             <div className="p-4">
                                                 <div className="flex items-center gap-4 mb-3">
-                                                    <button className="text-gray-900 dark:text-white hover:scale-110 transition-transform">
+                                                    <button
+                                                        onClick={() => handlePostClick(item)}
+                                                        className="text-gray-900 dark:text-white hover:scale-110 transition-transform"
+                                                    >
                                                         <Heart className="w-6 h-6" />
                                                     </button>
-                                                    <button className="text-gray-900 dark:text-white hover:scale-110 transition-transform">
+                                                    <button
+                                                        onClick={() => handlePostClick(item)}
+                                                        className="text-gray-900 dark:text-white hover:scale-110 transition-transform"
+                                                    >
                                                         <MessageCircle className="w-6 h-6" />
                                                     </button>
                                                     <button className="text-gray-900 dark:text-white hover:scale-110 transition-transform">
                                                         <Share2 className="w-6 h-6" />
                                                     </button>
                                                 </div>
-                                                <div className="font-bold text-sm mb-1 text-gray-900 dark:text-white">{item.likes.toLocaleString()} likes</div>
+                                                <div className="font-bold text-sm mb-1 text-gray-900 dark:text-white">
+                                                    {item.likes > 0 ? `${item.likes.toLocaleString()} likes` : 'Be the first to like'}
+                                                </div>
                                                 <p className="text-sm text-gray-600 dark:text-gray-300">
                                                     <span className="font-bold text-gray-900 dark:text-white mr-2">{item.user.handle}</span>
                                                     {item.caption}
@@ -504,7 +634,12 @@ export default function HomePage() {
                                                         </span>
                                                     ))}
                                                 </div>
-                                                <div className="text-xs text-gray-500 mt-2 cursor-pointer hover:text-gray-900 dark:hover:text-gray-300">View all {item.comments} comments</div>
+                                                <button
+                                                    onClick={() => handlePostClick(item)}
+                                                    className="text-xs text-gray-500 mt-2 cursor-pointer hover:text-gray-900 dark:hover:text-gray-300"
+                                                >
+                                                    {item.comments > 0 ? `View all ${item.comments} comments` : 'Add a comment...'}
+                                                </button>
                                             </div>
                                         </div>
                                     ))

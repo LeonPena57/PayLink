@@ -1,6 +1,7 @@
 "use client";
 
 import { MoreHorizontal, Plus, Sparkles, Palette, Gamepad2, ArrowRight, Briefcase } from "lucide-react";
+import Link from "next/link";
 
 const services: any[] = []; // Empty array for No Data state
 
@@ -47,12 +48,12 @@ export function ServicesWidget() {
                 )}
             </div>
 
-            <button className="mt-6 w-full py-4 rounded-2xl border border-dashed border-border text-muted-foreground text-sm font-bold hover:text-primary hover:border-primary/50 hover:bg-primary/5 transition-all flex items-center justify-center gap-2 group">
+            <Link href="/create/service" className="mt-6 w-full py-4 rounded-2xl border border-dashed border-border text-muted-foreground text-sm font-bold hover:text-primary hover:border-primary/50 hover:bg-primary/5 transition-all flex items-center justify-center gap-2 group">
                 <div className="w-6 h-6 rounded-full bg-muted text-muted-foreground flex items-center justify-center group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
                     <Plus className="w-3.5 h-3.5" />
                 </div>
                 Add New Service
-            </button>
+            </Link>
         </div>
     );
 }

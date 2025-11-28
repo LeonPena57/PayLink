@@ -16,11 +16,10 @@ import { useTheme } from "next-themes";
 import Link from "next/link";
 import { useUser } from "@/context/UserContext";
 import { supabase } from "@/lib/supabase/client";
+import { useSearchParams } from "next/navigation";
 
 const SELLER_TABS = ["SERVICES", "PORTFOLIO", "SHOP"];
 const BUYER_TABS = ["ORDERS", "SAVED", "FOLLOWING"];
-
-import { useSearchParams } from "next/navigation";
 
 function DashboardContent() {
     const { userMode, toggleUserMode, profile, uploadAvatar, uploadBanner, loading } = useUser();
@@ -406,51 +405,49 @@ function DashboardContent() {
                                                 Showcase your best work to attract more clients.
                                             </p>
                                         </div>
-                                        <button
-                                            onClick={() => setIsAddProjectOpen(true)}
+                                        <Link
+                                            href="/create/post"
                                             className="px-6 py-2 bg-primary text-primary-foreground rounded-full font-bold shadow-lg hover:scale-105 transition-all"
                                         >
                                             Add Project
-                                        </button>
+                                        </Link>
                                     </div>
                                 ) : (
-                                    Object.entries(portfolioSections).map(([sectionName, items]: [string, any]) => (
-                                        <div key={sectionName} className="space-y-4">
-                                            <h3 className="text-xl font-bold text-foreground px-1 flex items-center gap-2">
-                                                <span className="w-1 h-6 bg-primary rounded-full" />
-                                                {sectionName}
-                                            </h3>
-                                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
-                                                {items.map((item: any) => (
-                                                    <div key={item.id} className="group relative aspect-square rounded-2xl overflow-hidden cursor-pointer bg-muted border border-border shadow-sm hover:shadow-md transition-all">
-                                                        <img
-                                                            src={item.image_url}
-                                                            alt={item.title}
-                                                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                                                        />
-                                                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4">
-                                                            <h4 className="text-white font-bold text-sm truncate">{item.title}</h4>
-                                                            {item.description && <p className="text-white/70 text-xs truncate">{item.description}</p>}
+                                    <>
+                                        {Object.entries(portfolioSections).map(([sectionName, items]: [string, any]) => (
+                                            <div key={sectionName} className="space-y-4">
+                                                <h3 className="text-xl font-bold text-foreground px-1 flex items-center gap-2">
+                                                    <span className="w-1 h-6 bg-primary rounded-full" />
+                                                    {sectionName}
+                                                </h3>
+                                                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
+                                                    {items.map((item: any) => (
+                                                        <div key={item.id} className="group relative aspect-square rounded-2xl overflow-hidden cursor-pointer bg-muted border border-border shadow-sm hover:shadow-md transition-all">
+                                                            <img
+                                                                src={item.image_url}
+                                                                alt={item.title}
+                                                                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                                                            />
+                                                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4">
+                                                                <h4 className="text-white font-bold text-sm truncate">{item.title}</h4>
+                                                                {item.description && <p className="text-white/70 text-xs truncate">{item.description}</p>}
+                                                            </div>
                                                         </div>
-                                                    </div>
-                                                ))}
-                                                {/* Add Item Button for this section (optional, or global add) */}
+                                                    ))}
+                                                </div>
                                             </div>
+                                        ))}
+                                        {/* Global Add Project Button if items exist */}
+                                        <div className="flex justify-center pt-8">
+                                            <Link
+                                                href="/create/post"
+                                                className="px-6 py-3 bg-muted hover:bg-muted/80 text-foreground rounded-xl font-bold transition-colors flex items-center gap-2"
+                                            >
+                                                <Plus className="w-5 h-5" />
+                                                Add New Project
+                                            </Link>
                                         </div>
-                                    ))
-                                )}
-
-                                {/* Global Add Project Button if items exist */}
-                                {portfolioItems.length > 0 && (
-                                    <div className="flex justify-center pt-8">
-                                        <button
-                                            onClick={() => setIsAddProjectOpen(true)}
-                                            className="px-6 py-3 bg-muted hover:bg-muted/80 text-foreground rounded-xl font-bold transition-colors flex items-center gap-2"
-                                        >
-                                            <Plus className="w-5 h-5" />
-                                            Add New Project
-                                        </button>
-                                    </div>
+                                    </>
                                 )}
                             </div>
                         )}
@@ -467,12 +464,12 @@ function DashboardContent() {
                                             Start selling digital products and assets.
                                         </p>
                                     </div>
-                                    <button
-                                        onClick={() => setIsCreateProductOpen(true)}
+                                    <Link
+                                        href="/create/product"
                                         className="px-6 py-2 bg-primary text-primary-foreground rounded-full font-bold shadow-lg hover:scale-105 transition-all"
                                     >
                                         Create Product
-                                    </button>
+                                    </Link>
                                 </div>
                             </div>
                         )}
