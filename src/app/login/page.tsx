@@ -65,9 +65,7 @@ export default function LoginPage() {
                     <Link href="/" className="fixed top-6 left-6 p-3 bg-white/5 border border-white/10 rounded-full text-white hover:bg-white/10 transition-colors z-50 hover:scale-105 backdrop-blur-md group">
                         <ArrowLeft className="w-5 h-5 group-hover:-translate-x-0.5 transition-transform" />
                     </Link>
-                    <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center font-black italic text-white text-xl shadow-lg shadow-blue-900/20 transform -skew-x-6 mx-auto mb-6">
-                        <span className="transform skew-x-6">P</span>
-                    </div>
+                    <img src="/logo-white.png" alt="PayLink Logo" className="w-12 h-12 object-contain mx-auto mb-6" />
                     <h1 className="text-3xl font-black tracking-tight italic">
                         {forgotPasswordMode ? "Reset Password" : "Welcome back"}
                     </h1>
