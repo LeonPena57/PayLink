@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, Filter, Download, MoreHorizontal, ArrowUpRight, Package, Clock, CheckCircle2, AlertCircle, FolderOpen, MessageSquare } from "lucide-react";
+import { Search, Filter, Download, MoreHorizontal, ArrowUpRight, Package, Clock, CheckCircle2, AlertCircle, FolderOpen, MessageSquare, TrendingUp, DollarSign } from "lucide-react";
 import clsx from "clsx";
 import { useState } from "react";
 import Link from "next/link";
@@ -124,6 +124,50 @@ export default function OrdersPage() {
                     >
                         New Invoice
                     </button>
+                </div>
+            </div>
+
+            {/* Summary Cards (Desktop Only) */}
+            <div className="hidden md:grid grid-cols-4 gap-4 mb-8">
+                <div className="p-5 bg-card border border-border rounded-2xl shadow-sm">
+                    <div className="flex items-center gap-3 mb-2">
+                        <div className="p-2 bg-green-500/10 rounded-lg text-green-500">
+                            <DollarSign className="w-4 h-4" />
+                        </div>
+                        <span className="text-sm font-medium text-muted-foreground">Total Revenue</span>
+                    </div>
+                    <div className="text-2xl font-bold">$12,524.00</div>
+                    <div className="text-xs text-green-500 font-bold mt-1">+12% from last month</div>
+                </div>
+                <div className="p-5 bg-card border border-border rounded-2xl shadow-sm">
+                    <div className="flex items-center gap-3 mb-2">
+                        <div className="p-2 bg-blue-500/10 rounded-lg text-blue-500">
+                            <Package className="w-4 h-4" />
+                        </div>
+                        <span className="text-sm font-medium text-muted-foreground">Active Orders</span>
+                    </div>
+                    <div className="text-2xl font-bold">2</div>
+                    <div className="text-xs text-muted-foreground mt-1">1 due this week</div>
+                </div>
+                <div className="p-5 bg-card border border-border rounded-2xl shadow-sm">
+                    <div className="flex items-center gap-3 mb-2">
+                        <div className="p-2 bg-purple-500/10 rounded-lg text-purple-500">
+                            <CheckCircle2 className="w-4 h-4" />
+                        </div>
+                        <span className="text-sm font-medium text-muted-foreground">Completed</span>
+                    </div>
+                    <div className="text-2xl font-bold">145</div>
+                    <div className="text-xs text-muted-foreground mt-1">Lifetime projects</div>
+                </div>
+                <div className="p-5 bg-card border border-border rounded-2xl shadow-sm">
+                    <div className="flex items-center gap-3 mb-2">
+                        <div className="p-2 bg-orange-500/10 rounded-lg text-orange-500">
+                            <AlertCircle className="w-4 h-4" />
+                        </div>
+                        <span className="text-sm font-medium text-muted-foreground">Pending</span>
+                    </div>
+                    <div className="text-2xl font-bold">1</div>
+                    <div className="text-xs text-orange-500 font-bold mt-1">Action required</div>
                 </div>
             </div>
 

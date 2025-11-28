@@ -11,6 +11,7 @@ ADD COLUMN IF NOT EXISTS social_links jsonb DEFAULT '{}'::jsonb;
 NOTIFY pgrst, 'reload config';
 
 -- 3. Populate/Update the profile for the user
+-- NOTE: avatar_url is set to NULL to use the new placeholder icon
 INSERT INTO public.profiles (id, username, full_name, bio, location, accent_color, verification_status, avatar_url, banner_url, social_links)
 VALUES (
   '40e74a9b-fd26-4f2f-905e-e518ba1ba085', -- Your UID
@@ -20,7 +21,7 @@ VALUES (
   'Digital World',
   '#3b82f6',
   'verified',
-  'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=1000&auto=format&fit=crop',
+  NULL, -- Set to NULL for placeholder
   'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=1000&auto=format&fit=crop',
   '{"twitter": "havefate", "instagram": "havefate", "twitch": "havefate"}'::jsonb
 )

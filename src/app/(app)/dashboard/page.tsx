@@ -251,11 +251,8 @@ export default function DashboardPage() {
                                     {profile?.avatar_url ? (
                                         <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
                                     ) : (
-                                        <div
-                                            className="w-full h-full flex items-center justify-center text-white text-6xl md:text-7xl font-black italic tracking-tighter"
-                                            style={{ background: `linear-gradient(to bottom right, ${accentColor}, #000)` }}
-                                        >
-                                            {profile?.full_name ? profile.full_name.substring(0, 2).toUpperCase() : "??"}
+                                        <div className="w-full h-full bg-muted flex items-center justify-center">
+                                            <User className="w-20 h-20 text-muted-foreground" />
                                         </div>
                                     )}
 

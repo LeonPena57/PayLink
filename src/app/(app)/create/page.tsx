@@ -1,6 +1,6 @@
 "use client";
 
-import { FileText, ShoppingBag, Briefcase, ArrowRight, Plus } from "lucide-react";
+import { FileText, ShoppingBag, Briefcase, ArrowRight, Plus, Clock, LayoutTemplate } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { CreateInvoiceModal } from "@/components/features/dashboard/CreateInvoiceModal";
@@ -23,7 +23,7 @@ export default function CreatePage() {
             icon: Briefcase,
             color: "bg-purple-500",
             action: null,
-            link: "/dashboard?tab=SERVICES" // Ideally this would open a modal or go to a specific create service flow
+            link: "/dashboard?tab=SERVICES"
         },
         {
             title: "New Product",
@@ -31,51 +31,69 @@ export default function CreatePage() {
             icon: ShoppingBag,
             color: "bg-green-500",
             action: null,
-            link: "/dashboard?tab=SHOP" // Similarly, this would go to product creation
+            link: "/dashboard?tab=SHOP"
         }
     ];
 
     return (
-        <div className="min-h-screen bg-background pb-32 p-6 md:p-8 max-w-3xl mx-auto flex flex-col justify-center">
+        <div className="min-h-screen bg-background pb-32 p-6 md:p-10 max-w-7xl mx-auto">
             <CreateInvoiceModal isOpen={isInvoiceModalOpen} onClose={() => setIsInvoiceModalOpen(false)} />
 
-            <div className="mb-10 text-center">
-                <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                    <Plus className="w-8 h-8 text-primary" />
-                </div>
+            <div className="mb-10">
                 <h1 className="text-3xl md:text-4xl font-bold text-foreground tracking-tight mb-2">Create New</h1>
                 <p className="text-muted-foreground text-lg">What would you like to create today?</p>
             </div>
 
-            <div className="grid gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
                 {createOptions.map((option, index) => (
                     <div
                         key={index}
                         onClick={() => {
                             if (option.action) option.action();
-                            // If it's a link, the Link component handles it, but if it's a div acting as button we need logic.
-                            // For simplicity, we'll wrap content in Link if link exists, or div if not.
                         }}
-                        className="group relative overflow-hidden bg-card border border-border hover:border-primary/50 rounded-3xl p-6 transition-all hover:shadow-xl hover:shadow-primary/5 cursor-pointer active:scale-[0.99]"
+                        className="group relative overflow-hidden bg-card border border-border hover:border-primary/50 rounded-3xl p-8 transition-all hover:shadow-xl hover:shadow-primary/5 cursor-pointer active:scale-[0.99] flex flex-col h-full"
                     >
                         {option.link ? (
                             <Link href={option.link} className="absolute inset-0 z-10" />
                         ) : null}
 
-                        <div className="flex items-center gap-6 relative z-0">
-                            <div className={`w-16 h-16 rounded-2xl ${option.color}/10 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-500`}>
-                                <option.icon className={`w-8 h-8 ${option.color.replace("bg-", "text-")}`} />
-                            </div>
-                            <div className="flex-1">
-                                <h3 className="text-xl font-bold text-foreground mb-1 group-hover:text-primary transition-colors">{option.title}</h3>
-                                <p className="text-muted-foreground font-medium">{option.description}</p>
-                            </div>
-                            <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
-                                <ArrowRight className="w-5 h-5" />
-                            </div>
+                        <div className={`w-14 h-14 rounded-2xl ${option.color}/10 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-500 mb-6`}>
+                            <option.icon className={`w-7 h-7 ${option.color.replace("bg-", "text-")}`} />
+                        </div>
+
+                        <div className="flex-1">
+                            <h3 className="text-xl font-bold text-foreground mb-2 group-hover:text-primary transition-colors">{option.title}</h3>
+                            <p className="text-muted-foreground font-medium leading-relaxed">{option.description}</p>
+                        </div>
+
+                        <div className="mt-8 flex items-center text-sm font-bold text-primary opacity-0 group-hover:opacity-100 transition-opacity -translate-x-2 group-hover:translate-x-0 duration-300">
+                            Start Creating <ArrowRight className="w-4 h-4 ml-2" />
                         </div>
                     </div>
                 ))}
+            </div>
+
+            {/* Recent Drafts / Templates Section for Desktop Feel */}
+            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100">
+                <div className="flex items-center justify-between">
+                    <h2 className="text-xl font-bold text-foreground">Recent Drafts</h2>
+                    <button className="text-sm font-bold text-primary hover:underline">View All</button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {[1, 2, 3, 4].map((i) => (
+                        <div key={i} className="bg-card border border-border rounded-2xl p-4 hover:bg-muted/30 transition-colors cursor-pointer group">
+                            <div className="aspect-[4/3] bg-muted rounded-xl mb-4 flex items-center justify-center relative overflow-hidden">
+                                <LayoutTemplate className="w-8 h-8 text-muted-foreground/50 group-hover:scale-110 transition-transform" />
+                            </div>
+                            <h3 className="font-bold text-foreground text-sm mb-1">Untitled Draft {i}</h3>
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                <Clock className="w-3 h-3" />
+                                <span>Edited 2 days ago</span>
+                            </div>
+                        </div>
+                    ))}
+                </div>
             </div>
         </div>
     );

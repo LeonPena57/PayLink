@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
 import { useUserMode, useUser } from "@/context/UserContext";
-import { Moon, Sun, Monitor, User, Bell, Shield, LogOut, ChevronRight, CreditCard, Globe, HelpCircle, Crown, X, Check, Mail, Lock, Smartphone, Trash2 } from "lucide-react";
+import { Moon, Sun, Monitor, User, Bell, Shield, LogOut, ChevronRight, CreditCard, Globe, HelpCircle, Crown, X, Check, Mail, Lock, Smartphone, Trash2, LayoutGrid } from "lucide-react";
 import clsx from "clsx";
 import { SubscriptionModal } from "@/components/features/dashboard/SubscriptionModal";
 import { VerificationModal } from "@/components/features/dashboard/VerificationModal";
@@ -11,7 +11,7 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/lib/supabase/client";
 
-// Generic Modal Component
+// Generic Modal Component (Keep as is for mobile/specific actions)
 function SettingsDetailModal({ isOpen, onClose, title, children }: { isOpen: boolean; onClose: () => void; title: string; children: React.ReactNode }) {
     return (
         <AnimatePresence>
@@ -52,6 +52,7 @@ export default function SettingsPage() {
     const { user, signOut } = useUser();
     const router = useRouter();
     const [mounted, setMounted] = useState(false);
+    const [activeTab, setActiveTab] = useState("general");
 
     // Modal States
     const [isSubscriptionOpen, setIsSubscriptionOpen] = useState(false);
@@ -95,252 +96,262 @@ export default function SettingsPage() {
         }
     };
 
-    const sections = [
-        {
-            title: "Subscription",
-            items: [
-                {
-                    icon: Crown,
-                    label: "Manage Subscription",
-                    value: "Free Plan",
-                    action: () => setIsSubscriptionOpen(true),
-                    type: "link"
-                }
-            ]
-        },
-        {
-            title: "Appearance",
-            items: [
-                {
-                    icon: theme === 'dark' ? Moon : Sun,
-                    label: "Theme",
-                    value: theme === 'dark' ? "Dark" : theme === 'light' ? "Light" : "System",
-                    action: () => setTheme(theme === 'dark' ? 'light' : 'dark'),
-                    type: "toggle"
-                }
-            ]
-        },
-        {
-            title: "Account Mode",
-            items: [
-                {
-                    icon: User,
-                    label: "Switch Mode",
-                    value: userMode === "SELLER" ? "Seller" : "Buyer",
-                    action: toggleUserMode,
-                    type: "toggle_mode"
-                }
-            ]
-        },
-        {
-            title: "General",
-            items: [
-                { icon: User, label: "Account Information", action: () => setActiveModal("ACCOUNT"), type: "link" },
-                {
-                    icon: Check,
-                    label: "Verification",
-                    value: getVerificationStatusLabel(),
-                    action: handleVerificationClick,
-                    type: "link",
-                    disabled: profile?.verification_status === 'verified' || profile?.verification_status === 'pending'
-                },
-                { icon: Bell, label: "Notifications", action: () => setActiveModal("NOTIFICATIONS"), type: "link" },
-                { icon: Globe, label: "Language", value: "English", action: () => setActiveModal("LANGUAGE"), type: "link" },
-            ]
-        },
-        {
-            title: "Payments & Security",
-            items: [
-                { icon: CreditCard, label: "Payment Methods", action: () => setActiveModal("PAYMENTS"), type: "link" },
-                { icon: Shield, label: "Security & Privacy", action: () => setActiveModal("SECURITY"), type: "link" },
-            ]
-        },
-        {
-            title: "Support",
-            items: [
-                { icon: HelpCircle, label: "Help Center", action: () => setActiveModal("HELP"), type: "link" },
-            ]
-        }
+    const tabs = [
+        { id: "general", label: "General", icon: User },
+        { id: "account_mode", label: "Account Mode", icon: LayoutGrid },
+        { id: "subscription", label: "Subscription", icon: Crown },
+        { id: "appearance", label: "Appearance", icon: Moon },
+        { id: "security", label: "Security", icon: Shield },
+        { id: "payments", label: "Payments", icon: CreditCard },
+        { id: "support", label: "Support", icon: HelpCircle },
     ];
 
+    const renderContent = () => {
+        switch (activeTab) {
+            case "general":
+                return (
+                    <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+                        <div className="space-y-1">
+                            <h2 className="text-2xl font-bold">General Settings</h2>
+                            <p className="text-muted-foreground">Manage your account details and preferences.</p>
+                        </div>
+                        <div className="grid gap-6">
+                            <div className="p-6 bg-card border border-border rounded-3xl space-y-6">
+                                <h3 className="font-bold text-lg border-b border-border pb-4">Profile Information</h3>
+                                <div className="grid gap-4">
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium text-muted-foreground">Email Address</label>
+                                        <div className="p-3 bg-muted/50 rounded-xl border border-border flex items-center gap-3">
+                                            <Mail className="w-4 h-4 text-muted-foreground" />
+                                            <span className="text-foreground font-medium">{user?.email || "No email found"}</span>
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium text-muted-foreground">Verification Status</label>
+                                        <div className="flex items-center justify-between p-3 bg-muted/50 rounded-xl border border-border">
+                                            <span className="font-medium">{getVerificationStatusLabel()}</span>
+                                            {(profile?.verification_status === 'none' || profile?.verification_status === 'rejected') && (
+                                                <button onClick={handleVerificationClick} className="text-xs font-bold text-primary hover:underline">
+                                                    Start Verification
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="p-6 bg-card border border-border rounded-3xl space-y-6">
+                                <h3 className="font-bold text-lg border-b border-border pb-4">Language & Region</h3>
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
+                                            <Globe className="w-5 h-5" />
+                                        </div>
+                                        <div>
+                                            <div className="font-medium">Language</div>
+                                            <div className="text-sm text-muted-foreground">English</div>
+                                        </div>
+                                    </div>
+                                    <button className="px-4 py-2 bg-muted rounded-lg text-sm font-bold hover:bg-muted/80">Change</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                );
+            case "account_mode":
+                return (
+                    <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+                        <div className="space-y-1">
+                            <h2 className="text-2xl font-bold">Account Mode</h2>
+                            <p className="text-muted-foreground">Switch between Seller and Buyer features.</p>
+                        </div>
+                        <div className="p-8 bg-card border border-border rounded-3xl flex flex-col items-center text-center space-y-6">
+                            <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center">
+                                <LayoutGrid className="w-10 h-10 text-primary" />
+                            </div>
+                            <div>
+                                <h3 className="text-xl font-bold mb-2">Current Mode: {userMode}</h3>
+                                <p className="text-muted-foreground max-w-md mx-auto">
+                                    {userMode === "SELLER"
+                                        ? "You are currently in Seller mode. You can manage your services, portfolio, and orders."
+                                        : "You are currently in Buyer mode. You can browse services, make purchases, and track your orders."}
+                                </p>
+                            </div>
+                            <button
+                                onClick={toggleUserMode}
+                                className="px-8 py-3 bg-primary text-primary-foreground rounded-xl font-bold shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all hover:scale-105"
+                            >
+                                Switch to {userMode === "SELLER" ? "Buyer" : "Seller"} Mode
+                            </button>
+                        </div>
+                    </div>
+                );
+            case "subscription":
+                return (
+                    <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+                        <div className="space-y-1">
+                            <h2 className="text-2xl font-bold">Subscription</h2>
+                            <p className="text-muted-foreground">Manage your plan and billing.</p>
+                        </div>
+                        <div className="p-6 bg-gradient-to-br from-primary/10 to-blue-500/10 border border-primary/20 rounded-3xl space-y-6">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-12 h-12 bg-primary text-primary-foreground rounded-2xl flex items-center justify-center shadow-lg shadow-primary/20">
+                                        <Crown className="w-6 h-6" />
+                                    </div>
+                                    <div>
+                                        <h3 className="font-bold text-lg">Free Plan</h3>
+                                        <p className="text-sm text-muted-foreground">Basic features active</p>
+                                    </div>
+                                </div>
+                                <span className="px-3 py-1 bg-primary/10 text-primary rounded-full text-xs font-bold border border-primary/20">Active</span>
+                            </div>
+                            <button
+                                onClick={() => setIsSubscriptionOpen(true)}
+                                className="w-full py-3 bg-primary text-primary-foreground rounded-xl font-bold shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all"
+                            >
+                                Upgrade Plan
+                            </button>
+                        </div>
+                    </div>
+                );
+            case "appearance":
+                return (
+                    <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+                        <div className="space-y-1">
+                            <h2 className="text-2xl font-bold">Appearance</h2>
+                            <p className="text-muted-foreground">Customize how PayLink looks for you.</p>
+                        </div>
+                        <div className="grid grid-cols-3 gap-4">
+                            <button
+                                onClick={() => setTheme('light')}
+                                className={clsx(
+                                    "p-6 rounded-3xl border-2 flex flex-col items-center gap-4 transition-all",
+                                    theme === 'light' ? "border-primary bg-primary/5" : "border-border bg-card hover:border-primary/50"
+                                )}
+                            >
+                                <Sun className="w-8 h-8" />
+                                <span className="font-bold">Light</span>
+                            </button>
+                            <button
+                                onClick={() => setTheme('dark')}
+                                className={clsx(
+                                    "p-6 rounded-3xl border-2 flex flex-col items-center gap-4 transition-all",
+                                    theme === 'dark' ? "border-primary bg-primary/5" : "border-border bg-card hover:border-primary/50"
+                                )}
+                            >
+                                <Moon className="w-8 h-8" />
+                                <span className="font-bold">Dark</span>
+                            </button>
+                            <button
+                                onClick={() => setTheme('system')}
+                                className={clsx(
+                                    "p-6 rounded-3xl border-2 flex flex-col items-center gap-4 transition-all",
+                                    theme === 'system' ? "border-primary bg-primary/5" : "border-border bg-card hover:border-primary/50"
+                                )}
+                            >
+                                <Monitor className="w-8 h-8" />
+                                <span className="font-bold">System</span>
+                            </button>
+                        </div>
+                    </div>
+                );
+            case "security":
+                return (
+                    <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+                        <div className="space-y-1">
+                            <h2 className="text-2xl font-bold">Security</h2>
+                            <p className="text-muted-foreground">Protect your account and data.</p>
+                        </div>
+                        <div className="p-6 bg-card border border-border rounded-3xl space-y-6">
+                            <div className="space-y-4">
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-muted-foreground">Password</label>
+                                    <button
+                                        onClick={handleResetPassword}
+                                        disabled={resetSent}
+                                        className="w-full p-3 bg-muted/50 border border-border rounded-xl hover:bg-muted transition-colors flex items-center justify-between group"
+                                    >
+                                        <span className="font-medium">Change Password</span>
+                                        <span className="text-xs text-primary font-bold">{resetSent ? "Email Sent!" : "Send Reset Link"}</span>
+                                    </button>
+                                </div>
+                                <div className="pt-4 border-t border-border">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <div className="p-2 bg-blue-500/10 rounded-lg text-blue-500">
+                                                <Smartphone className="w-5 h-5" />
+                                            </div>
+                                            <div>
+                                                <div className="font-bold text-foreground">Two-Factor Authentication</div>
+                                                <div className="text-xs text-muted-foreground">Add an extra layer of security.</div>
+                                            </div>
+                                        </div>
+                                        <button className="px-4 py-1.5 bg-muted text-foreground text-xs font-bold rounded-lg hover:bg-muted/80">Enable</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="p-6 bg-red-500/5 border border-red-500/20 rounded-3xl">
+                            <h3 className="font-bold text-red-500 mb-2">Danger Zone</h3>
+                            <p className="text-sm text-red-500/80 mb-4">Permanently delete your account and all of your content.</p>
+                            <button className="px-4 py-2 bg-red-500 text-white rounded-lg text-sm font-bold hover:bg-red-600 transition-colors flex items-center gap-2">
+                                <Trash2 className="w-4 h-4" />
+                                Delete Account
+                            </button>
+                        </div>
+                    </div>
+                );
+            default:
+                return (
+                    <div className="flex items-center justify-center h-64 text-muted-foreground">
+                        Select a setting to view details.
+                    </div>
+                );
+        }
+    };
+
     return (
-        <div className="min-h-screen bg-background pb-32 p-4 md:p-8 max-w-3xl mx-auto">
+        <div className="min-h-screen bg-background pb-32 md:pb-10 p-4 md:p-8 max-w-7xl mx-auto">
             <SubscriptionModal isOpen={isSubscriptionOpen} onClose={() => setIsSubscriptionOpen(false)} />
             <VerificationModal isOpen={isVerificationOpen} onClose={() => setIsVerificationOpen(false)} />
 
-            {/* Account Modal */}
-            <SettingsDetailModal isOpen={activeModal === "ACCOUNT"} onClose={() => setActiveModal(null)} title="Account Information">
-                <div className="space-y-6">
-                    <div className="space-y-2">
-                        <label className="text-sm font-medium text-muted-foreground">Email Address</label>
-                        <div className="p-3 bg-muted/50 rounded-xl border border-border flex items-center gap-3">
-                            <Mail className="w-4 h-4 text-muted-foreground" />
-                            <span className="text-foreground font-medium">{user?.email || "No email found"}</span>
-                        </div>
-                    </div>
-                    <div className="space-y-2">
-                        <label className="text-sm font-medium text-muted-foreground">Password</label>
+            <h1 className="text-3xl font-bold text-foreground mb-8 md:mb-10">Settings</h1>
+
+            <div className="flex flex-col md:flex-row gap-8">
+                {/* Sidebar (Desktop) / List (Mobile) */}
+                <div className="w-full md:w-64 shrink-0 space-y-2">
+                    {tabs.map((tab) => (
                         <button
-                            onClick={handleResetPassword}
-                            disabled={resetSent}
-                            className="w-full p-3 bg-card border border-border rounded-xl hover:bg-muted transition-colors flex items-center justify-between group"
+                            key={tab.id}
+                            onClick={() => setActiveTab(tab.id)}
+                            className={clsx(
+                                "w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all",
+                                activeTab === tab.id
+                                    ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
+                                    : "hover:bg-muted text-muted-foreground hover:text-foreground"
+                            )}
                         >
-                            <span className="font-medium">Change Password</span>
-                            <span className="text-xs text-primary font-bold">{resetSent ? "Email Sent!" : "Send Reset Link"}</span>
-                        </button>
-                    </div>
-                </div>
-            </SettingsDetailModal>
-
-            {/* Notifications Modal */}
-            <SettingsDetailModal isOpen={activeModal === "NOTIFICATIONS"} onClose={() => setActiveModal(null)} title="Notifications">
-                <div className="space-y-4">
-                    {[
-                        { label: "Email Notifications", desc: "Receive emails about your account activity." },
-                        { label: "Push Notifications", desc: "Receive push notifications on your device." },
-                        { label: "Marketing Emails", desc: "Receive emails about new features and offers." },
-                    ].map((item, i) => (
-                        <div key={i} className="flex items-center justify-between p-4 bg-card border border-border rounded-xl">
-                            <div>
-                                <div className="font-bold text-foreground">{item.label}</div>
-                                <div className="text-xs text-muted-foreground">{item.desc}</div>
-                            </div>
-                            <div className="relative inline-flex h-6 w-11 items-center rounded-full bg-primary">
-                                <span className="translate-x-6 inline-block h-4 w-4 transform rounded-full bg-white transition" />
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </SettingsDetailModal>
-
-            {/* Language Modal */}
-            <SettingsDetailModal isOpen={activeModal === "LANGUAGE"} onClose={() => setActiveModal(null)} title="Language">
-                <div className="space-y-2">
-                    {["English", "Spanish", "French", "German", "Japanese"].map((lang) => (
-                        <button key={lang} className="w-full p-4 bg-card border border-border rounded-xl hover:bg-muted transition-colors flex items-center justify-between group">
-                            <span className="font-medium">{lang}</span>
-                            {lang === "English" && <Check className="w-4 h-4 text-primary" />}
+                            <tab.icon className="w-5 h-5" />
+                            {tab.label}
                         </button>
                     ))}
-                </div>
-            </SettingsDetailModal>
 
-            {/* Payments Modal */}
-            <SettingsDetailModal isOpen={activeModal === "PAYMENTS"} onClose={() => setActiveModal(null)} title="Payment Methods">
-                <div className="text-center py-8 space-y-4">
-                    <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto">
-                        <CreditCard className="w-8 h-8 text-muted-foreground" />
-                    </div>
-                    <div>
-                        <h3 className="font-bold text-lg">No Payment Methods</h3>
-                        <p className="text-muted-foreground text-sm">You haven't added any payment methods yet.</p>
-                    </div>
-                    <button className="px-6 py-2 bg-primary text-primary-foreground rounded-full font-bold shadow-lg hover:scale-105 transition-all">
-                        Add Payment Method
-                    </button>
-                </div>
-            </SettingsDetailModal>
-
-            {/* Security Modal */}
-            <SettingsDetailModal isOpen={activeModal === "SECURITY"} onClose={() => setActiveModal(null)} title="Security & Privacy">
-                <div className="space-y-4">
-                    <div className="flex items-center justify-between p-4 bg-card border border-border rounded-xl">
-                        <div className="flex items-center gap-3">
-                            <div className="p-2 bg-blue-500/10 rounded-lg text-blue-500">
-                                <Smartphone className="w-5 h-5" />
-                            </div>
-                            <div>
-                                <div className="font-bold text-foreground">Two-Factor Authentication</div>
-                                <div className="text-xs text-muted-foreground">Add an extra layer of security.</div>
-                            </div>
-                        </div>
-                        <button className="px-4 py-1.5 bg-muted text-foreground text-xs font-bold rounded-lg hover:bg-muted/80">Enable</button>
-                    </div>
-
-                    <div className="pt-4 border-t border-border">
-                        <button className="w-full p-4 bg-red-500/5 border border-red-500/20 rounded-xl hover:bg-red-500/10 transition-colors flex items-center gap-3 text-red-500 group">
-                            <Trash2 className="w-5 h-5" />
-                            <div className="text-left">
-                                <div className="font-bold">Delete Account</div>
-                                <div className="text-xs opacity-80">Permanently delete your account and data.</div>
-                            </div>
+                    <div className="pt-4 mt-4 border-t border-border">
+                        <button
+                            onClick={handleSignOut}
+                            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-red-500 hover:bg-red-500/10 transition-colors"
+                        >
+                            <LogOut className="w-5 h-5" />
+                            Log Out
                         </button>
                     </div>
                 </div>
-            </SettingsDetailModal>
 
-            {/* Help Modal */}
-            <SettingsDetailModal isOpen={activeModal === "HELP"} onClose={() => setActiveModal(null)} title="Help Center">
-                <div className="space-y-4">
-                    <div className="p-4 bg-card border border-border rounded-xl space-y-4">
-                        <h3 className="font-bold">Contact Support</h3>
-                        <p className="text-sm text-muted-foreground">Need help? Our support team is available 24/7.</p>
-                        <button className="w-full py-2 bg-primary text-primary-foreground rounded-xl font-bold text-sm">
-                            Start Live Chat
-                        </button>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                        <button className="p-4 bg-card border border-border rounded-xl hover:bg-muted transition-colors text-center space-y-2">
-                            <div className="font-bold text-sm">FAQs</div>
-                        </button>
-                        <button className="p-4 bg-card border border-border rounded-xl hover:bg-muted transition-colors text-center space-y-2">
-                            <div className="font-bold text-sm">Community</div>
-                        </button>
-                    </div>
+                {/* Content Area */}
+                <div className="flex-1 min-h-[500px]">
+                    {renderContent()}
                 </div>
-            </SettingsDetailModal>
-
-            <h1 className="text-3xl font-bold text-foreground mb-8">Settings</h1>
-
-            <div className="space-y-8">
-                {sections.map((section, idx) => (
-                    <div key={idx} className="space-y-3">
-                        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider ml-1">{section.title}</h2>
-                        <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
-                            {section.items.map((item, itemIdx) => (
-                                <div
-                                    key={itemIdx}
-                                    onClick={item.disabled ? undefined : item.action}
-                                    className={clsx(
-                                        "flex items-center justify-between p-4 transition-colors",
-                                        item.disabled ? "opacity-50 cursor-not-allowed" : "hover:bg-muted/50 cursor-pointer",
-                                        itemIdx !== section.items.length - 1 && "border-b border-border/50"
-                                    )}
-                                >
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-foreground">
-                                            <item.icon className="w-5 h-5" />
-                                        </div>
-                                        <span className="font-medium text-foreground">{item.label}</span>
-                                    </div>
-
-                                    <div className="flex items-center gap-3">
-                                        {item.type === "toggle_mode" && (
-                                            <div className="bg-muted p-1 rounded-lg flex items-center">
-                                                <span className={clsx("px-3 py-1 rounded-md text-xs font-bold transition-all", item.value === "Seller" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground")}>Seller</span>
-                                                <span className={clsx("px-3 py-1 rounded-md text-xs font-bold transition-all", item.value === "Buyer" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground")}>Buyer</span>
-                                            </div>
-                                        )}
-
-                                        {item.value && item.type !== "toggle_mode" && (
-                                            <span className="text-muted-foreground text-sm">{item.value}</span>
-                                        )}
-
-                                        <ChevronRight className="w-5 h-5 text-muted-foreground/50" />
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                ))}
-
-                <button
-                    onClick={handleSignOut}
-                    className="w-full p-4 rounded-2xl bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-colors font-bold flex items-center justify-center gap-2"
-                >
-                    <LogOut className="w-5 h-5" />
-                    Log Out
-                </button>
             </div>
         </div>
     );

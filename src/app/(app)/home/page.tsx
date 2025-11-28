@@ -173,8 +173,8 @@ export default function HomePage() {
                                             {profile?.avatar_url ? (
                                                 <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
                                             ) : (
-                                                <div className="w-full h-full bg-gray-200 dark:bg-[#333] flex items-center justify-center text-4xl font-bold text-gray-400">
-                                                    {profile?.full_name?.[0] || "?"}
+                                                <div className="w-full h-full bg-gray-200 dark:bg-[#333] flex items-center justify-center">
+                                                    <User className="w-16 h-16 text-gray-400" />
                                                 </div>
                                             )}
 
