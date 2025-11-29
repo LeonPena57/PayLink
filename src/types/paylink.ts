@@ -79,3 +79,65 @@ export type ProfileStats = {
     following: number;
     is_following: boolean;
 };
+
+export type Comment = {
+    id: string;
+    user_id: string;
+    portfolio_item_id: string;
+    content: string;
+    parent_id: string | null;
+    created_at: string;
+    profiles?: {
+        id: string;
+        username: string;
+        full_name: string;
+        avatar_url: string | null;
+    };
+    likes_count?: number;
+    user_has_liked?: boolean;
+};
+
+export type InvoiceItem = {
+    title: string;
+    price: number;
+    image: string | null;
+    size: string | null;
+    date: string;
+};
+
+export type Invoice = {
+    id: string;
+    seller_id: string;
+    amount: number;
+    currency: string;
+    description: string;
+    status: 'pending' | 'paid' | 'cancelled';
+    created_at: string;
+    items: InvoiceItem[] | null;
+};
+
+export type PortfolioItem = {
+    id: string;
+    user_id: string;
+    title: string;
+    description: string | null;
+    image_url: string;
+    section: string | null;
+    created_at: string;
+    updated_at: string;
+    // Joined fields
+    user?: {
+        name: string;
+        username: string;
+        avatar: string | null;
+        verification_status?: string;
+    };
+    profiles?: {
+        full_name: string;
+        username: string;
+        avatar_url: string | null;
+        verification_status?: string;
+    };
+    likes?: { count: number }[];
+    comments?: { count: number }[];
+};

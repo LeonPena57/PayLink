@@ -2,6 +2,7 @@
 
 import { ArrowRight, Check, Shield, Zap, LayoutGrid, Lock, CreditCard, Image as ImageIcon, Globe, Repeat, FileText, Star, Play, ChevronRight, Menu, X } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
@@ -26,7 +27,9 @@ export default function LandingPage() {
             <nav className="fixed top-0 left-0 right-0 z-50 bg-[#0a0a0a]/80 backdrop-blur-xl border-b border-white/5">
                 <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <img src="/logo-white.png" alt="PayLink Logo" className="w-10 h-10 object-contain" />
+                        <div className="relative w-10 h-10">
+                            <Image src="/logo-white.png" alt="PayLink Logo" fill className="object-contain" priority />
+                        </div>
                         <span className="font-black tracking-tighter text-2xl italic bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">PAYLINK</span>
                     </div>
 
@@ -85,12 +88,12 @@ export default function LandingPage() {
                     </div>
 
                     <h1 className="text-6xl md:text-8xl font-black tracking-tighter mb-8 text-white animate-in fade-in slide-in-from-bottom-6 duration-700 delay-100 leading-[0.9]">
-                        The future of <br />
-                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-blue-400 animate-gradient-x">creative payments.</span>
+                        The best <br />
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-blue-400 animate-gradient-x">commission site.</span>
                     </h1>
 
                     <p className="text-xl md:text-2xl text-gray-400 mb-12 max-w-2xl mx-auto leading-relaxed animate-in fade-in slide-in-from-bottom-8 duration-700 delay-200 font-medium">
-                        Secure file delivery, automated invoicing, and instant global payouts. The all-in-one platform for modern creators.
+                        Better than Fiverr, Ko-fi, and PayPal. Secure file delivery, automated invoicing, and instant global payouts for digital artists and freelancers.
                     </p>
 
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-in fade-in slide-in-from-bottom-10 duration-700 delay-300">
@@ -251,39 +254,113 @@ export default function LandingPage() {
                 <div className="max-w-7xl mx-auto relative z-10">
                     <div className="text-center mb-20">
                         <h2 className="text-4xl md:text-6xl font-black tracking-tighter mb-6">Simple, transparent pricing.</h2>
-                        <p className="text-gray-400 text-xl font-medium">No monthly fees. We only make money when you do.</p>
+                        <p className="text-gray-400 text-xl font-medium max-w-2xl mx-auto">Choose the plan that fits your growth. Upgrade anytime.</p>
+
+                        {/* 0% Tips Highlight */}
+                        <div className="mt-8 inline-flex items-center gap-2 px-6 py-3 rounded-full bg-green-500/10 border border-green-500/20 text-green-400 font-bold animate-pulse">
+                            <Star className="w-5 h-5 fill-current" />
+                            <span>We never take a cut from your tips. You keep 100%.</span>
+                        </div>
                     </div>
 
-                    <div className="max-w-md mx-auto bg-[#111] border border-white/10 rounded-[2.5rem] overflow-hidden shadow-2xl hover:shadow-blue-900/20 transition-shadow duration-500">
-                        <div className="p-10 text-center border-b border-white/5 bg-gradient-to-b from-white/5 to-transparent">
-                            <h3 className="text-2xl font-bold mb-2 text-white">Pay-as-you-go</h3>
-                            <div className="flex items-baseline justify-center gap-1 text-white my-6">
-                                <span className="text-6xl font-black tracking-tighter">5%</span>
-                                <span className="text-gray-400 font-bold">per transaction</span>
+                    <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+                        {/* Starter Plan */}
+                        <div className="bg-[#111] border border-white/10 rounded-[2.5rem] overflow-hidden p-8 flex flex-col hover:border-white/20 transition-all">
+                            <div className="mb-8">
+                                <h3 className="text-2xl font-bold text-white mb-2">Starter</h3>
+                                <div className="flex items-baseline gap-1 my-4">
+                                    <span className="text-5xl font-black text-white">$0</span>
+                                    <span className="text-gray-400 font-bold">/month</span>
+                                </div>
+                                <p className="text-gray-400 font-medium">Perfect for just getting started.</p>
                             </div>
-                            <p className="text-sm text-gray-400 font-medium bg-white/5 inline-block px-4 py-1 rounded-full">Includes all features. No hidden fees.</p>
-                        </div>
-                        <div className="p-10 bg-[#0a0a0a]">
-                            <ul className="space-y-5">
-                                {[
-                                    "Unlimited Projects",
-                                    "Secure File Hosting",
-                                    "Global Payments",
-                                    "Dispute Protection",
-                                    "Instant Payouts"
-                                ].map((item, i) => (
-                                    <li key={i} className="flex items-center gap-4">
-                                        <div className="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center shrink-0">
-                                            <Check className="w-3.5 h-3.5 text-green-500" />
-                                        </div>
-                                        <span className="font-bold text-gray-300">{item}</span>
-                                    </li>
-                                ))}
+
+                            <ul className="space-y-4 flex-1 mb-8">
+                                <li className="flex items-center gap-3">
+                                    <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center shrink-0"><Check className="w-3.5 h-3.5 text-white" /></div>
+                                    <span className="text-gray-300 font-medium">5% Transaction Fee</span>
+                                </li>
+                                <li className="flex items-center gap-3">
+                                    <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center shrink-0"><Check className="w-3.5 h-3.5 text-white" /></div>
+                                    <span className="text-gray-300 font-medium">Unlimited Products</span>
+                                </li>
+                                <li className="flex items-center gap-3">
+                                    <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center shrink-0"><Check className="w-3.5 h-3.5 text-white" /></div>
+                                    <span className="text-gray-300 font-medium">Basic Analytics</span>
+                                </li>
+                                <li className="flex items-center gap-3">
+                                    <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center shrink-0"><Check className="w-3.5 h-3.5 text-white" /></div>
+                                    <span className="text-gray-300 font-medium">1GB File Uploads</span>
+                                </li>
                             </ul>
-                            <Link href="/signup" className="block w-full py-5 bg-white text-black text-center font-bold text-lg rounded-2xl mt-10 hover:bg-gray-200 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5">
-                                Get Started for Free
+
+                            <Link href="/signup" className="block w-full py-4 bg-white/10 text-white text-center font-bold rounded-2xl hover:bg-white/20 transition-all">
+                                Start for Free
                             </Link>
                         </div>
+
+                        {/* Pro Plan */}
+                        <div className="bg-[#111] border border-blue-500/30 rounded-[2.5rem] overflow-hidden p-8 flex flex-col relative group">
+                            <div className="absolute inset-0 bg-blue-500/5 pointer-events-none" />
+                            <div className="absolute top-0 right-0 p-6">
+                                <span className="px-3 py-1 bg-blue-500 text-white text-xs font-bold rounded-full">RECOMMENDED</span>
+                            </div>
+
+                            <div className="mb-8 relative z-10">
+                                <h3 className="text-2xl font-bold text-white mb-2">Pro Creator</h3>
+                                <div className="flex items-baseline gap-1 my-4">
+                                    <span className="text-5xl font-black text-white">$9</span>
+                                    <span className="text-gray-400 font-bold">/month</span>
+                                </div>
+                                <p className="text-blue-200 font-medium">For serious sellers scaling up.</p>
+                            </div>
+
+                            <ul className="space-y-4 flex-1 mb-8 relative z-10">
+                                <li className="flex items-center gap-3">
+                                    <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center shrink-0"><Check className="w-3.5 h-3.5 text-white" /></div>
+                                    <span className="text-white font-bold">0% Transaction Fee</span>
+                                </li>
+                                <li className="flex items-center gap-3">
+                                    <div className="w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center shrink-0"><Check className="w-3.5 h-3.5 text-blue-400" /></div>
+                                    <span className="text-gray-300 font-medium">Verified Badge</span>
+                                </li>
+                                <li className="flex items-center gap-3">
+                                    <div className="w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center shrink-0"><Check className="w-3.5 h-3.5 text-blue-400" /></div>
+                                    <span className="text-gray-300 font-medium">Advanced Analytics</span>
+                                </li>
+                                <li className="flex items-center gap-3">
+                                    <div className="w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center shrink-0"><Check className="w-3.5 h-3.5 text-blue-400" /></div>
+                                    <span className="text-gray-300 font-medium">10GB File Uploads</span>
+                                </li>
+                            </ul>
+
+                            <Link href="/signup" className="relative z-10 block w-full py-4 bg-blue-600 text-white text-center font-bold rounded-2xl hover:bg-blue-500 transition-all shadow-lg shadow-blue-900/20">
+                                Get Started with Pro
+                            </Link>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* FAQ Section */}
+            <section className="py-32 px-6 bg-[#0a0a0a] border-t border-white/5">
+                <div className="max-w-4xl mx-auto">
+                    <div className="text-center mb-16">
+                        <h2 className="text-3xl md:text-5xl font-black tracking-tighter mb-6">Frequently Asked Questions</h2>
+                    </div>
+
+                    <div className="space-y-6">
+                        {[
+                            { q: "How do I get paid?", a: "We use Stripe Connect to send payouts directly to your bank account. Payouts are instant for most countries." },
+                            { q: "Are there really no fees on tips?", a: "Yes! We believe tips are a gift from your supporters. We don't take a single cent from them." },
+                            { q: "Can I cancel my Pro subscription?", a: "Absolutely. You can cancel anytime from your settings dashboard. No questions asked." },
+                            { q: "What file types do you support?", a: "We support all major file types including ZIP, PSD, AI, MP4, and more. Maximum file size depends on your plan." }
+                        ].map((item, i) => (
+                            <div key={i} className="p-8 rounded-3xl bg-[#111] border border-white/5 hover:border-white/10 transition-all">
+                                <h3 className="text-xl font-bold text-white mb-3">{item.q}</h3>
+                                <p className="text-gray-400 font-medium leading-relaxed">{item.a}</p>
+                            </div>
+                        ))}
                     </div>
                 </div>
             </section>
@@ -292,7 +369,9 @@ export default function LandingPage() {
             <footer className="py-12 px-6 border-t border-white/5 bg-[#0a0a0a]">
                 <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
                     <div className="flex items-center gap-3">
-                        <img src="/logo-white.png" alt="PayLink Logo" className="w-8 h-8 object-contain opacity-50 grayscale hover:grayscale-0 hover:opacity-100 transition-all" />
+                        <div className="relative w-8 h-8 opacity-50 grayscale hover:grayscale-0 hover:opacity-100 transition-all">
+                            <Image src="/logo-white.png" alt="PayLink Logo" fill className="object-contain" />
+                        </div>
                         <span className="font-bold tracking-tight text-gray-500">Paylink © 2025</span>
                     </div>
                     <div className="flex gap-8 text-sm text-gray-500 font-bold">

@@ -7,6 +7,7 @@ import { useUser } from "@/context/UserContext";
 import { MapPin, Link as LinkIcon, Twitter, Instagram, Twitch, Grid as GridIcon, ShoppingBag, Package, Heart, UserPlus, UserCheck, MessageCircle } from "lucide-react";
 import clsx from "clsx";
 import Link from "next/link";
+import Image from "next/image";
 import { PostModal } from "@/components/features/PostModal";
 import { useToast } from "@/context/ToastContext";
 
@@ -176,7 +177,7 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
                 <div className="h-64 md:h-96 w-full relative overflow-hidden">
                     {profile.banner_url ? (
                         <div className="absolute inset-0">
-                            <img src={profile.banner_url} alt="Profile Banner" className="w-full h-full object-cover" />
+                            <Image src={profile.banner_url} alt="Profile Banner" fill className="object-cover" priority />
                             <div className="absolute inset-0 dark:bg-black/20" />
                             <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
                         </div>
@@ -197,7 +198,7 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
                             <div className="w-40 h-40 md:w-56 md:h-56 rounded-[2.5rem] p-1.5 bg-background shadow-2xl shadow-black/20">
                                 <div className="w-full h-full rounded-[2rem] bg-muted overflow-hidden relative border border-border">
                                     {profile.avatar_url ? (
-                                        <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+                                        <Image src={profile.avatar_url} alt="Avatar" fill className="object-cover" priority />
                                     ) : (
                                         <div
                                             className="w-full h-full flex items-center justify-center text-white text-6xl md:text-7xl font-black italic tracking-tighter"
@@ -214,8 +215,14 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
                         <div className="flex-1 flex flex-col md:flex-row items-center md:items-end justify-between gap-6 w-full text-center md:text-left pb-4 min-w-0">
                             <div className="space-y-4 flex-1 w-full min-w-0">
                                 <div>
-                                    <h1 className="text-4xl md:text-6xl font-black text-foreground tracking-tight leading-none mb-2">
+                                    <h1 className="text-4xl md:text-6xl font-black text-foreground tracking-tight leading-none mb-2 flex items-center justify-center md:justify-start gap-3">
                                         {profile.full_name || "No Name"}
+                                        {/* Verified Badge Logic: Rating > 4.5 AND Commissions > 10 */}
+                                        {(profile.seller_rating > 4.5 && profile.completed_commissions > 10) && (
+                                            <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center shrink-0" title="Verified Creator">
+                                                <UserCheck className="w-5 h-5 text-white" />
+                                            </div>
+                                        )}
                                     </h1>
                                     <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 text-muted-foreground font-medium text-lg">
                                         <span className="text-foreground">@{profile.username}</span>
@@ -378,10 +385,11 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
                                                 onClick={() => handlePostClick(item)}
                                                 className="group relative aspect-square rounded-2xl overflow-hidden cursor-pointer bg-muted border border-border shadow-sm hover:shadow-md transition-all"
                                             >
-                                                <img
+                                                <Image
                                                     src={item.image_url}
                                                     alt={item.title}
-                                                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                                                    fill
+                                                    className="object-cover transition-transform duration-500 group-hover:scale-110"
                                                 />
                                                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4">
                                                     <h4 className="text-white font-bold text-sm truncate">{item.title}</h4>

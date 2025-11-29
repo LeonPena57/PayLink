@@ -132,6 +132,7 @@ async function updateSellerMetrics(sellerId: string, type: 'completed' | 'cancel
         .eq('seller_id', sellerId)
         .single();
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const updates: any = {
         total_orders: (current?.total_orders || 0) + 1,
         updated_at: new Date().toISOString(),

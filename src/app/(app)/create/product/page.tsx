@@ -6,6 +6,7 @@ import { ArrowLeft, Loader2, ShoppingBag, X, FileText, Upload } from "lucide-rea
 import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
 import { useUser } from "@/context/UserContext";
+import { generateWatermarkedPreview } from "@/lib/watermark";
 
 export default function CreateProductPage() {
     const router = useRouter();
@@ -16,7 +17,7 @@ export default function CreateProductPage() {
     const [price, setPrice] = useState("");
 
     // Multiple Images
-    const [images, setImages] = useState<{ file: File, preview: string }[]>([]);
+    const [images, setImages] = useState<{ file: File, preview: string, watermarkedBlob?: Blob }[]>([]);
 
     // Multiple Files
     const [files, setFiles] = useState<File[]>([]);
@@ -24,20 +25,27 @@ export default function CreateProductPage() {
     const imageInputRef = useRef<HTMLInputElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const selectedFiles = Array.from(e.target.files || []);
         if (images.length + selectedFiles.length > 5) {
             alert("You can only upload up to 5 images.");
             return;
         }
 
-        selectedFiles.forEach(file => {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setImages(prev => [...prev, { file, preview: reader.result as string }]);
-            };
-            reader.readAsDataURL(file);
-        });
+        const newImages = await Promise.all(selectedFiles.map(async (file) => {
+            // Generate watermarked preview
+            try {
+                const watermarkedBlob = await generateWatermarkedPreview(file);
+                const previewUrl = URL.createObjectURL(watermarkedBlob);
+                return { file, preview: previewUrl, watermarkedBlob };
+            } catch (error) {
+                console.error("Error generating watermark:", error);
+                // Fallback to normal preview if watermark fails
+                return { file, preview: URL.createObjectURL(file) };
+            }
+        }));
+
+        setImages(prev => [...prev, ...newImages]);
     };
 
     const removeImage = (index: number) => {
@@ -50,6 +58,9 @@ export default function CreateProductPage() {
             alert("You can only upload up to 5 files.");
             return;
         }
+
+        // Note: The "1GB vs 10GB" limit enforcement is not yet implemented in code (it requires backend logic to check total usage)
+
         setFiles(prev => [...prev, ...selectedFiles]);
     };
 
@@ -82,25 +93,56 @@ export default function CreateProductPage() {
             if (images.length > 0) {
                 await Promise.all(images.map(async (img, index) => {
                     const fileExt = img.file.name.split('.').pop();
-                    const fileName = `${productId}/image_${index}_${Math.random()}.${fileExt}`;
-                    const filePath = `product-content/${fileName}`;
+                    const randomId = Math.random().toString(36).substring(7);
 
-                    const { error: uploadError } = await supabase.storage
-                        .from('public-images')
-                        .upload(filePath, img.file);
+                    // Paths
+                    const originalPath = `${user.id}/${productId}/original_${index}_${randomId}.${fileExt}`;
+                    const previewPath = `${user.id}/${productId}/preview_${index}_${randomId}.jpg`; // Previews are always JPG
 
-                    if (!uploadError) {
-                        const { data } = supabase.storage.from('public-images').getPublicUrl(filePath);
-                        await supabase.from('product_images').insert({
-                            product_id: productId,
-                            image_url: data.publicUrl,
-                            display_order: index
-                        });
+                    // A. Upload Original to Secure Bucket (Private)
+                    const { error: secureError } = await supabase.storage
+                        .from('secure_uploads')
+                        .upload(originalPath, img.file);
 
-                        // Update main thumbnail if it's the first image
-                        if (index === 0) {
-                            await supabase.from('products').update({ thumbnail_url: data.publicUrl }).eq('id', productId);
+                    if (secureError) throw secureError;
+
+                    // B. Upload Watermarked Preview to Public Bucket
+                    let publicUrl = "";
+                    if (img.watermarkedBlob) {
+                        const { error: publicError } = await supabase.storage
+                            .from('public_previews')
+                            .upload(previewPath, img.watermarkedBlob);
+
+                        if (!publicError) {
+                            const { data } = supabase.storage.from('public_previews').getPublicUrl(previewPath);
+                            publicUrl = data.publicUrl;
                         }
+                    } else {
+                        // Fallback: Upload original to public if watermark failed (not ideal but keeps flow working)
+                        // Or we could upload the original file as the preview if we don't care about security for this edge case
+                        // For now, let's just upload the original to public_previews
+                        const { error: publicError } = await supabase.storage
+                            .from('public_previews')
+                            .upload(previewPath, img.file);
+
+                        if (!publicError) {
+                            const { data } = supabase.storage.from('public_previews').getPublicUrl(previewPath);
+                            publicUrl = data.publicUrl;
+                        }
+                    }
+
+                    // C. Insert Record
+                    // Note: We might need to update the product_images table to support secure_url if we want to link to the original later
+                    // For now, we assume 'image_url' is the public preview.
+                    await supabase.from('product_images').insert({
+                        product_id: productId,
+                        image_url: publicUrl,
+                        display_order: index
+                    });
+
+                    // Update main thumbnail if it's the first image
+                    if (index === 0) {
+                        await supabase.from('products').update({ thumbnail_url: publicUrl }).eq('id', productId);
                     }
                 }));
             }
@@ -109,18 +151,19 @@ export default function CreateProductPage() {
             if (files.length > 0) {
                 await Promise.all(files.map(async (file, index) => {
                     const fileExt = file.name.split('.').pop();
-                    const fileName = `${productId}/file_${index}_${Math.random()}.${fileExt}`;
-                    const filePath = `product-content/${fileName}`;
+                    const fileName = `${user.id}/${productId}/file_${index}_${Math.random()}.${fileExt}`;
 
+                    // Upload to Secure Bucket
                     const { error: uploadError } = await supabase.storage
-                        .from('public-images') // Using public-images for now, ideally should be a private bucket
-                        .upload(filePath, file);
+                        .from('secure_uploads')
+                        .upload(fileName, file);
 
                     if (!uploadError) {
-                        const { data } = supabase.storage.from('public-images').getPublicUrl(filePath);
+                        // We don't get a public URL for secure files.
+                        // We store the path, and generate a signed URL when the user buys it.
                         await supabase.from('product_files').insert({
                             product_id: productId,
-                            file_url: data.publicUrl,
+                            file_url: fileName, // Store PATH, not URL
                             file_name: file.name,
                             file_size: file.size
                         });
@@ -165,7 +208,7 @@ export default function CreateProductPage() {
                             <span>Product Images</span>
                             <span>{images.length}/5</span>
                         </label>
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        <div className="grid grid-cols-3 gap-3 md:gap-4">
                             {images.map((img, index) => (
                                 <div key={index} className="relative aspect-square rounded-2xl overflow-hidden border border-border group">
                                     <img src={img.preview} alt={`Preview ${index}`} className="w-full h-full object-cover" />

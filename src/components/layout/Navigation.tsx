@@ -120,16 +120,16 @@ export function Navigation() {
                             initial={{ opacity: 0, y: -20 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -20 }}
-                            className="fixed top-20 left-0 right-0 bg-[#0a0a0a] border-b border-white/10 p-6 flex flex-col gap-4 z-40 md:hidden shadow-2xl"
+                            className="fixed top-20 left-0 right-0 bg-white dark:bg-[#0a0a0a] border-b border-gray-200 dark:border-white/10 p-6 flex flex-col gap-4 z-[60] md:hidden shadow-2xl"
                         >
-                            <Link href="/" className="text-lg font-bold text-gray-400 hover:text-white" onClick={() => setIsMobileMenuOpen(false)}>Home</Link>
-                            <Link href="/#features" className="text-lg font-bold text-gray-400 hover:text-white" onClick={() => setIsMobileMenuOpen(false)}>Features</Link>
-                            <Link href="/#how-it-works" className="text-lg font-bold text-gray-400 hover:text-white" onClick={() => setIsMobileMenuOpen(false)}>How it Works</Link>
-                            <Link href="/#pricing" className="text-lg font-bold text-gray-400 hover:text-white" onClick={() => setIsMobileMenuOpen(false)}>Pricing</Link>
-                            <Link href="/home" className="text-lg font-bold text-blue-400 hover:text-blue-300" onClick={() => setIsMobileMenuOpen(false)}>Explore</Link>
-                            <div className="h-px bg-white/10 my-2" />
-                            <Link href="/login" className="text-lg font-bold text-gray-400 hover:text-white" onClick={() => setIsMobileMenuOpen(false)}>Log in</Link>
-                            <Link href="/signup" className="px-6 py-3 bg-white text-black text-center font-bold rounded-full" onClick={() => setIsMobileMenuOpen(false)}>Get Started</Link>
+                            <Link href="/" className="text-lg font-bold text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white" onClick={() => setIsMobileMenuOpen(false)}>Home</Link>
+                            <Link href="/#features" className="text-lg font-bold text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white" onClick={() => setIsMobileMenuOpen(false)}>Features</Link>
+                            <Link href="/#how-it-works" className="text-lg font-bold text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white" onClick={() => setIsMobileMenuOpen(false)}>How it Works</Link>
+                            <Link href="/#pricing" className="text-lg font-bold text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white" onClick={() => setIsMobileMenuOpen(false)}>Pricing</Link>
+                            <Link href="/home" className="text-lg font-bold text-blue-500 dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-300" onClick={() => setIsMobileMenuOpen(false)}>Explore</Link>
+                            <div className="h-px bg-gray-200 dark:bg-white/10 my-2" />
+                            <Link href="/login" className="text-lg font-bold text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white" onClick={() => setIsMobileMenuOpen(false)}>Log in</Link>
+                            <Link href="/signup" className="px-6 py-3 bg-black dark:bg-white text-white dark:text-black text-center font-bold rounded-full hover:opacity-90 transition-opacity" onClick={() => setIsMobileMenuOpen(false)}>Get Started</Link>
                         </motion.div>
                     )}
                 </AnimatePresence>

@@ -24,7 +24,8 @@ import {
     Edit3,
     User,
     Maximize2,
-    Send
+    Send,
+    X
 } from "lucide-react";
 import Link from "next/link";
 import clsx from "clsx";
@@ -49,6 +50,11 @@ export default function HomePage() {
     const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
     const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
     const [stats, setStats] = useState({ followers: 0, following: 0, is_following: false });
+
+    // Feed State
+    const [feedTab, setFeedTab] = useState<'foryou' | 'following'>('foryou');
+    const [isFollowListOpen, setIsFollowListOpen] = useState(false);
+    const [followListType, setFollowListType] = useState<'followers' | 'following'>('followers');
 
     // Scroll Direction State for Mobile Header
     const [isHeaderVisible, setIsHeaderVisible] = useState(true);
@@ -176,7 +182,9 @@ export default function HomePage() {
                     full_name,
                     avatar_url,
                     verification_status
-                )
+                ),
+                comments (count),
+                likes (count)
             `)
             .order('created_at', { ascending: false })
             .limit(50);
@@ -195,8 +203,8 @@ export default function HomePage() {
                 },
                 image: item.image_url,
                 caption: item.description || item.title,
-                likes: 0, // Will be fetched/updated via modal
-                comments: 0, // Will be fetched/updated via modal
+                likes: item.likes?.[0]?.count || 0,
+                comments: item.comments?.[0]?.count || 0,
                 tags: item.section ? [item.section] : ["Creative"] // Use section as tag
             }));
             setFeedItems(formattedFeed);
@@ -266,13 +274,17 @@ export default function HomePage() {
                 });
 
             if (error) {
-                toast("Error liking post", "error");
-                // Revert
-                setFeedItems(prev => prev.map(item =>
-                    item.id === post.id
-                        ? { ...item, likes: post.likes, user_has_liked: false }
-                        : item
-                ));
+                if (error.code === '23505') {
+                    // Already liked, do nothing (optimistic update was correct)
+                } else {
+                    toast("Error liking post", "error");
+                    // Revert
+                    setFeedItems(prev => prev.map(item =>
+                        item.id === post.id
+                            ? { ...item, likes: post.likes, user_has_liked: false }
+                            : item
+                    ));
+                }
             }
         }
     };
@@ -281,6 +293,24 @@ export default function HomePage() {
     const [portfolioItems, setPortfolioItems] = useState<any[]>([]);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [services, setServices] = useState<any[]>([]);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [products, setProducts] = useState<any[]>([]);
+
+    const deleteProduct = async (productId: string) => {
+        if (!confirm("Are you sure you want to delete this product?")) return;
+
+        const { error } = await supabase
+            .from('products')
+            .delete()
+            .eq('id', productId);
+
+        if (error) {
+            toast("Error deleting product", "error");
+        } else {
+            toast("Product deleted", "success");
+            setProducts(prev => prev.filter(p => p.id !== productId));
+        }
+    };
 
     // Inline Comment State
     const [commentingPostId, setCommentingPostId] = useState<string | null>(null);
@@ -358,9 +388,26 @@ export default function HomePage() {
             const formattedServices = servicesData.map(s => ({
                 ...s,
                 icon: ShoppingBag, // Default icon
-                previews: s.image_url ? [s.image_url] : []
+                previews: s.thumbnail_url ? [s.thumbnail_url] : []
             }));
             setServices(formattedServices);
+        }
+
+
+        // Fetch Products (Shop)
+        const { data: productsData } = await supabase
+            .from('products')
+            .select(`
+                *,
+                product_images (
+                    image_url
+                )
+            `)
+            .eq('seller_id', profile!.id)
+            .order('created_at', { ascending: false });
+
+        if (productsData) {
+            setProducts(productsData);
         }
     };
 
@@ -385,7 +432,10 @@ export default function HomePage() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-[#1a1a1a] text-gray-900 dark:text-white pb-32 selection:bg-red-500/30 transition-colors duration-300 font-sans">
+        <div className={clsx(
+            "min-h-screen text-gray-900 dark:text-white pb-32 selection:bg-red-500/30 transition-colors duration-300 font-sans",
+            userMode === "SELLER" ? "bg-gray-50 dark:bg-[#1a1a1a]" : "bg-white dark:bg-[#222]"
+        )}>
 
             <EditProfileModal isOpen={isEditProfileOpen} onClose={() => setIsEditProfileOpen(false)} />
             <PostModal
@@ -660,254 +710,421 @@ export default function HomePage() {
 
                         {activeProfileTab === "SHOP" && (
                             <div className="p-4 md:p-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                                <div className="flex flex-col items-center justify-center py-20 text-center space-y-4 border-2 border-dashed border-gray-200 dark:border-[#333] rounded-3xl bg-gray-50/50 dark:bg-[#222]/30">
-                                    <div className="w-16 h-16 bg-gray-100 dark:bg-[#2a2a2a] rounded-full flex items-center justify-center">
-                                        <ShoppingBag className="w-8 h-8 text-gray-500" />
+                                {products.length > 0 ? (
+                                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                                        {products.map((product) => (
+                                            <div key={product.id} className="bg-white dark:bg-[#222] border border-gray-200 dark:border-[#333] rounded-2xl overflow-hidden group hover:shadow-lg transition-all">
+                                                <div className="aspect-square bg-gray-100 dark:bg-[#2a2a2a] relative overflow-hidden">
+                                                    {product.product_images && product.product_images.length > 0 ? (
+                                                        <img
+                                                            src={product.product_images[0].image_url}
+                                                            alt={product.title}
+                                                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                                        />
+                                                    ) : (
+                                                        <div className="w-full h-full flex items-center justify-center text-gray-400">
+                                                            <ShoppingBag className="w-10 h-10" />
+                                                        </div>
+                                                    )}
+                                                    <div className="absolute top-2 right-2 flex gap-2">
+                                                        <div className="bg-black/50 text-white text-xs font-bold px-2 py-1 rounded-full backdrop-blur-sm">
+                                                            ${product.price}
+                                                        </div>
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                deleteProduct(product.id);
+                                                            }}
+                                                            className="bg-red-500/80 hover:bg-red-500 text-white p-1 rounded-full backdrop-blur-sm transition-colors"
+                                                            title="Delete Product"
+                                                        >
+                                                            <X className="w-3 h-3" />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                <div className="p-4">
+                                                    <h4 className="font-bold text-gray-900 dark:text-white truncate">{product.title}</h4>
+                                                    <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 mt-1">{product.description}</p>
+                                                    <button className="w-full mt-3 bg-gray-900 dark:bg-white text-white dark:text-black py-2 rounded-xl text-xs font-bold hover:opacity-90 transition-opacity">
+                                                        Buy Now
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))}
                                     </div>
-                                    <div>
-                                        <h3 className="text-xl font-bold text-gray-900 dark:text-white">Shop Demo</h3>
-                                        <p className="text-gray-500 dark:text-gray-400 max-w-sm mx-auto mt-2">
-                                            This is where your digital products would appear.
-                                        </p>
+                                ) : (
+                                    <div className="flex flex-col items-center justify-center py-20 text-center space-y-4 border-2 border-dashed border-gray-200 dark:border-[#333] rounded-3xl bg-gray-50/50 dark:bg-[#222]/30">
+                                        <div className="w-16 h-16 bg-gray-100 dark:bg-[#2a2a2a] rounded-full flex items-center justify-center">
+                                            <ShoppingBag className="w-8 h-8 text-gray-500" />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-xl font-bold text-gray-900 dark:text-white">Shop is Empty</h3>
+                                            <p className="text-gray-500 dark:text-gray-400 max-w-sm mx-auto mt-2">
+                                                You haven't listed any products yet.
+                                            </p>
+                                        </div>
                                     </div>
-                                </div>
+                                )}
                             </div>
                         )}
                     </div>
                 </div>
             ) : (
                 /* BUYER FEED */
-                <div className="pt-16 md:pt-24 px-0 md:px-4 pb-32 w-full md:max-w-6xl md:mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
-                    {searchedUsers.map(user => (
-                        <div key={user.id} className="flex items-center justify-between">
-                            <Link href={`/${user.username}`} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-                                <div className="w-10 h-10 rounded-full overflow-hidden ring-1 ring-gray-100 dark:ring-[#333] bg-gray-100 dark:bg-[#333] flex items-center justify-center">
-                                    {user.avatar_url ? (
-                                        <img src={user.avatar_url} alt={user.full_name} className="w-full h-full object-cover" />
-                                    ) : (
-                                        <User className="w-5 h-5 text-gray-400" />
+                /* BUYER FEED */
+                <div className="w-full max-w-6xl mx-auto pb-24 md:pt-8 md:px-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        {/* Middle Column - Feed */}
+                        <div className="lg:col-span-2">
+                            {/* Mobile Search Header & Tabs */}
+                            {/* Mobile Search Header & Tabs */}
+                            {/* Mobile Search Header & Tabs */}
+                            <div className={clsx(
+                                "fixed top-0 left-0 right-0 z-20 bg-white/95 dark:bg-[#222]/95 backdrop-blur-md border-b border-gray-200 dark:border-[#333] transition-transform duration-300 md:hidden",
+                                isHeaderVisible ? "translate-y-0" : "-translate-y-full"
+                            )}>
+                                <div className="px-4 py-2">
+                                    <div className="relative">
+                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                        <input
+                                            type="text"
+                                            value={searchQuery}
+                                            onChange={(e) => setSearchQuery(e.target.value)}
+                                            placeholder="Search creators..."
+                                            className="w-full bg-gray-100 dark:bg-[#2a2a2a] border-none rounded-xl pl-10 pr-4 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-gray-200 dark:focus:ring-[#333] placeholder:text-gray-500"
+                                        />
+                                    </div>
+
+                                    {/* Search Results Dropdown */}
+                                    {searchQuery && searchedUsers.length > 0 && (
+                                        <div className="absolute top-full left-0 right-0 mt-2 mx-4 bg-white dark:bg-[#222] border border-gray-200 dark:border-[#333] rounded-2xl overflow-hidden shadow-xl max-h-[60vh] overflow-y-auto">
+                                            {searchedUsers.map(user => (
+                                                <Link
+                                                    key={user.id}
+                                                    href={`/${user.username}`}
+                                                    className="flex items-center gap-3 p-3 hover:bg-gray-50 dark:hover:bg-[#333] transition-colors"
+                                                >
+                                                    <div className="w-10 h-10 rounded-full overflow-hidden ring-1 ring-gray-100 dark:ring-[#333] bg-gray-100 dark:bg-[#333] flex items-center justify-center">
+                                                        {user.avatar_url ? (
+                                                            <img src={user.avatar_url} alt={user.full_name} className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            <User className="w-5 h-5 text-gray-400" />
+                                                        )}
+                                                    </div>
+                                                    <div>
+                                                        <div className="font-bold text-gray-900 dark:text-white text-sm flex items-center gap-1">
+                                                            {user.full_name}
+                                                            {user.verification_status === 'verified' && (
+                                                                <div className="bg-blue-500 text-white p-0.5 rounded-full">
+                                                                    <Check className="w-2 h-2 stroke-[4]" />
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        <div className="text-xs text-gray-500">@{user.username}</div>
+                                                    </div>
+                                                </Link>
+                                            ))}
+                                        </div>
                                     )}
                                 </div>
-                                <div>
-                                    <div className="font-bold text-gray-900 dark:text-white text-sm flex items-center gap-1">
-                                        {user.full_name}
-                                        {user.verification_status === 'verified' && (
-                                            <div className="bg-blue-500 text-white p-0.5 rounded-full">
-                                                <Check className="w-2 h-2 stroke-[4]" />
-                                            </div>
+
+                                {/* Feed Tabs */}
+                                <div className="flex border-t border-gray-200 dark:border-[#333]">
+                                    <button
+                                        onClick={() => setFeedTab('foryou')}
+                                        className={clsx(
+                                            "flex-1 py-3 text-sm font-bold text-center relative",
+                                            feedTab === 'foryou' ? "text-gray-900 dark:text-white" : "text-gray-500 dark:text-gray-400"
                                         )}
-                                    </div>
-                                    <div className="text-xs text-gray-500">@{user.username}</div>
+                                    >
+                                        For You
+                                        {feedTab === 'foryou' && (
+                                            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-1 bg-gray-900 dark:bg-white rounded-t-full" />
+                                        )}
+                                    </button>
+                                    <button
+                                        onClick={() => setFeedTab('following')}
+                                        className={clsx(
+                                            "flex-1 py-3 text-sm font-bold text-center relative",
+                                            feedTab === 'following' ? "text-gray-900 dark:text-white" : "text-gray-500 dark:text-gray-400"
+                                        )}
+                                    >
+                                        Following
+                                        {feedTab === 'following' && (
+                                            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-1 bg-gray-900 dark:bg-white rounded-t-full" />
+                                        )}
+                                    </button>
                                 </div>
-                            </Link>
-                            <Link href={`/${user.username}`} className="text-xs font-bold bg-gray-100 dark:bg-[#333] text-gray-900 dark:text-white px-4 py-2 rounded-full hover:bg-gray-200 dark:hover:bg-[#444] transition-colors">
-                                View
-                            </Link>
-                        </div>
-                    ))}
-                </div>
-            )}
-
-            {/* Feed Items */}
-            <div className="space-y-6">
-                {filteredFeed.length > 0 ? (
-                    filteredFeed.map((item) => (
-                        <div key={item.id} className="w-full bg-white dark:bg-[#222] border-y md:border border-gray-200 dark:border-[#333] md:rounded-3xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                            <div className="p-4 flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                    <Link href={`/${item.user.username}`} className="block">
-                                        <div className="w-10 h-10 rounded-full overflow-hidden ring-2 ring-gray-100 dark:ring-[#333] bg-gray-100 dark:bg-[#333] flex items-center justify-center">
-                                            {item.user.avatar ? (
-                                                <img src={item.user.avatar} alt={item.user.name} className="w-full h-full object-cover" />
-                                            ) : (
-                                                <User className="w-5 h-5 text-gray-400" />
-                                            )}
-                                        </div>
-                                    </Link>
-                                    <div>
-                                        <Link href={`/${item.user.username}`} className="flex items-center gap-1 font-bold text-gray-900 dark:text-white text-sm hover:underline">
-                                            {item.user.name}
-                                            {/* Verified Badge Logic - Assuming item.user has verification_status or we check a list */}
-                                            {(item.user.username === "leonp" || item.user.username === "paylink") && (
-                                                <div className="bg-blue-500 text-white p-0.5 rounded-full">
-                                                    <Check className="w-2 h-2 stroke-[4]" />
-                                                </div>
-                                            )}
-                                        </Link>
-                                        <Link href={`/${item.user.username}`} className="text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
-                                            {item.user.handle}
-                                        </Link>
-                                    </div>
-                                </div>
-                                <button className="text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
-                                    <MoreHorizontal className="w-5 h-5" />
-                                </button>
                             </div>
 
-                            <div
-                                className="aspect-square w-full bg-gray-100 dark:bg-[#1a1a1a] relative group"
-                            >
-                                <img src={item.image} alt="Post" className="w-full h-full object-cover" />
+                            {/* Desktop Tabs (Sticky) */}
+                            <div className="hidden md:flex sticky top-24 z-10 bg-white/95 dark:bg-[#222]/95 backdrop-blur-md border border-gray-200 dark:border-[#333] rounded-2xl mb-6 overflow-hidden shadow-sm">
                                 <button
-                                    onClick={() => handlePostClick(item)}
-                                    className="absolute bottom-3 right-3 p-2 bg-black/50 hover:bg-black/70 rounded-full text-white opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
+                                    onClick={() => setFeedTab('foryou')}
+                                    className={clsx(
+                                        "flex-1 py-3 text-sm font-bold text-center relative hover:bg-gray-50 dark:hover:bg-[#333] transition-colors",
+                                        feedTab === 'foryou' ? "text-gray-900 dark:text-white" : "text-gray-500 dark:text-gray-400"
+                                    )}
                                 >
-                                    <Maximize2 className="w-5 h-5" />
+                                    For You
+                                    {feedTab === 'foryou' && (
+                                        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-1 bg-gray-900 dark:bg-white rounded-t-full" />
+                                    )}
+                                </button>
+                                <button
+                                    onClick={() => setFeedTab('following')}
+                                    className={clsx(
+                                        "flex-1 py-3 text-sm font-bold text-center relative hover:bg-gray-50 dark:hover:bg-[#333] transition-colors",
+                                        feedTab === 'following' ? "text-gray-900 dark:text-white" : "text-gray-500 dark:text-gray-400"
+                                    )}
+                                >
+                                    Following
+                                    {feedTab === 'following' && (
+                                        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-1 bg-gray-900 dark:bg-white rounded-t-full" />
+                                    )}
                                 </button>
                             </div>
 
-                            <div className="p-4">
-                                <div className="flex items-center justify-between mb-3">
-                                    <div className="flex items-center gap-4">
-                                        <button
-                                            onClick={() => handleLike(item)}
-                                            className={clsx(
-                                                "hover:scale-110 transition-transform flex items-center justify-center",
-                                                item.user_has_liked ? "text-red-500" : "text-gray-900 dark:text-white"
-                                            )}
-                                        >
-                                            <Heart className={clsx("w-7 h-7", item.user_has_liked && "fill-current")} />
-                                        </button>
-                                        <button
-                                            onClick={() => setCommentingPostId(commentingPostId === item.id ? null : item.id)}
-                                            className="text-gray-900 dark:text-white hover:scale-110 transition-transform flex items-center justify-center"
-                                        >
-                                            <MessageCircle className="w-7 h-7" />
-                                        </button>
-                                        <button className="text-gray-900 dark:text-white hover:scale-110 transition-transform flex items-center justify-center">
-                                            <Send className="w-7 h-7 -rotate-45 mt-2" />
-                                        </button>
-                                    </div>
-                                    <div className="font-bold text-sm mb-1 text-gray-900 dark:text-white">
-                                        {item.likes} likes
-                                    </div>
-                                </div>
-
-                                <div className="space-y-1">
-                                    <p className="text-sm text-gray-900 dark:text-white">
-                                        <span className="font-bold mr-2">{item.user.name}</span>
-                                        {item.caption}
-                                    </p>
-                                    <div className="flex flex-wrap gap-2 mt-2">
-                                        {item.tags.map((tag: string, idx: number) => (
-                                            <span key={idx} className="text-xs text-blue-500 hover:underline cursor-pointer">#{tag}</span>
+                            <div className="pt-[110px] md:pt-0 px-0 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                {/* Tag Filter (Hidden on Desktop, moved to sidebar) */}
+                                {feedTab === 'foryou' && (
+                                    <div className="md:hidden flex items-center gap-2 mb-4 overflow-x-auto pb-2 no-scrollbar px-4">
+                                        {TAGS.map((tag) => (
+                                            <button
+                                                key={tag}
+                                                onClick={() => setActiveTag(tag)}
+                                                className={clsx(
+                                                    "px-4 py-1.5 rounded-full font-bold text-xs transition-all whitespace-nowrap border",
+                                                    activeTag === tag
+                                                        ? "bg-gray-900 dark:bg-white text-white dark:text-black border-transparent"
+                                                        : "bg-transparent border-gray-200 dark:border-[#333] text-gray-600 dark:text-gray-400 hover:border-gray-400 dark:hover:border-gray-500"
+                                                )}
+                                            >
+                                                {tag}
+                                            </button>
                                         ))}
                                     </div>
-                                    <button
-                                        onClick={() => handlePostClick(item)}
-                                        className="text-gray-500 text-sm mt-1 hover:text-gray-900 dark:hover:text-gray-300"
-                                    >
-                                        View all {item.comments} comments
-                                    </button>
+                                )}
 
-                                    {/* Inline Comment Input */}
-                                    {commentingPostId === item.id && (
-                                        <div className="flex items-center gap-2 mt-2 animate-in fade-in slide-in-from-top-1 duration-200">
-                                            <input
-                                                id={`inline-comment-${item.id}`}
-                                                type="text"
-                                                value={inlineComment}
-                                                onChange={(e) => setInlineComment(e.target.value)}
-                                                onKeyDown={(e) => e.key === 'Enter' && handleInlineCommentSubmit(item.id)}
-                                                placeholder="Add a comment..."
-                                                className="flex-1 bg-gray-100 dark:bg-[#333] border-none rounded-full px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 transition-all"
-                                                autoFocus
-                                            />
-                                            <button
-                                                onClick={() => handleInlineCommentSubmit(item.id)}
-                                                disabled={!inlineComment.trim()}
-                                                className="text-blue-500 font-bold text-sm disabled:opacity-50 hover:text-blue-600 transition-colors px-2"
+                                {/* Feed Items */}
+                                {filteredFeed.length > 0 ? (
+                                    filteredFeed.map((item) => (
+                                        <div key={item.id} className="w-full bg-white dark:bg-[#222] border-y md:border border-gray-200 dark:border-[#333] md:rounded-3xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                                            <div className="p-3 flex items-center justify-between">
+                                                <div className="flex items-center gap-3">
+                                                    <Link href={`/${item.user.username}`} className="block">
+                                                        <div className="w-9 h-9 rounded-full overflow-hidden ring-1 ring-gray-100 dark:ring-[#333] bg-gray-100 dark:bg-[#333] flex items-center justify-center">
+                                                            {item.user.avatar ? (
+                                                                <img src={item.user.avatar} alt={item.user.name} className="w-full h-full object-cover" />
+                                                            ) : (
+                                                                <User className="w-4 h-4 text-gray-400" />
+                                                            )}
+                                                        </div>
+                                                    </Link>
+                                                    <div className="leading-tight">
+                                                        <Link href={`/${item.user.username}`} className="flex items-center gap-1 font-bold text-gray-900 dark:text-white text-sm hover:underline">
+                                                            {item.user.name}
+                                                            {(item.user.username === "leonp" || item.user.username === "paylink") && (
+                                                                <div className="bg-blue-500 text-white p-0.5 rounded-full">
+                                                                    <Check className="w-2 h-2 stroke-[4]" />
+                                                                </div>
+                                                            )}
+                                                        </Link>
+                                                        <Link href={`/${item.user.username}`} className="text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
+                                                            {item.user.handle}
+                                                        </Link>
+                                                    </div>
+                                                </div>
+                                                <button className="text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
+                                                    <MoreHorizontal className="w-5 h-5" />
+                                                </button>
+                                            </div>
+
+                                            <div
+                                                className="aspect-square w-full bg-gray-100 dark:bg-[#1a1a1a] relative group"
                                             >
-                                                Post
-                                            </button>
-                                        </div>
-                                    )}
+                                                <img src={item.image} alt="Post" className="w-full h-full object-cover" />
+                                                <button
+                                                    onClick={() => handlePostClick(item)}
+                                                    className="absolute bottom-3 right-3 p-2 bg-black/50 hover:bg-black/70 rounded-full text-white opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
+                                                >
+                                                    <Maximize2 className="w-5 h-5" />
+                                                </button>
+                                            </div>
 
-                                    {!commentingPostId && (
+                                            <div className="p-4">
+                                                <div className="flex items-center justify-between mb-3">
+                                                    <div className="flex items-center gap-4">
+                                                        <button
+                                                            onClick={() => handleLike(item)}
+                                                            className={clsx(
+                                                                "hover:scale-110 transition-transform flex items-center justify-center",
+                                                                item.user_has_liked ? "text-red-500" : "text-gray-900 dark:text-white"
+                                                            )}
+                                                        >
+                                                            <Heart className={clsx("w-7 h-7", item.user_has_liked && "fill-current")} />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => setCommentingPostId(commentingPostId === item.id ? null : item.id)}
+                                                            className="text-gray-900 dark:text-white hover:scale-110 transition-transform flex items-center justify-center"
+                                                        >
+                                                            <MessageCircle className="w-7 h-7" />
+                                                        </button>
+                                                        <button className="text-gray-900 dark:text-white hover:scale-110 transition-transform flex items-center justify-center">
+                                                            <Send className="w-7 h-7 -rotate-45 mt-2" />
+                                                        </button>
+                                                    </div>
+                                                    <div className="font-bold text-sm mb-1 text-gray-900 dark:text-white">
+                                                        {item.likes} likes
+                                                    </div>
+                                                </div>
+
+                                                <div className="space-y-1">
+                                                    <p className="text-sm text-gray-900 dark:text-white">
+                                                        <span className="font-bold mr-2">{item.user.name}</span>
+                                                        {item.caption}
+                                                    </p>
+                                                    <div className="flex flex-wrap gap-2 mt-2">
+                                                        {item.tags.map((tag: string, idx: number) => (
+                                                            <span key={idx} className="text-xs text-blue-500 hover:underline cursor-pointer">#{tag}</span>
+                                                        ))}
+                                                    </div>
+                                                    <button
+                                                        onClick={() => handlePostClick(item)}
+                                                        className="text-gray-500 text-sm mt-1 hover:text-gray-900 dark:hover:text-gray-300"
+                                                    >
+                                                        View all {item.comments} comments
+                                                    </button>
+
+                                                    {/* Inline Comment Input */}
+                                                    {commentingPostId === item.id && (
+                                                        <div className="flex items-center gap-2 mt-2 animate-in fade-in slide-in-from-top-1 duration-200">
+                                                            <input
+                                                                id={`inline-comment-${item.id}`}
+                                                                type="text"
+                                                                value={inlineComment}
+                                                                onChange={(e) => setInlineComment(e.target.value)}
+                                                                onKeyDown={(e) => e.key === 'Enter' && handleInlineCommentSubmit(item.id)}
+                                                                placeholder="Add a comment..."
+                                                                className="flex-1 bg-gray-100 dark:bg-[#333] border-none rounded-full px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 transition-all"
+                                                                autoFocus
+                                                            />
+                                                            <button
+                                                                onClick={() => handleInlineCommentSubmit(item.id)}
+                                                                disabled={!inlineComment.trim()}
+                                                                className="text-blue-500 font-bold text-sm disabled:opacity-50 hover:text-blue-600 transition-colors px-2"
+                                                            >
+                                                                Post
+                                                            </button>
+                                                        </div>
+                                                    )}
+
+                                                    {!commentingPostId && (
+                                                        <button
+                                                            onClick={() => setCommentingPostId(item.id)}
+                                                            className="text-gray-400 text-xs mt-2 block hover:text-gray-600 dark:hover:text-gray-300"
+                                                        >
+                                                            Add a comment...
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div className="text-center py-20 bg-white dark:bg-[#222] rounded-3xl border border-gray-200 dark:border-[#333]">
+                                        <div className="w-16 h-16 bg-gray-100 dark:bg-[#333] rounded-full flex items-center justify-center mx-auto mb-4">
+                                            <Search className="w-8 h-8 text-gray-400" />
+                                        </div>
+                                        <h3 className="text-lg font-bold text-gray-900 dark:text-white">No posts found</h3>
+                                        <p className="text-gray-500 dark:text-gray-400 mt-2">Try adjusting your search or filters</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Right Sidebar - Desktop Only */}
+                        <div className="hidden lg:block space-y-6 sticky top-24 h-fit">
+                            {/* Search Widget */}
+                            <div className="bg-white dark:bg-[#222] rounded-2xl p-4 border border-gray-200 dark:border-[#333] shadow-sm">
+                                <div className="relative">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                    <input
+                                        type="text"
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        placeholder="Search creators..."
+                                        className="w-full bg-gray-100 dark:bg-[#2a2a2a] border-none rounded-xl pl-10 pr-4 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-gray-200 dark:focus:ring-[#333] placeholder:text-gray-500"
+                                    />
+                                </div>
+
+                                {/* Search Results Dropdown */}
+                                {searchQuery && searchedUsers.length > 0 && (
+                                    <div className="mt-4 space-y-2">
+                                        {searchedUsers.map(user => (
+                                            <Link
+                                                key={user.id}
+                                                href={`/${user.username}`}
+                                                className="flex items-center gap-3 p-2 hover:bg-gray-50 dark:hover:bg-[#333] rounded-xl transition-colors"
+                                            >
+                                                <div className="w-8 h-8 rounded-full overflow-hidden ring-1 ring-gray-100 dark:ring-[#333] bg-gray-100 dark:bg-[#333] flex items-center justify-center">
+                                                    {user.avatar_url ? (
+                                                        <img src={user.avatar_url} alt={user.full_name} className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        <User className="w-4 h-4 text-gray-400" />
+                                                    )}
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <div className="font-bold text-gray-900 dark:text-white text-sm flex items-center gap-1 truncate">
+                                                        {user.full_name}
+                                                        {user.verification_status === 'verified' && (
+                                                            <div className="bg-blue-500 text-white p-0.5 rounded-full shrink-0">
+                                                                <Check className="w-2 h-2 stroke-[4]" />
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <div className="text-xs text-gray-500 truncate">@{user.username}</div>
+                                                </div>
+                                            </Link>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Tags Widget */}
+                            <div className="bg-white dark:bg-[#222] rounded-2xl p-6 border border-gray-200 dark:border-[#333] shadow-sm">
+                                <h3 className="font-bold text-gray-900 dark:text-white mb-4">Trending Topics</h3>
+                                <div className="flex flex-wrap gap-2">
+                                    {TAGS.map((tag) => (
                                         <button
-                                            onClick={() => setCommentingPostId(item.id)}
-                                            className="text-gray-400 text-xs mt-2 block hover:text-gray-600 dark:hover:text-gray-300"
+                                            key={tag}
+                                            onClick={() => setActiveTag(tag)}
+                                            className={clsx(
+                                                "px-3 py-1.5 rounded-full font-bold text-xs transition-all border",
+                                                activeTag === tag
+                                                    ? "bg-gray-900 dark:bg-white text-white dark:text-black border-transparent"
+                                                    : "bg-transparent border-gray-200 dark:border-[#333] text-gray-600 dark:text-gray-400 hover:border-gray-400 dark:hover:border-gray-500"
+                                            )}
                                         >
-                                            Add a comment...
+                                            {tag}
                                         </button>
-                                    )}
+                                    ))}
                                 </div>
                             </div>
-                        </div>
-                    ))
-                ) : (
-                    <div className="text-center py-20 bg-white dark:bg-[#222] rounded-3xl border border-gray-200 dark:border-[#333]">
-                        <div className="w-16 h-16 bg-gray-100 dark:bg-[#333] rounded-full flex items-center justify-center mx-auto mb-4">
-                            <Search className="w-8 h-8 text-gray-400" />
-                        </div>
-                        <h3 className="text-lg font-bold text-gray-900 dark:text-white">No posts found</h3>
-                        <p className="text-gray-500 dark:text-gray-400 mt-2">Try adjusting your search or filters</p>
-                    </div>
-                )}
-            </div>
-            {/* Right Sidebar (Desktop) */}
-            <div className="hidden lg:block space-y-6">
-                {/* Search */}
-                <div className="bg-white dark:bg-[#222] border border-gray-200 dark:border-[#333] rounded-3xl p-6 sticky top-24">
-                    <div className="relative mb-6">
-                        <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
-                        <input
-                            type="text"
-                            placeholder="Search..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full bg-gray-50 dark:bg-[#1a1a1a] border-none rounded-xl pl-9 pr-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500/20 transition-all"
-                        />
-                    </div>
 
-                    <div className="flex flex-wrap gap-2">
-                        {TAGS.map(tag => (
-                            <button
-                                key={tag}
-                                onClick={() => setActiveTag(tag)}
-                                className={clsx(
-                                    "px-4 py-1.5 rounded-full text-xs font-bold transition-colors",
-                                    activeTag === tag
-                                        ? "bg-gray-900 dark:bg-white text-white dark:text-black"
-                                        : "bg-gray-50 dark:bg-[#1a1a1a] text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-[#333] hover:bg-gray-100 dark:hover:bg-[#333]"
-                                )}
-                            >
-                                {tag}
-                            </button>
-                        ))}
-                    </div>
-                </div >
-
-                {/* Suggested Creators */}
-                <div className="bg-white dark:bg-[#222] border border-gray-200 dark:border-[#333] rounded-3xl p-6">
-                    <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-lg font-bold text-gray-900 dark:text-white">Suggested</h2>
-                        <button className="text-xs font-bold text-blue-500 hover:text-blue-400">See All</button>
-                    </div>
-                    <div className="space-y-4">
-                        {suggestedUsers.map((user) => (
-                            <div key={user.id} className="flex items-center justify-between">
-                                <Link href={`/${user.username}`} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-                                    <div className="w-10 h-10 rounded-full overflow-hidden ring-1 ring-gray-100 dark:ring-[#333] bg-gray-100 dark:bg-[#333] flex items-center justify-center">
-                                        {user.avatar ? (
-                                            <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
-                                        ) : (
-                                            <User className="w-5 h-5 text-gray-400" />
-                                        )}
-                                    </div>
-                                    <div>
-                                        <div className="font-bold text-gray-900 dark:text-white text-sm">{user.name}</div>
-                                        <div className="text-xs text-gray-500">{user.handle}</div>
-                                    </div>
-                                </Link>
-                                <button className="text-xs font-bold bg-gray-900 dark:bg-white text-white dark:text-black px-3 py-1.5 rounded-full hover:opacity-90 transition-opacity">
-                                    Follow
-                                </button>
+                            {/* Footer Links */}
+                            <div className="flex flex-wrap gap-x-4 gap-y-2 px-2">
+                                <Link href="#" className="text-xs text-gray-400 hover:underline">Terms of Service</Link>
+                                <Link href="#" className="text-xs text-gray-400 hover:underline">Privacy Policy</Link>
+                                <Link href="#" className="text-xs text-gray-400 hover:underline">Cookie Policy</Link>
+                                <Link href="#" className="text-xs text-gray-400 hover:underline">Accessibility</Link>
+                                <Link href="#" className="text-xs text-gray-400 hover:underline">Ads Info</Link>
+                                <div className="text-xs text-gray-400 mt-2 w-full">© 2024 PayLink, Inc.</div>
                             </div>
-                        ))}
+                        </div>
                     </div>
                 </div>
-            </div>
+            )}
         </div>
     );
 }

@@ -98,18 +98,21 @@ export function MessagesWidget() {
             .select('conversation_id')
             .eq('user_id', user.id);
 
-        if (myConvosError || !myConvos) {
+        if (myConvosError) {
+            // Table doesn't exist or other error - just show empty state
+            console.warn('Conversations feature not available:', myConvosError.message);
+            setConversations([]);
+            setLoading(false);
+            return;
+        }
+
+        if (!myConvos || myConvos.length === 0) {
+            setConversations([]);
             setLoading(false);
             return;
         }
 
         const conversationIds = myConvos.map(c => c.conversation_id);
-
-        if (conversationIds.length === 0) {
-            setConversations([]);
-            setLoading(false);
-            return;
-        }
 
         // 2. Get the other participants for these conversations
         const { data: participants, error: participantsError } = await supabase

@@ -18,8 +18,15 @@ const robotoCondensed = Roboto_Condensed({
 });
 
 export const metadata: Metadata = {
-  title: "Paylink",
-  description: "Freelancer commission platform",
+  title: "Paylink | The Best Commission Site for Freelancers & Artists",
+  description: "The ultimate alternative to Fiverr, Ko-fi, and Upwork. Secure payments, file delivery, and instant payouts for digital artists and freelancers. Better than PayPal for commissions.",
+  keywords: ["commission site", "freelance platform", "digital art commissions", "Fiverr alternative", "Ko-fi alternative", "Upwork alternative", "PayPal for freelancers", "secure file delivery", "artist payments", "freelance invoicing"],
+  openGraph: {
+    title: "Paylink | The Best Commission Site for Freelancers & Artists",
+    description: "Secure payments, file delivery, and instant payouts. The all-in-one platform for modern creators.",
+    type: "website",
+    siteName: "Paylink",
+  },
 };
 
 export default function RootLayout({

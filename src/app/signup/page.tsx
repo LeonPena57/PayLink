@@ -70,6 +70,13 @@ export default function SignupPage() {
                     console.log("Profile creation fallback result:", profileError);
                 }
 
+                // Send Welcome Email
+                await fetch('/api/send-welcome-email', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, username }),
+                });
+
                 router.push("/dashboard");
             } else {
                 // Email confirmation required

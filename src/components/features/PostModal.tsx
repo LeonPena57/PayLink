@@ -1,13 +1,14 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useRef } from "react";
-import { X, Heart, MessageCircle, Send, MoreHorizontal, Trash2, Check } from "lucide-react";
+import { X, Heart, MessageCircle, Send, Check, User } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 import { useUser } from "@/context/UserContext";
 import { useToast } from "@/context/ToastContext";
-import clsx from "clsx";
 import Link from "next/link";
+import clsx from "clsx";
 import { formatDistanceToNow } from "date-fns";
+import { Comment } from "@/types/paylink";
 import { ShareModal } from "./ShareModal";
 
 interface PostModalProps {
@@ -16,33 +17,36 @@ interface PostModalProps {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     post: any;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    onUpdate?: (updatedPost: any) => void; // Callback to update parent state
+    onUpdate?: (updatedPost: any) => void;
 }
 
 export function PostModal({ isOpen, onClose, post, onUpdate }: PostModalProps) {
     const { user } = useUser();
     const { toast } = useToast();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const [comments, setComments] = useState<any[]>([]);
+    const [comments, setComments] = useState<Comment[]>([]);
     const [newComment, setNewComment] = useState("");
     const [isLiked, setIsLiked] = useState(false);
     const [likesCount, setLikesCount] = useState(0);
     const [loadingComments, setLoadingComments] = useState(false);
     const [submittingComment, setSubmittingComment] = useState(false);
+    const [replyTo, setReplyTo] = useState<Comment | null>(null);
+    const [isShareModalOpen, setIsShareModalOpen] = useState(false);
     const commentsEndRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         if (isOpen && post) {
-            fetchPostDetails();
+            // Initialize from props
+            setLikesCount(post.likes || 0);
+            setIsLiked(post.user_has_liked || false);
             fetchComments();
         }
     }, [isOpen, post]);
 
+    // Removed redundant fetchPostDetails to prevent race conditions/flickering
+    /*
     const fetchPostDetails = async () => {
         if (!post) return;
-
-        // Use the RPC function to get accurate stats
-        const { data, error } = await supabase
+        const { data } = await supabase
             .rpc('get_post_stats', { post_id: post.id });
 
         if (data) {
@@ -50,11 +54,12 @@ export function PostModal({ isOpen, onClose, post, onUpdate }: PostModalProps) {
             setIsLiked(data.user_has_liked);
         }
     };
+    */
 
     const fetchComments = async () => {
         if (!post) return;
         setLoadingComments(true);
-        const { data, error } = await supabase
+        const { data: commentsData } = await supabase
             .from('comments')
             .select(`
                 *,
@@ -68,8 +73,25 @@ export function PostModal({ isOpen, onClose, post, onUpdate }: PostModalProps) {
             .eq('portfolio_item_id', post.id)
             .order('created_at', { ascending: true });
 
-        if (data) {
-            setComments(data);
+        if (commentsData) {
+            const commentIds = commentsData.map(c => c.id);
+
+            // Fetch likes for these comments
+            const { data: likesData } = await supabase
+                .from('comment_likes')
+                .select('comment_id, user_id')
+                .in('comment_id', commentIds);
+
+            const commentsWithLikes = commentsData.map(comment => {
+                const likes = likesData?.filter(l => l.comment_id === comment.id) || [];
+                return {
+                    ...comment,
+                    likes_count: likes.length,
+                    user_has_liked: user ? likes.some(l => l.user_id === user.id) : false
+                };
+            });
+
+            setComments(commentsWithLikes);
             setTimeout(scrollToBottom, 100);
         }
         setLoadingComments(false);
@@ -85,15 +107,14 @@ export function PostModal({ isOpen, onClose, post, onUpdate }: PostModalProps) {
             return;
         }
 
-        // Optimistic update
         const previousLiked = isLiked;
         const previousCount = likesCount;
 
-        setIsLiked(!isLiked);
-        setLikesCount(prev => isLiked ? prev - 1 : prev + 1);
+        const newLikedState = !isLiked;
+        setIsLiked(newLikedState);
+        setLikesCount(prev => newLikedState ? prev + 1 : prev - 1);
 
         if (previousLiked) {
-            // Unlike
             const { error } = await supabase
                 .from('likes')
                 .delete()
@@ -101,13 +122,11 @@ export function PostModal({ isOpen, onClose, post, onUpdate }: PostModalProps) {
                 .eq('portfolio_item_id', post.id);
 
             if (error) {
-                // Revert
                 setIsLiked(previousLiked);
                 setLikesCount(previousCount);
-                toast(`Error liking post: ${error.message}`, "error");
+                toast(`Error unliking post: ${error.message}`, "error");
             }
         } else {
-            // Like
             const { error } = await supabase
                 .from('likes')
                 .insert({
@@ -116,16 +135,22 @@ export function PostModal({ isOpen, onClose, post, onUpdate }: PostModalProps) {
                 });
 
             if (error) {
-                // Revert
-                setIsLiked(previousLiked);
-                setLikesCount(previousCount);
-                toast(`Error liking post: ${error.message}`, "error");
+                if (error.code === '23505') {
+                    setIsLiked(true);
+                } else {
+                    setIsLiked(previousLiked);
+                    setLikesCount(previousCount);
+                    toast(`Error liking post: ${error.message}`, "error");
+                }
             }
         }
 
-        // Notify parent of update if needed
         if (onUpdate) {
-            onUpdate({ ...post, likes: isLiked ? likesCount - 1 : likesCount + 1, user_has_liked: !isLiked });
+            onUpdate({
+                ...post,
+                likes: newLikedState ? likesCount + 1 : likesCount - 1,
+                user_has_liked: newLikedState
+            });
         }
     };
 
@@ -142,7 +167,8 @@ export function PostModal({ isOpen, onClose, post, onUpdate }: PostModalProps) {
             .insert({
                 user_id: user.id,
                 portfolio_item_id: post.id,
-                content: newComment.trim()
+                content: newComment.trim(),
+                parent_id: replyTo ? replyTo.id : null
             })
             .select(`
                 *,
@@ -160,11 +186,11 @@ export function PostModal({ isOpen, onClose, post, onUpdate }: PostModalProps) {
         }
 
         if (data) {
-            setComments(prev => [...prev, data]);
+            setComments(prev => [...prev, { ...data, likes_count: 0, user_has_liked: false }]);
             setNewComment("");
+            setReplyTo(null);
             setTimeout(scrollToBottom, 100);
 
-            // Notify parent
             if (onUpdate) {
                 onUpdate({ ...post, comments: (post.comments || 0) + 1 });
             }
@@ -186,7 +212,52 @@ export function PostModal({ isOpen, onClose, post, onUpdate }: PostModalProps) {
         }
     };
 
-    const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+    const handleLikeComment = async (commentId: string) => {
+        if (!user) return;
+
+        setComments(prev => prev.map(c => {
+            if (c.id === commentId) {
+                const isLiked = c.user_has_liked;
+                return {
+                    ...c,
+                    likes_count: (c.likes_count || 0) + (isLiked ? -1 : 1),
+                    user_has_liked: !isLiked
+                };
+            }
+            return c;
+        }));
+
+        try {
+            const { error } = await supabase
+                .from('comment_likes')
+                .insert({ comment_id: commentId, user_id: user.id });
+
+            if (error) {
+                if (error.code === '23505') {
+                    await supabase
+                        .from('comment_likes')
+                        .delete()
+                        .match({ comment_id: commentId, user_id: user.id });
+                } else {
+                    throw error;
+                }
+            }
+        } catch (error) {
+            console.error('Error liking comment:', error);
+            setComments(prev => prev.map(c => {
+                if (c.id === commentId) {
+                    const isLiked = !c.user_has_liked;
+                    return {
+                        ...c,
+                        likes_count: (c.likes_count || 0) + (isLiked ? -1 : 1),
+                        user_has_liked: !isLiked
+                    };
+                }
+                return c;
+            }));
+            toast("Failed to like comment", "error");
+        }
+    };
 
     if (!isOpen || !post) return null;
 
@@ -202,7 +273,7 @@ export function PostModal({ isOpen, onClose, post, onUpdate }: PostModalProps) {
                 <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
 
                 {/* DESKTOP LAYOUT (Split View) */}
-                <div className="hidden md:flex relative w-full h-full max-w-5xl h-[85vh] bg-background rounded-xl overflow-hidden flex-row shadow-2xl animate-in fade-in zoom-in-95 duration-200 border border-border/50">
+                <div className="hidden md:flex relative w-full h-full max-w-5xl max-h-[85vh] bg-background rounded-xl overflow-hidden flex-row shadow-2xl animate-in fade-in zoom-in-95 duration-200 border border-border/50">
                     {/* Image Section */}
                     <div className="flex-1 bg-black flex items-center justify-center relative group overflow-hidden">
                         <div className="relative w-full h-full flex items-center justify-center">
@@ -229,7 +300,7 @@ export function PostModal({ isOpen, onClose, post, onUpdate }: PostModalProps) {
                                             />
                                         ) : (
                                             <div className="w-4 h-4 text-muted-foreground">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
+                                                <User className="w-full h-full p-0.5" />
                                             </div>
                                         )}
                                     </div>
@@ -276,46 +347,17 @@ export function PostModal({ isOpen, onClose, post, onUpdate }: PostModalProps) {
                                     <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
                                 </div>
                             ) : comments.length > 0 ? (
-                                comments.map((comment) => (
-                                    <div key={comment.id} className="flex gap-3 group">
-                                        <Link href={`/${comment.profiles?.username}`} className="w-8 h-8 rounded-full bg-muted overflow-hidden border border-border shrink-0 flex items-center justify-center">
-                                            {comment.profiles?.avatar_url ? (
-                                                <img
-                                                    src={comment.profiles?.avatar_url}
-                                                    alt="Avatar"
-                                                    className="w-full h-full object-cover"
-                                                />
-                                            ) : (
-                                                <div className="w-4 h-4 text-muted-foreground">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
-                                                </div>
-                                            )}
-                                        </Link>
-                                        <div className="flex-1">
-                                            <div className="flex items-baseline justify-between">
-                                                <p className="text-sm">
-                                                    <Link href={`/${comment.profiles?.username}`} className="font-bold mr-2 hover:underline">
-                                                        {comment.profiles?.full_name}
-                                                    </Link>
-                                                    {comment.content}
-                                                </p>
-                                            </div>
-                                            <div className="flex items-center gap-4 mt-1">
-                                                <span className="text-xs text-muted-foreground">
-                                                    {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
-                                                </span>
-                                                {(user?.id === comment.user_id || user?.id === post.user_id) && (
-                                                    <button
-                                                        onClick={() => handleDeleteComment(comment.id)}
-                                                        className="text-xs text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                                                    >
-                                                        Delete
-                                                    </button>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))
+                                <CommentList
+                                    comments={comments}
+                                    user={user}
+                                    post={post}
+                                    onDelete={handleDeleteComment}
+                                    onReply={(comment: Comment) => {
+                                        setReplyTo(comment);
+                                        document.getElementById('comment-input-desktop')?.focus();
+                                    }}
+                                    onLike={handleLikeComment}
+                                />
                             ) : (
                                 <div className="text-center py-10 text-muted-foreground text-sm">
                                     No comments yet. Be the first to say something!
@@ -411,7 +453,7 @@ export function PostModal({ isOpen, onClose, post, onUpdate }: PostModalProps) {
                                         />
                                     ) : (
                                         <div className="w-5 h-5 text-muted-foreground">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
+                                            <User className="w-full h-full p-0.5" />
                                         </div>
                                     )}
                                 </Link>
@@ -443,46 +485,17 @@ export function PostModal({ isOpen, onClose, post, onUpdate }: PostModalProps) {
                                     <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
                                 </div>
                             ) : comments.length > 0 ? (
-                                comments.map((comment) => (
-                                    <div key={comment.id} className="flex gap-3 group">
-                                        <Link href={`/${comment.profiles?.username}`} className="w-8 h-8 rounded-full bg-muted overflow-hidden border border-border shrink-0 flex items-center justify-center">
-                                            {comment.profiles?.avatar_url ? (
-                                                <img
-                                                    src={comment.profiles?.avatar_url}
-                                                    alt="Avatar"
-                                                    className="w-full h-full object-cover"
-                                                />
-                                            ) : (
-                                                <div className="w-4 h-4 text-muted-foreground">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
-                                                </div>
-                                            )}
-                                        </Link>
-                                        <div className="flex-1">
-                                            <div className="flex items-baseline justify-between">
-                                                <p className="text-sm">
-                                                    <Link href={`/${comment.profiles?.username}`} className="font-bold mr-2 hover:underline">
-                                                        {comment.profiles?.full_name}
-                                                    </Link>
-                                                    {comment.content}
-                                                </p>
-                                            </div>
-                                            <div className="flex items-center gap-4 mt-1">
-                                                <span className="text-xs text-muted-foreground">
-                                                    {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
-                                                </span>
-                                                {(user?.id === comment.user_id || user?.id === post.user_id) && (
-                                                    <button
-                                                        onClick={() => handleDeleteComment(comment.id)}
-                                                        className="text-xs text-red-500 transition-opacity"
-                                                    >
-                                                        Delete
-                                                    </button>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))
+                                <CommentList
+                                    comments={comments}
+                                    user={user}
+                                    post={post}
+                                    onDelete={handleDeleteComment}
+                                    onReply={(comment: Comment) => {
+                                        setReplyTo(comment);
+                                        document.getElementById('comment-input-mobile')?.focus();
+                                    }}
+                                    onLike={handleLikeComment}
+                                />
                             ) : (
                                 <div className="text-center py-10 text-muted-foreground text-sm">
                                     No comments yet.
@@ -493,6 +506,14 @@ export function PostModal({ isOpen, onClose, post, onUpdate }: PostModalProps) {
 
                     {/* Footer (Input) */}
                     <div className="p-4 border-t border-border bg-background shrink-0 sticky bottom-0 z-50">
+                        {replyTo && (
+                            <div className="flex items-center justify-between bg-muted/30 px-3 py-1.5 mb-2 rounded-lg text-xs">
+                                <span className="text-muted-foreground">Replying to <span className="font-bold text-foreground">@{replyTo.profiles?.username}</span></span>
+                                <button onClick={() => setReplyTo(null)} className="p-1 hover:bg-muted rounded-full">
+                                    <X className="w-3 h-3" />
+                                </button>
+                            </div>
+                        )}
                         <div className="flex items-center gap-3">
                             <input
                                 id="comment-input-mobile"
@@ -500,7 +521,7 @@ export function PostModal({ isOpen, onClose, post, onUpdate }: PostModalProps) {
                                 value={newComment}
                                 onChange={(e) => setNewComment(e.target.value)}
                                 onKeyDown={(e) => e.key === 'Enter' && handlePostComment()}
-                                placeholder="Add a comment..."
+                                placeholder={replyTo ? `Reply to @${replyTo.profiles?.username}...` : "Add a comment..."}
                                 className="flex-1 bg-muted/50 border-none rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20 transition-all"
                             />
                             <button
@@ -515,5 +536,145 @@ export function PostModal({ isOpen, onClose, post, onUpdate }: PostModalProps) {
                 </div>
             </div>
         </>
+    );
+}
+
+// Helper Component for Recursive Comments
+interface CommentListProps {
+    comments: Comment[];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    user: any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    post: any;
+    onDelete: (id: string) => void;
+    onReply: (comment: Comment) => void;
+    onLike: (commentId: string) => void;
+}
+
+function CommentItem({ comment, comments, user, post, onDelete, onReply, onLike }: {
+    comment: Comment;
+    comments: Comment[];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    user: any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    post: any;
+    onDelete: (id: string) => void;
+    onReply: (comment: Comment) => void;
+    onLike: (commentId: string) => void;
+}) {
+    const [showReplies, setShowReplies] = useState(false);
+    const replies = comments.filter(c => c.parent_id === comment.id);
+    const hasReplies = replies.length > 0;
+
+    return (
+        <div className="group">
+            <div className="flex gap-3">
+                <Link href={`/${comment.profiles?.username}`} className="w-8 h-8 rounded-full bg-muted overflow-hidden border border-border shrink-0 flex items-center justify-center">
+                    {comment.profiles?.avatar_url ? (
+                        <img
+                            src={comment.profiles?.avatar_url}
+                            alt="Avatar"
+                            className="w-full h-full object-cover"
+                        />
+                    ) : (
+                        <div className="w-4 h-4 text-muted-foreground">
+                            <User className="w-full h-full p-0.5" />
+                        </div>
+                    )}
+                </Link>
+                <div className="flex-1">
+                    <div className="flex items-baseline justify-between">
+                        <p className="text-sm">
+                            <Link href={`/${comment.profiles?.username}`} className="font-bold mr-2 hover:underline">
+                                {comment.profiles?.full_name}
+                            </Link>
+                            {comment.content}
+                        </p>
+                        <button
+                            onClick={() => onLike(comment.id)}
+                            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-red-500 transition-colors"
+                        >
+                            <Heart className={clsx("w-3 h-3", comment.user_has_liked && "fill-red-500 text-red-500")} />
+                            {comment.likes_count && comment.likes_count > 0 && <span>{comment.likes_count}</span>}
+                        </button>
+                    </div>
+                    <div className="flex items-center gap-4 mt-1">
+                        <span className="text-xs text-muted-foreground">
+                            {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
+                        </span>
+                        <button
+                            onClick={() => onReply(comment)}
+                            className="text-xs font-bold text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                            Reply
+                        </button>
+                        {(user?.id === comment.user_id || user?.id === post.user_id) && (
+                            <button
+                                onClick={() => onDelete(comment.id)}
+                                className="text-xs text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                                Delete
+                            </button>
+                        )}
+                    </div>
+
+                    {hasReplies && (
+                        <div className="mt-2">
+                            {!showReplies ? (
+                                <button
+                                    onClick={() => setShowReplies(true)}
+                                    className="flex items-center gap-2 text-xs font-bold text-muted-foreground hover:text-foreground my-1"
+                                >
+                                    <div className="w-6 h-px bg-border" />
+                                    View {replies.length} replies
+                                </button>
+                            ) : (
+                                <div className="pl-8 border-l-2 border-border/50 mt-2 space-y-4">
+                                    {replies.map(reply => (
+                                        <CommentItem
+                                            key={reply.id}
+                                            comment={reply}
+                                            comments={comments}
+                                            user={user}
+                                            post={post}
+                                            onDelete={onDelete}
+                                            onReply={onReply}
+                                            onLike={onLike}
+                                        />
+                                    ))}
+                                    <button
+                                        onClick={() => setShowReplies(false)}
+                                        className="text-xs font-bold text-muted-foreground hover:text-foreground mt-2"
+                                    >
+                                        Hide replies
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function CommentList({ comments, user, post, onDelete, onReply, onLike }: CommentListProps) {
+    const rootComments = comments.filter((c: Comment) => !c.parent_id);
+
+    return (
+        <div className="space-y-4">
+            {rootComments.map((comment: Comment) => (
+                <CommentItem
+                    key={comment.id}
+                    comment={comment}
+                    comments={comments}
+                    user={user}
+                    post={post}
+                    onDelete={onDelete}
+                    onReply={onReply}
+                    onLike={onLike}
+                />
+            ))}
+        </div>
     );
 }

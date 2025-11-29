@@ -12,12 +12,21 @@ export default function CreateInvoicePage() {
     const { user } = useUser();
     const [loading, setLoading] = useState(false);
 
-    // Form State
+    interface InvoiceCreationItem {
+        id: number;
+        name: string;
+        price: string;
+        image: File | null;
+        preview: string | null;
+        saveAsService: boolean;
+    }
+
     // Form State
     const [title, setTitle] = useState(""); // Invoice Title
-    const [items, setItems] = useState([{ id: 1, name: "", price: "", image: null as File | null, preview: null as string | null, saveAsService: false }]);
+    const [items, setItems] = useState<InvoiceCreationItem[]>([{ id: 1, name: "", price: "", image: null, preview: null, saveAsService: false }]);
     const [paymentType, setPaymentType] = useState("full"); // 'full', '50-50'
     const [dueDate, setDueDate] = useState("");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [services, setServices] = useState<any[]>([]);
 
     const fileInputRefs = useRef<{ [key: number]: HTMLInputElement | null }>({});
@@ -44,8 +53,9 @@ export default function CreateInvoicePage() {
         }
     };
 
-    const updateItem = (id: number, field: string, value: any) => {
-        setItems(items.map(item => item.id === id ? { ...item, [field]: value } : item));
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const updateItem = (id: number, field: keyof InvoiceCreationItem, value: any) => {
+        setItems(prev => prev.map(item => item.id === id ? { ...item, [field]: value } : item));
     };
 
     const handleServiceSelect = (id: number, serviceId: string) => {
@@ -53,9 +63,9 @@ export default function CreateInvoicePage() {
         if (service) {
             setItems(items.map(item => item.id === id ? {
                 ...item,
-                name: service.title,
-                price: service.price.toString(),
-                preview: service.image_url,
+                name: service.title || "",
+                price: (service.price !== undefined && service.price !== null) ? service.price.toString() : "",
+                preview: service.image_url || null,
                 saveAsService: false
             } : item));
         }
@@ -93,11 +103,11 @@ export default function CreateInvoicePage() {
                     const filePath = `invoice-items/${fileName}`;
 
                     const { error: uploadError } = await supabase.storage
-                        .from('public-images')
+                        .from('public_previews')
                         .upload(filePath, item.image);
 
                     if (!uploadError) {
-                        const { data } = supabase.storage.from('public-images').getPublicUrl(filePath);
+                        const { data } = supabase.storage.from('public_previews').getPublicUrl(filePath);
                         imageUrl = data.publicUrl;
                     }
                 }
@@ -109,19 +119,21 @@ export default function CreateInvoicePage() {
                         title: item.name,
                         description: `Service created from PayLink: ${title}`,
                         price: parseFloat(item.price),
-                        image_url: imageUrl
+                        thumbnail_url: imageUrl
                     });
                 }
 
                 return {
-                    name: item.name,
+                    title: item.name, // Changed to title to match PayLink page expectation
                     price: parseFloat(item.price) || 0,
-                    image_url: imageUrl
+                    image: imageUrl, // Changed to image to match PayLink page expectation
+                    size: "2.4MB", // Placeholder as we don't have file size for services yet
+                    date: new Date().toLocaleDateString()
                 };
             }));
 
             // 2. Create Invoice
-            const { error } = await supabase
+            const { data: invoiceData, error } = await supabase
                 .from('invoices')
                 .insert({
                     seller_id: user.id,
@@ -130,14 +142,25 @@ export default function CreateInvoicePage() {
                     description: title,
                     due_date: dueDate || null,
                     status: 'pending',
-                });
+                    items: processedItems // Store items JSON
+                })
+                .select()
+                .single();
 
             if (error) throw error;
+
+            // Show success with the PayLink
+            const payLink = `${window.location.origin}/pay/${invoiceData.id}`;
+
+            // Copy to clipboard
+            await navigator.clipboard.writeText(payLink);
+
+            alert(`PayLink created successfully!\n\nLink copied to clipboard:\n${payLink}\n\nShare this link with your client to receive payment.`);
 
             router.push('/receipts');
         } catch (error) {
             console.error('Error creating invoice:', error);
-            alert('Failed to create invoice');
+            alert('Failed to create PayLink. Please try again.');
         } finally {
             setLoading(false);
         }

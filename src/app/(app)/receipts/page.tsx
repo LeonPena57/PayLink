@@ -1,38 +1,86 @@
 "use client";
 
-import { Search, Filter, Download, MoreHorizontal, ArrowUpRight, Package, Clock, CheckCircle2, AlertCircle, FolderOpen, MessageSquare, TrendingUp, DollarSign, Inbox } from "lucide-react";
+import { Search, Filter, Download, MoreHorizontal, ArrowUpRight, Package, Clock, CheckCircle2, AlertCircle, FolderOpen, MessageSquare, TrendingUp, DollarSign, Inbox, Copy, ExternalLink } from "lucide-react";
 import clsx from "clsx";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-
-// Empty Data for No Data State
-const ACTIVE_ORDERS: any[] = [];
-const TRANSACTIONS: any[] = [];
+import { supabase } from "@/lib/supabase/client";
+import { useUser } from "@/context/UserContext";
+import { useToast } from "@/context/ToastContext";
 
 export default function OrdersPage() {
+    const { user } = useUser();
+    const { toast } = useToast();
     const [activeTab, setActiveTab] = useState<"active" | "history">("active");
     const [searchQuery, setSearchQuery] = useState("");
+    const [invoices, setInvoices] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        if (user) {
+            fetchInvoices();
+        }
+    }, [user]);
+
+    const fetchInvoices = async () => {
+        setLoading(true);
+        const { data, error } = await supabase
+            .from('invoices')
+            .select('*')
+            .eq('seller_id', user!.id)
+            .order('created_at', { ascending: false });
+
+        if (data) {
+            setInvoices(data);
+        }
+        setLoading(false);
+    };
+
+    const deleteInvoice = async (id: string) => {
+        if (!confirm("Are you sure you want to delete this invoice? This action cannot be undone.")) return;
+
+        const { error } = await supabase
+            .from('invoices')
+            .delete()
+            .eq('id', id);
+
+        if (error) {
+            toast("Error deleting invoice", "error");
+        } else {
+            toast("Invoice deleted", "success");
+            setInvoices(invoices.filter(inv => inv.id !== id));
+        }
+    };
 
     const handleExport = () => {
         alert("Exporting CSV...");
     };
 
     const handleNewInvoice = () => {
-        alert("Opening invoice creator...");
+        window.location.href = '/create/invoice';
     };
 
     const handleFilter = () => {
         alert("Filter options would appear here.");
     };
 
-    const handleDetails = (id: string) => {
-        alert(`Opening details for transaction ${id}`);
+    const copyLink = (id: string) => {
+        const link = `${window.location.origin}/pay/${id}`;
+        navigator.clipboard.writeText(link);
+        toast("PayLink copied to clipboard!", "success");
     };
 
-    const filteredTransactions = TRANSACTIONS.filter(tx =>
-        tx.client.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        tx.project.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    const activeInvoices = invoices.filter(inv => inv.status === 'pending');
+    const historyInvoices = invoices.filter(inv => inv.status !== 'pending');
+
+    const filteredActive = activeInvoices.filter(tx =>
+        (tx.description || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+        tx.id.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    const filteredHistory = historyInvoices.filter(tx =>
+        (tx.description || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
         tx.id.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
@@ -52,12 +100,12 @@ export default function OrdersPage() {
                         <Download className="w-4 h-4" />
                         Export
                     </button>
-                    <button
-                        onClick={handleNewInvoice}
+                    <Link
+                        href="/create/invoice"
                         className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-bold hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20"
                     >
                         New Invoice
-                    </button>
+                    </Link>
                 </div>
             </div>
 
@@ -70,8 +118,10 @@ export default function OrdersPage() {
                         </div>
                         <span className="text-sm font-medium text-muted-foreground">Total Revenue</span>
                     </div>
-                    <div className="text-2xl font-bold">$0.00</div>
-                    <div className="text-xs text-muted-foreground font-bold mt-1">No data available</div>
+                    <div className="text-2xl font-bold">
+                        ${invoices.filter(i => i.status === 'paid').reduce((acc, curr) => acc + curr.amount, 0).toFixed(2)}
+                    </div>
+                    <div className="text-xs text-muted-foreground font-bold mt-1">Lifetime earnings</div>
                 </div>
                 <div className="p-5 bg-card border border-border rounded-2xl shadow-sm">
                     <div className="flex items-center gap-3 mb-2">
@@ -80,8 +130,8 @@ export default function OrdersPage() {
                         </div>
                         <span className="text-sm font-medium text-muted-foreground">Active Orders</span>
                     </div>
-                    <div className="text-2xl font-bold">0</div>
-                    <div className="text-xs text-muted-foreground mt-1">No active orders</div>
+                    <div className="text-2xl font-bold">{activeInvoices.length}</div>
+                    <div className="text-xs text-muted-foreground mt-1">Pending payment</div>
                 </div>
                 <div className="p-5 bg-card border border-border rounded-2xl shadow-sm">
                     <div className="flex items-center gap-3 mb-2">
@@ -90,8 +140,8 @@ export default function OrdersPage() {
                         </div>
                         <span className="text-sm font-medium text-muted-foreground">Completed</span>
                     </div>
-                    <div className="text-2xl font-bold">0</div>
-                    <div className="text-xs text-muted-foreground mt-1">Lifetime projects</div>
+                    <div className="text-2xl font-bold">{historyInvoices.filter(i => i.status === 'paid').length}</div>
+                    <div className="text-xs text-muted-foreground mt-1">Paid invoices</div>
                 </div>
                 <div className="p-5 bg-card border border-border rounded-2xl shadow-sm">
                     <div className="flex items-center gap-3 mb-2">
@@ -100,7 +150,7 @@ export default function OrdersPage() {
                         </div>
                         <span className="text-sm font-medium text-muted-foreground">Pending</span>
                     </div>
-                    <div className="text-2xl font-bold">0</div>
+                    <div className="text-2xl font-bold">{activeInvoices.length}</div>
                     <div className="text-xs text-muted-foreground mt-1">Action required</div>
                 </div>
             </div>
@@ -144,10 +194,59 @@ export default function OrdersPage() {
                         transition={{ duration: 0.2 }}
                         className="grid grid-cols-1 md:grid-cols-2 gap-6"
                     >
-                        {ACTIVE_ORDERS.length > 0 ? (
-                            ACTIVE_ORDERS.map((order) => (
-                                <div key={order.id} className="bg-card border border-border rounded-3xl p-6 shadow-sm hover:shadow-2xl hover:shadow-primary/5 transition-all duration-500 group relative overflow-hidden">
-                                    {/* ... Order Card Content ... */}
+                        {filteredActive.length > 0 ? (
+                            filteredActive.map((invoice) => (
+                                <div key={invoice.id} className="bg-card border border-border rounded-3xl p-6 shadow-sm hover:shadow-2xl hover:shadow-primary/5 transition-all duration-500 group relative overflow-hidden">
+                                    <div className="flex gap-4 mb-4">
+                                        {/* Image Preview */}
+                                        <div className="w-20 h-20 bg-muted rounded-xl overflow-hidden shrink-0 border border-border">
+                                            {invoice.items && invoice.items[0]?.image ? (
+                                                <img src={invoice.items[0].image} alt="Preview" className="w-full h-full object-cover" />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                                                    <Package className="w-8 h-8 opacity-50" />
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <span className="px-2 py-0.5 rounded-full bg-orange-500/10 text-orange-500 text-[10px] font-bold uppercase tracking-wider border border-orange-500/20">
+                                                    PENDING PAYMENT
+                                                </span>
+                                                <span className="text-xs text-muted-foreground font-mono">#{invoice.id.slice(0, 8)}</span>
+                                            </div>
+                                            <h3 className="font-bold text-lg text-foreground truncate">{invoice.description || "Untitled Invoice"}</h3>
+                                            <div className="text-2xl font-black text-foreground mt-1">${invoice.amount.toFixed(2)}</div>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-2 mb-6">
+                                        <Clock className="w-4 h-4 text-muted-foreground" />
+                                        <span className="text-sm text-muted-foreground">Created {new Date(invoice.created_at).toLocaleDateString()}</span>
+                                    </div>
+
+                                    <div className="flex gap-3">
+                                        <button
+                                            onClick={() => copyLink(invoice.id)}
+                                            className="flex-1 py-3 bg-primary/10 text-primary font-bold rounded-xl hover:bg-primary/20 transition-colors flex items-center justify-center gap-2"
+                                        >
+                                            <Copy className="w-4 h-4" />
+                                            Copy Link
+                                        </button>
+                                        <Link
+                                            href={`/pay/${invoice.id}`}
+                                            className="px-4 py-3 bg-card border border-border hover:bg-muted rounded-xl transition-colors flex items-center justify-center"
+                                        >
+                                            <ExternalLink className="w-4 h-4 text-foreground" />
+                                        </Link>
+                                        <button
+                                            onClick={() => deleteInvoice(invoice.id)}
+                                            className="px-4 py-3 bg-red-500/10 text-red-500 border border-red-500/20 hover:bg-red-500/20 rounded-xl transition-colors flex items-center justify-center"
+                                            title="Delete Invoice"
+                                        >
+                                            <AlertCircle className="w-4 h-4" />
+                                        </button>
+                                    </div>
                                 </div>
                             ))
                         ) : (
@@ -165,12 +264,12 @@ export default function OrdersPage() {
                         )}
 
                         {/* Add New Order Placeholder */}
-                        <button onClick={handleNewInvoice} className="border-2 border-dashed border-border rounded-3xl p-6 flex flex-col items-center justify-center gap-4 text-muted-foreground hover:text-primary hover:border-primary/50 hover:bg-primary/5 transition-all group min-h-[250px] active:scale-[0.99]">
+                        <Link href="/create/invoice" className="border-2 border-dashed border-border rounded-3xl p-6 flex flex-col items-center justify-center gap-4 text-muted-foreground hover:text-primary hover:border-primary/50 hover:bg-primary/5 transition-all group min-h-[250px] active:scale-[0.99]">
                             <div className="w-16 h-16 rounded-full bg-muted group-hover:bg-primary/10 flex items-center justify-center transition-colors">
                                 <Package className="w-8 h-8 opacity-50 group-hover:opacity-100 transition-opacity" />
                             </div>
-                            <span className="font-bold text-lg">Create New Order</span>
-                        </button>
+                            <span className="font-bold text-lg">Create New PayLink</span>
+                        </Link>
                     </motion.div>
                 ) : (
                     <motion.div
@@ -205,23 +304,39 @@ export default function OrdersPage() {
 
                         {/* Table Container (Desktop) */}
                         <div className="hidden md:block bg-card border border-border rounded-3xl overflow-hidden shadow-xl shadow-black/5 min-h-[300px]">
-                            {filteredTransactions.length > 0 ? (
+                            {filteredHistory.length > 0 ? (
                                 <div className="overflow-x-auto">
                                     <table className="w-full text-left text-sm">
                                         <thead>
                                             <tr className="border-b border-border bg-muted/30">
-                                                <th className="px-6 py-5 font-semibold text-muted-foreground">Transaction ID</th>
+                                                <th className="px-6 py-5 font-semibold text-muted-foreground">ID</th>
                                                 <th className="px-6 py-5 font-semibold text-muted-foreground">Date</th>
-                                                <th className="px-6 py-5 font-semibold text-muted-foreground">Client / Project</th>
+                                                <th className="px-6 py-5 font-semibold text-muted-foreground">Description</th>
                                                 <th className="px-6 py-5 font-semibold text-muted-foreground">Status</th>
                                                 <th className="px-6 py-5 font-semibold text-muted-foreground text-right">Amount</th>
                                                 <th className="px-6 py-5 font-semibold text-muted-foreground"></th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-border/50">
-                                            {filteredTransactions.map((tx) => (
-                                                <tr key={tx.id} /* ... */>
-                                                    {/* ... Transaction Row ... */}
+                                            {filteredHistory.map((tx) => (
+                                                <tr key={tx.id} className="hover:bg-muted/30 transition-colors">
+                                                    <td className="px-6 py-4 font-mono text-xs text-muted-foreground">#{tx.id.slice(0, 8)}</td>
+                                                    <td className="px-6 py-4">{new Date(tx.created_at).toLocaleDateString()}</td>
+                                                    <td className="px-6 py-4 font-medium">{tx.description}</td>
+                                                    <td className="px-6 py-4">
+                                                        <span className={clsx(
+                                                            "px-2 py-1 rounded-full text-xs font-bold uppercase tracking-wider",
+                                                            tx.status === 'paid' ? "bg-green-500/10 text-green-500" : "bg-gray-500/10 text-gray-500"
+                                                        )}>
+                                                            {tx.status}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-6 py-4 text-right font-bold">${tx.amount.toFixed(2)}</td>
+                                                    <td className="px-6 py-4 text-right">
+                                                        <button className="text-muted-foreground hover:text-foreground">
+                                                            <MoreHorizontal className="w-4 h-4" />
+                                                        </button>
+                                                    </td>
                                                 </tr>
                                             ))}
                                         </tbody>
@@ -235,23 +350,28 @@ export default function OrdersPage() {
                                     <p className="text-muted-foreground font-medium">No transactions found.</p>
                                 </div>
                             )}
-
-                            {/* Pagination / Footer */}
-                            <div className="px-6 py-4 border-t border-border flex items-center justify-between text-xs text-muted-foreground font-medium bg-muted/10">
-                                <div>Showing {filteredTransactions.length} transactions</div>
-                                <div className="flex gap-2">
-                                    <button className="px-4 py-2 border border-border rounded-lg hover:bg-muted transition-colors disabled:opacity-50 font-bold" disabled>Previous</button>
-                                    <button className="px-4 py-2 border border-border rounded-lg hover:bg-muted transition-colors disabled:opacity-50 font-bold" disabled>Next</button>
-                                </div>
-                            </div>
                         </div>
 
                         {/* Mobile Card List */}
                         <div className="md:hidden space-y-4">
-                            {filteredTransactions.length > 0 ? (
-                                filteredTransactions.map((tx) => (
-                                    <div key={tx.id} /* ... */>
-                                        {/* ... Mobile Transaction Card ... */}
+                            {filteredHistory.length > 0 ? (
+                                filteredHistory.map((tx) => (
+                                    <div key={tx.id} className="bg-card border border-border rounded-2xl p-4">
+                                        <div className="flex justify-between items-start mb-2">
+                                            <div>
+                                                <div className="font-bold text-foreground">{tx.description}</div>
+                                                <div className="text-xs text-muted-foreground">{new Date(tx.created_at).toLocaleDateString()}</div>
+                                            </div>
+                                            <div className="text-right">
+                                                <div className="font-bold">${tx.amount.toFixed(2)}</div>
+                                                <span className={clsx(
+                                                    "text-[10px] font-bold uppercase tracking-wider",
+                                                    tx.status === 'paid' ? "text-green-500" : "text-gray-500"
+                                                )}>
+                                                    {tx.status}
+                                                </span>
+                                            </div>
+                                        </div>
                                     </div>
                                 ))
                             ) : (
