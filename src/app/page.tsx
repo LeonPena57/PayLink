@@ -2,10 +2,23 @@
 
 import { ArrowRight, Check, Shield, Zap, LayoutGrid, Lock, CreditCard, Image as ImageIcon, Globe, Repeat, FileText, Star, Play, ChevronRight, Menu, X } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase/client";
 
 export default function LandingPage() {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const router = useRouter();
+
+    useEffect(() => {
+        const checkUser = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+                router.push('/home');
+            }
+        };
+        checkUser();
+    }, [router]);
 
     return (
         <div className="min-h-screen bg-[#0a0a0a] text-white selection:bg-blue-500/30 font-sans overflow-x-hidden">
@@ -21,6 +34,7 @@ export default function LandingPage() {
                         <a href="#features" className="hover:text-white transition-colors">Features</a>
                         <a href="#how-it-works" className="hover:text-white transition-colors">How it Works</a>
                         <a href="#pricing" className="hover:text-white transition-colors">Pricing</a>
+                        <Link href="/home" className="hover:text-white transition-colors text-blue-400">Explore</Link>
                     </div>
 
                     <div className="hidden md:flex items-center gap-4">
@@ -46,6 +60,7 @@ export default function LandingPage() {
                         <a href="#features" className="text-lg font-bold text-gray-400 hover:text-white" onClick={() => setIsMobileMenuOpen(false)}>Features</a>
                         <a href="#how-it-works" className="text-lg font-bold text-gray-400 hover:text-white" onClick={() => setIsMobileMenuOpen(false)}>How it Works</a>
                         <a href="#pricing" className="text-lg font-bold text-gray-400 hover:text-white" onClick={() => setIsMobileMenuOpen(false)}>Pricing</a>
+                        <Link href="/home" className="text-lg font-bold text-blue-400 hover:text-blue-300">Explore</Link>
                         <div className="h-px bg-white/10 my-2" />
                         <Link href="/login" className="text-lg font-bold text-gray-400 hover:text-white">Log in</Link>
                         <Link href="/signup" className="px-6 py-3 bg-white text-black text-center font-bold rounded-full">Get Started</Link>
@@ -54,7 +69,7 @@ export default function LandingPage() {
             </nav>
 
             {/* Hero Section */}
-            <section className="pt-40 pb-20 px-6 relative overflow-hidden min-h-[90vh] flex flex-col justify-center">
+            <section className="pt-52 pb-20 px-6 relative overflow-hidden min-h-[90vh] flex flex-col justify-center">
                 {/* Background Effects */}
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-blue-600/20 rounded-full blur-[120px] opacity-40 pointer-events-none mix-blend-screen" />
                 <div className="absolute bottom-0 right-0 w-[800px] h-[600px] bg-purple-600/10 rounded-full blur-[120px] opacity-30 pointer-events-none mix-blend-screen" />
@@ -87,12 +102,13 @@ export default function LandingPage() {
                             <ArrowRight className="w-5 h-5" />
                         </Link>
                         <Link
-                            href="/demo"
-                            className="px-8 py-4 bg-white/5 hover:bg-white/10 text-white rounded-full font-bold text-lg transition-all border border-white/10 flex items-center gap-2 backdrop-blur-md"
+                            href="/home"
+                            className="px-8 py-4 bg-white/10 text-white border border-white/10 rounded-full font-bold text-lg transition-all hover:scale-105 hover:bg-white/20 backdrop-blur-md flex items-center gap-2"
                         >
-                            <Play className="w-4 h-4 fill-current" />
-                            View Demo
+                            Explore
+                            <Globe className="w-5 h-5" />
                         </Link>
+
                     </div>
                 </div>
             </section>

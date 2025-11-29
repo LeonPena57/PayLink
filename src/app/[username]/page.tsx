@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import { useUser } from "@/context/UserContext";
@@ -8,15 +8,18 @@ import { MapPin, Link as LinkIcon, Twitter, Instagram, Twitch, Grid as GridIcon,
 import clsx from "clsx";
 import Link from "next/link";
 import { PostModal } from "@/components/features/PostModal";
+import { useToast } from "@/context/ToastContext";
 
-export default function PublicProfilePage({ params }: { params: { username: string } }) {
+export default function PublicProfilePage({ params }: { params: Promise<{ username: string }> }) {
+    const { username } = use(params);
     const router = useRouter();
     const { user: currentUser } = useUser();
+    const { toast } = useToast();
     const [profile, setProfile] = useState<any>(null);
     const [portfolioItems, setPortfolioItems] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [isFollowing, setIsFollowing] = useState(false);
-    const [activeTab, setActiveTab] = useState("PORTFOLIO");
+    const [activeTab, setActiveTab] = useState("POSTS");
 
     const [stats, setStats] = useState({ followers: 0, following: 0, is_following: false });
 
@@ -25,13 +28,24 @@ export default function PublicProfilePage({ params }: { params: { username: stri
     const [isPostModalOpen, setIsPostModalOpen] = useState(false);
 
     const handlePostClick = (post: any) => {
-        setSelectedPost(post);
+        // Inject profile data since we know the post belongs to this profile
+        const postWithUser = {
+            ...post,
+            user: {
+                name: profile.full_name,
+                username: profile.username,
+                avatar: profile.avatar_url,
+                verification_status: profile.verification_status
+            },
+            profiles: profile // Fallback for some components that might look for profiles
+        };
+        setSelectedPost(postWithUser);
         setIsPostModalOpen(true);
     };
 
     useEffect(() => {
         fetchProfile();
-    }, [params.username]);
+    }, [username]);
 
     useEffect(() => {
         if (profile) {
@@ -45,7 +59,7 @@ export default function PublicProfilePage({ params }: { params: { username: stri
         const { data: profileData, error: profileError } = await supabase
             .from('profiles')
             .select('*')
-            .eq('username', params.username)
+            .eq('username', username)
             .single();
 
         if (profileError || !profileData) {
@@ -82,7 +96,7 @@ export default function PublicProfilePage({ params }: { params: { username: stri
     const handleFollowToggle = async () => {
         if (!currentUser) {
             // Redirect to login or show auth modal
-            alert("Please login to follow users.");
+            toast("Please login to follow users.", "error");
             return;
         }
 
@@ -126,7 +140,7 @@ export default function PublicProfilePage({ params }: { params: { username: stri
         return (
             <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4 text-center">
                 <h1 className="text-2xl font-bold mb-2">User not found</h1>
-                <p className="text-muted-foreground mb-4">The user @{params.username} does not exist.</p>
+                <p className="text-muted-foreground mb-4">The user @{username} does not exist.</p>
                 <Link href="/home" className="px-6 py-2 bg-primary text-primary-foreground rounded-full font-bold">
                     Go Home
                 </Link>
@@ -177,7 +191,7 @@ export default function PublicProfilePage({ params }: { params: { username: stri
                 </div>
 
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 -mt-32 md:-mt-40">
-                    <div className="flex flex-col md:flex-row items-end gap-6 md:gap-10">
+                    <div className="flex flex-col md:flex-row items-center md:items-end gap-6 md:gap-10">
                         {/* Avatar */}
                         <div className="relative shrink-0 mx-auto md:mx-0">
                             <div className="w-40 h-40 md:w-56 md:h-56 rounded-[2.5rem] p-1.5 bg-background shadow-2xl shadow-black/20">
@@ -197,7 +211,7 @@ export default function PublicProfilePage({ params }: { params: { username: stri
                         </div>
 
                         {/* Profile Info */}
-                        <div className="flex-1 flex flex-col md:flex-row items-end justify-between gap-6 w-full text-center md:text-left pb-4 min-w-0">
+                        <div className="flex-1 flex flex-col md:flex-row items-center md:items-end justify-between gap-6 w-full text-center md:text-left pb-4 min-w-0">
                             <div className="space-y-4 flex-1 w-full min-w-0">
                                 <div>
                                     <h1 className="text-4xl md:text-6xl font-black text-foreground tracking-tight leading-none mb-2">
@@ -256,48 +270,58 @@ export default function PublicProfilePage({ params }: { params: { username: stri
                                         )}
                                     </div>
                                 </div>
+
+
+                                {/* Actions */}
+                                {!isOwner && (
+                                    <div className="flex items-center justify-center md:justify-start gap-3 pt-2">
+                                        <button
+                                            onClick={handleFollowToggle}
+                                            className={clsx(
+                                                "px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-all shadow-lg active:scale-95",
+                                                isFollowing
+                                                    ? "bg-card border border-border text-foreground hover:bg-muted"
+                                                    : "bg-primary text-primary-foreground hover:opacity-90"
+                                            )}
+                                        >
+                                            {isFollowing ? (
+                                                <>
+                                                    <UserCheck className="w-5 h-5" />
+                                                    Following
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <UserPlus className="w-5 h-5" />
+                                                    Follow
+                                                </>
+                                            )}
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                if (!currentUser) {
+                                                    toast("Make an account to message", "error");
+                                                    return;
+                                                }
+                                                router.push(`/messages?chat_with=${profile.id}`);
+                                            }}
+                                            className="px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-all shadow-lg active:scale-95 bg-card border border-border text-foreground hover:bg-muted"
+                                        >
+                                            <MessageCircle className="w-5 h-5" />
+                                            Message
+                                        </button>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Actions */}
-                            {!isOwner && (
-                                <div className="flex items-center gap-3">
-                                    <button
-                                        onClick={handleFollowToggle}
-                                        className={clsx(
-                                            "px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-all shadow-lg active:scale-95",
-                                            isFollowing
-                                                ? "bg-card border border-border text-foreground hover:bg-muted"
-                                                : "bg-primary text-primary-foreground hover:opacity-90"
-                                        )}
-                                    >
-                                        {isFollowing ? (
-                                            <>
-                                                <UserCheck className="w-5 h-5" />
-                                                Following
-                                            </>
-                                        ) : (
-                                            <>
-                                                <UserPlus className="w-5 h-5" />
-                                                Follow
-                                            </>
-                                        )}
-                                    </button>
-                                    <button
-                                        onClick={() => router.push(`/messages?chat_with=${profile.id}`)}
-                                        className="px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-all shadow-lg active:scale-95 bg-card border border-border text-foreground hover:bg-muted"
-                                    >
-                                        <MessageCircle className="w-5 h-5" />
-                                        Message
-                                    </button>
-                                </div>
-                            )}
+
                         </div>
                     </div>
 
                     {/* Navigation Tabs */}
                     <div className="mt-12 border-b border-border">
                         <div className="flex gap-8 overflow-x-auto max-w-full pb-px no-scrollbar justify-start">
-                            {["PORTFOLIO", "SHOP"].map((tab) => (
+                            {["POSTS", "SHOP"].map((tab) => (
                                 <button
                                     key={tab}
                                     onClick={() => setActiveTab(tab)}
@@ -312,7 +336,7 @@ export default function PublicProfilePage({ params }: { params: { username: stri
                                         color: activeTab === tab ? accentColor : undefined
                                     }}
                                 >
-                                    {tab === "PORTFOLIO" && <GridIcon className="w-4 h-4" />}
+                                    {tab === "POSTS" && <GridIcon className="w-4 h-4" />}
                                     {tab === "SHOP" && <ShoppingBag className="w-4 h-4" />}
                                     {tab}
                                 </button>
@@ -324,7 +348,7 @@ export default function PublicProfilePage({ params }: { params: { username: stri
 
             {/* Content Area */}
             <div className="max-w-7xl mx-auto mt-2 pb-20">
-                {activeTab === "PORTFOLIO" && (
+                {activeTab === "POSTS" && (
                     <div className="p-4 md:p-6 animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-8">
                         {portfolioItems.length === 0 ? (
                             <div className="flex flex-col items-center justify-center py-20 text-center space-y-4 border-2 border-dashed border-border rounded-3xl bg-muted/30">
@@ -398,6 +422,6 @@ export default function PublicProfilePage({ params }: { params: { username: stri
                     </div>
                 )}
             </div>
-        </div>
+        </div >
     );
 }

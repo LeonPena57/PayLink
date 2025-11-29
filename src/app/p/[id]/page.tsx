@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase/client";
-import { Loader2, Sun, Moon, Check, Download, FileText, Image as ImageIcon, Bell } from "lucide-react";
+import { Loader2, Sun, Moon, Check, Download, FileText, Image as ImageIcon, Bell, User } from "lucide-react";
 import Link from "next/link";
 import clsx from "clsx";
 import { format } from "date-fns";
@@ -22,7 +22,7 @@ export default function PaylinkPage({ params }: { params: { id: string } }) {
     const MOCK_DATA = {
         seller: {
             username: "FATECREATES",
-            avatar_url: "https://github.com/shadcn.png", // Replace with actual
+            avatar_url: null, // Replace with actual
         },
         items: [
             {
@@ -143,8 +143,12 @@ export default function PaylinkPage({ params }: { params: { id: string } }) {
                 {/* Seller Header */}
                 <div className="flex items-center justify-center gap-3 mb-6 mt-4">
                     <h1 className="text-2xl font-black italic tracking-wider uppercase">{seller?.username || "SELLER"}</h1>
-                    <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white/20">
-                        <img src={seller?.avatar_url || "https://github.com/shadcn.png"} alt="Avatar" className="w-full h-full object-cover" />
+                    <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white/20 flex items-center justify-center bg-gray-800">
+                        {seller?.avatar_url ? (
+                            <img src={seller.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+                        ) : (
+                            <User className="w-6 h-6 text-gray-400" />
+                        )}
                     </div>
                 </div>
 
@@ -264,8 +268,12 @@ export default function PaylinkPage({ params }: { params: { id: string } }) {
                     <span className="text-[10px] font-bold">QR CODE</span>
                 </Link>
                 <Link href="/account" className="flex flex-col items-center gap-1 opacity-70 hover:opacity-100">
-                    <div className="w-6 h-6 rounded-full bg-black border border-white/20 overflow-hidden">
-                        <img src={seller?.avatar_url || "https://github.com/shadcn.png"} className="w-full h-full object-cover" />
+                    <div className="w-6 h-6 rounded-full bg-black border border-white/20 overflow-hidden flex items-center justify-center">
+                        {seller?.avatar_url ? (
+                            <img src={seller.avatar_url} className="w-full h-full object-cover" />
+                        ) : (
+                            <User className="w-4 h-4 text-gray-400" />
+                        )}
                     </div>
                     <span className="text-[10px] font-bold">ACCOUNT</span>
                 </Link>

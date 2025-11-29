@@ -1,19 +1,23 @@
-import { Navigation } from "@/components/layout/Navigation";
-import { UserProvider } from "@/context/UserContext";
+"use client";
+
+import { useUser } from "@/context/UserContext";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import { supabase } from "@/lib/supabase/client";
 
 export default function AppLayout({
     children,
-}: Readonly<{
+}: {
     children: React.ReactNode;
-}>) {
+}) {
+    const router = useRouter();
+
+    // Removed strict session check to allow public access to /home
+    // Individual protected pages should handle their own redirects if needed.
+
     return (
-        <UserProvider>
-            <div className="flex flex-col h-screen overflow-hidden">
-                <Navigation />
-                <main className="flex-1 w-full h-full overflow-y-auto relative bg-background">
-                    {children}
-                </main>
-            </div>
-        </UserProvider>
+        <div className="min-h-screen bg-background">
+            {children}
+        </div>
     );
 }

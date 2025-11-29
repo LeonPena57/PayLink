@@ -29,6 +29,7 @@ export default function SettingsPage() {
 
     const handleSignOut = async () => {
         await signOut();
+        window.location.href = "/home"; // Hard redirect to ensure state clear and navigation to public home
     };
 
     const tabs = [

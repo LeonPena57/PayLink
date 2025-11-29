@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import { Manrope, Roboto_Condensed } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
+import { UserProvider } from "@/context/UserContext";
+import { ToastProvider } from "@/context/ToastContext";
+import { Navigation } from "@/components/layout/Navigation";
 
 const manrope = Manrope({
   subsets: ["latin"],
@@ -35,7 +38,12 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {children}
+          <UserProvider>
+            <ToastProvider>
+              <Navigation />
+              {children}
+            </ToastProvider>
+          </UserProvider>
         </ThemeProvider>
       </body>
     </html>

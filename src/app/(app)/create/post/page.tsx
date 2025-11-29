@@ -7,12 +7,15 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
 import { useUser } from "@/context/UserContext";
 
+const TAGS = ["Digital Art", "Graphic Design", "Photography", "3D Modeling", "Animation"];
+
 export default function CreatePostPage() {
     const router = useRouter();
     const { user, profile } = useUser();
     const [loading, setLoading] = useState(false);
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
+    const [tag, setTag] = useState(TAGS[0]);
     const [image, setImage] = useState<File | null>(null);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -62,7 +65,8 @@ export default function CreatePostPage() {
                     user_id: user.id,
                     title,
                     description,
-                    image_url: publicUrl
+                    image_url: publicUrl,
+                    section: tag
                 });
 
             if (error) throw error;
@@ -121,6 +125,22 @@ export default function CreatePostPage() {
                                 placeholder="What's happening?"
                                 className="w-full bg-transparent text-lg text-foreground placeholder:text-muted-foreground/50 border-none focus:ring-0 p-0 min-h-[150px] resize-none leading-relaxed"
                             />
+                        </div>
+
+                        {/* Tag Selection */}
+                        <div className="flex flex-wrap gap-2">
+                            {TAGS.map((t) => (
+                                <button
+                                    key={t}
+                                    onClick={() => setTag(t)}
+                                    className={`px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${tag === t
+                                            ? "bg-primary text-primary-foreground"
+                                            : "bg-muted text-muted-foreground hover:bg-muted/80"
+                                        }`}
+                                >
+                                    {t}
+                                </button>
+                            ))}
                         </div>
 
                         {/* Image Preview */}
