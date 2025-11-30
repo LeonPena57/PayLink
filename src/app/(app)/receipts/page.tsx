@@ -1,8 +1,8 @@
 "use client";
 
-import { Search, Filter, Download, MoreHorizontal, ArrowUpRight, Package, Clock, CheckCircle2, AlertCircle, FolderOpen, MessageSquare, TrendingUp, DollarSign, Inbox, Copy, ExternalLink } from "lucide-react";
+import { Search, Package, Clock, CheckCircle2, AlertCircle, DollarSign, Copy, Plus, ArrowLeft } from "lucide-react";
 import clsx from "clsx";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/lib/supabase/client";
@@ -14,28 +14,33 @@ export default function OrdersPage() {
     const { toast } = useToast();
     const [activeTab, setActiveTab] = useState<"active" | "history">("active");
     const [searchQuery, setSearchQuery] = useState("");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [invoices, setInvoices] = useState<any[]>([]);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        if (user) {
-            fetchInvoices();
-        }
-    }, [user]);
+    const fetchInvoices = useCallback(async () => {
+        if (!user) return;
 
-    const fetchInvoices = async () => {
-        setLoading(true);
-        const { data, error } = await supabase
+        const { data } = await supabase
             .from('invoices')
             .select('*')
-            .eq('seller_id', user!.id)
+            .eq('seller_id', user.id)
             .order('created_at', { ascending: false });
 
         if (data) {
             setInvoices(data);
         }
         setLoading(false);
-    };
+    }, [user]);
+
+    useEffect(() => {
+        // Use setTimeout to avoid "synchronous setState" lint warning, though function is async
+        const timer = setTimeout(() => {
+            fetchInvoices();
+        }, 0);
+        return () => clearTimeout(timer);
+    }, [fetchInvoices]);
 
     const deleteInvoice = async (id: string) => {
         if (!confirm("Are you sure you want to delete this invoice? This action cannot be undone.")) return;
@@ -51,18 +56,6 @@ export default function OrdersPage() {
             toast("Invoice deleted", "success");
             setInvoices(invoices.filter(inv => inv.id !== id));
         }
-    };
-
-    const handleExport = () => {
-        alert("Exporting CSV...");
-    };
-
-    const handleNewInvoice = () => {
-        window.location.href = '/create/invoice';
-    };
-
-    const handleFilter = () => {
-        alert("Filter options would appear here.");
     };
 
     const copyLink = (id: string) => {
@@ -85,101 +78,70 @@ export default function OrdersPage() {
     );
 
     return (
-        <div className="p-6 md:p-10 max-w-7xl mx-auto min-h-screen bg-background text-foreground pb-32">
-            {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-                <div>
-                    <h1 className="text-3xl font-header font-bold italic tracking-tight">Orders & Receipts</h1>
-                    <p className="text-muted-foreground text-sm mt-1">Track your active projects and transaction history.</p>
-                </div>
+        <div className="min-h-screen bg-background pb-32 p-4 md:p-8 max-w-5xl mx-auto">
+            {/* Minimal Header */}
+            <div className="sticky top-0 z-20 bg-background/80 backdrop-blur-md -mx-4 px-4 py-4 mb-6 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                    <button
-                        onClick={handleExport}
-                        className="px-4 py-2 bg-card border border-border rounded-lg text-sm font-medium hover:bg-muted transition-colors flex items-center gap-2"
-                    >
-                        <Download className="w-4 h-4" />
-                        Export
-                    </button>
-                    <Link
-                        href="/create/invoice"
-                        className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-bold hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20"
-                    >
-                        New Invoice
+                    <Link href="/home" className="p-2 -ml-2 rounded-full hover:bg-muted transition-colors">
+                        <ArrowLeft className="w-6 h-6 text-foreground" />
                     </Link>
+                    <h1 className="text-2xl font-black text-foreground tracking-tight">Orders</h1>
                 </div>
+                <div className="w-10" /> {/* Spacer */}
             </div>
 
-            {/* Summary Cards (Desktop Only) */}
-            <div className="hidden md:grid grid-cols-4 gap-4 mb-8">
-                <div className="p-5 bg-card border border-border rounded-2xl shadow-sm">
-                    <div className="flex items-center gap-3 mb-2">
-                        <div className="p-2 bg-green-500/10 rounded-lg text-green-500">
+            {/* Summary Bubbles (Horizontal Scroll) */}
+            <div className="flex gap-4 overflow-x-auto pb-4 -mx-4 px-4 mb-8 custom-scrollbar snap-x">
+                <div className="min-w-[160px] p-5 bg-muted/30 rounded-[2rem] snap-start">
+                    <div className="flex items-center gap-2 mb-3 text-green-500">
+                        <div className="p-2 bg-green-500/10 rounded-full">
                             <DollarSign className="w-4 h-4" />
                         </div>
-                        <span className="text-sm font-medium text-muted-foreground">Total Revenue</span>
+                        <span className="text-xs font-bold uppercase tracking-wider">Revenue</span>
                     </div>
-                    <div className="text-2xl font-bold">
-                        ${invoices.filter(i => i.status === 'paid').reduce((acc, curr) => acc + curr.amount, 0).toFixed(2)}
+                    <div className="text-2xl font-black text-foreground">
+                        ${invoices.filter(i => i.status === 'paid').reduce((acc, curr) => acc + curr.amount, 0).toFixed(0)}
                     </div>
-                    <div className="text-xs text-muted-foreground font-bold mt-1">Lifetime earnings</div>
                 </div>
-                <div className="p-5 bg-card border border-border rounded-2xl shadow-sm">
-                    <div className="flex items-center gap-3 mb-2">
-                        <div className="p-2 bg-blue-500/10 rounded-lg text-blue-500">
+                <div className="min-w-[160px] p-5 bg-muted/30 rounded-[2rem] snap-start">
+                    <div className="flex items-center gap-2 mb-3 text-blue-500">
+                        <div className="p-2 bg-blue-500/10 rounded-full">
                             <Package className="w-4 h-4" />
                         </div>
-                        <span className="text-sm font-medium text-muted-foreground">Active Orders</span>
+                        <span className="text-xs font-bold uppercase tracking-wider">Active</span>
                     </div>
-                    <div className="text-2xl font-bold">{activeInvoices.length}</div>
-                    <div className="text-xs text-muted-foreground mt-1">Pending payment</div>
+                    <div className="text-2xl font-black text-foreground">{activeInvoices.length}</div>
                 </div>
-                <div className="p-5 bg-card border border-border rounded-2xl shadow-sm">
-                    <div className="flex items-center gap-3 mb-2">
-                        <div className="p-2 bg-purple-500/10 rounded-lg text-purple-500">
+                <div className="min-w-[160px] p-5 bg-muted/30 rounded-[2rem] snap-start">
+                    <div className="flex items-center gap-2 mb-3 text-purple-500">
+                        <div className="p-2 bg-purple-500/10 rounded-full">
                             <CheckCircle2 className="w-4 h-4" />
                         </div>
-                        <span className="text-sm font-medium text-muted-foreground">Completed</span>
+                        <span className="text-xs font-bold uppercase tracking-wider">Completed</span>
                     </div>
-                    <div className="text-2xl font-bold">{historyInvoices.filter(i => i.status === 'paid').length}</div>
-                    <div className="text-xs text-muted-foreground mt-1">Paid invoices</div>
-                </div>
-                <div className="p-5 bg-card border border-border rounded-2xl shadow-sm">
-                    <div className="flex items-center gap-3 mb-2">
-                        <div className="p-2 bg-orange-500/10 rounded-lg text-orange-500">
-                            <AlertCircle className="w-4 h-4" />
-                        </div>
-                        <span className="text-sm font-medium text-muted-foreground">Pending</span>
-                    </div>
-                    <div className="text-2xl font-bold">{activeInvoices.length}</div>
-                    <div className="text-xs text-muted-foreground mt-1">Action required</div>
+                    <div className="text-2xl font-black text-foreground">{historyInvoices.filter(i => i.status === 'paid').length}</div>
                 </div>
             </div>
 
             {/* Tabs */}
-            <div className="flex gap-6 border-b border-border mb-8">
+            <div className="flex p-1 bg-muted/30 rounded-full mb-8 w-fit">
                 <button
                     onClick={() => setActiveTab("active")}
                     className={clsx(
-                        "pb-4 text-sm font-bold tracking-wide transition-all relative",
-                        activeTab === "active" ? "text-primary" : "text-muted-foreground hover:text-foreground"
+                        "px-6 py-2 rounded-full text-sm font-bold transition-all",
+                        activeTab === "active" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
                     )}
                 >
-                    Active Orders
-                    {activeTab === "active" && (
-                        <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
-                    )}
+                    Active
                 </button>
                 <button
                     onClick={() => setActiveTab("history")}
                     className={clsx(
-                        "pb-4 text-sm font-bold tracking-wide transition-all relative",
-                        activeTab === "history" ? "text-primary" : "text-muted-foreground hover:text-foreground"
+                        "px-6 py-2 rounded-full text-sm font-bold transition-all",
+                        activeTab === "history" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
                     )}
                 >
-                    Transaction History
-                    {activeTab === "history" && (
-                        <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
-                    )}
+                    History
                 </button>
             </div>
 
@@ -192,57 +154,44 @@ export default function OrdersPage() {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
                         transition={{ duration: 0.2 }}
-                        className="grid grid-cols-1 md:grid-cols-2 gap-6"
+                        className="space-y-4"
                     >
                         {filteredActive.length > 0 ? (
                             filteredActive.map((invoice) => (
-                                <div key={invoice.id} className="bg-card border border-border rounded-3xl p-6 shadow-sm hover:shadow-2xl hover:shadow-primary/5 transition-all duration-500 group relative overflow-hidden">
-                                    <div className="flex gap-4 mb-4">
-                                        {/* Image Preview */}
-                                        <div className="w-20 h-20 bg-muted rounded-xl overflow-hidden shrink-0 border border-border">
+                                <div key={invoice.id} className="bg-muted/30 rounded-[2rem] p-5 animate-in slide-in-from-bottom-2">
+                                    <div className="flex gap-4">
+                                        {/* Image Bubble */}
+                                        <div className="w-16 h-16 bg-background rounded-2xl overflow-hidden shrink-0 shadow-sm flex items-center justify-center">
                                             {invoice.items && invoice.items[0]?.image ? (
-                                                <img src={invoice.items[0].image} alt="Preview" className="w-full h-full object-cover" />
+                                                <img src={invoice.items[0].image} alt="" className="w-full h-full object-cover" />
                                             ) : (
-                                                <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                                                    <Package className="w-8 h-8 opacity-50" />
-                                                </div>
+                                                <Package className="w-6 h-6 text-muted-foreground/50" />
                                             )}
                                         </div>
+
                                         <div className="flex-1 min-w-0">
-                                            <div className="flex items-center gap-2 mb-1">
-                                                <span className="px-2 py-0.5 rounded-full bg-orange-500/10 text-orange-500 text-[10px] font-bold uppercase tracking-wider border border-orange-500/20">
-                                                    PENDING PAYMENT
+                                            <div className="flex items-center justify-between mb-1">
+                                                <span className="text-[10px] font-bold uppercase tracking-wider text-orange-500 bg-orange-500/10 px-2 py-0.5 rounded-full">
+                                                    Pending
                                                 </span>
-                                                <span className="text-xs text-muted-foreground font-mono">#{invoice.id.slice(0, 8)}</span>
+                                                <span className="text-xs font-bold text-muted-foreground">#{invoice.id.slice(0, 4)}</span>
                                             </div>
-                                            <h3 className="font-bold text-lg text-foreground truncate">{invoice.description || "Untitled Invoice"}</h3>
-                                            <div className="text-2xl font-black text-foreground mt-1">${invoice.amount.toFixed(2)}</div>
+                                            <h3 className="font-bold text-lg text-foreground truncate">{invoice.description || "Untitled"}</h3>
+                                            <div className="text-xl font-black text-foreground mt-0.5">${invoice.amount.toFixed(2)}</div>
                                         </div>
                                     </div>
 
-                                    <div className="flex items-center gap-2 mb-6">
-                                        <Clock className="w-4 h-4 text-muted-foreground" />
-                                        <span className="text-sm text-muted-foreground">Created {new Date(invoice.created_at).toLocaleDateString()}</span>
-                                    </div>
-
-                                    <div className="flex gap-3">
+                                    <div className="mt-4 flex gap-2">
                                         <button
                                             onClick={() => copyLink(invoice.id)}
-                                            className="flex-1 py-3 bg-primary/10 text-primary font-bold rounded-xl hover:bg-primary/20 transition-colors flex items-center justify-center gap-2"
+                                            className="flex-1 py-3 bg-background rounded-xl font-bold text-sm hover:bg-muted transition-colors flex items-center justify-center gap-2 shadow-sm"
                                         >
                                             <Copy className="w-4 h-4" />
                                             Copy Link
                                         </button>
-                                        <Link
-                                            href={`/pay/${invoice.id}`}
-                                            className="px-4 py-3 bg-card border border-border hover:bg-muted rounded-xl transition-colors flex items-center justify-center"
-                                        >
-                                            <ExternalLink className="w-4 h-4 text-foreground" />
-                                        </Link>
                                         <button
                                             onClick={() => deleteInvoice(invoice.id)}
-                                            className="px-4 py-3 bg-red-500/10 text-red-500 border border-red-500/20 hover:bg-red-500/20 rounded-xl transition-colors flex items-center justify-center"
-                                            title="Delete Invoice"
+                                            className="p-3 bg-red-500/10 text-red-500 rounded-xl hover:bg-red-500/20 transition-colors"
                                         >
                                             <AlertCircle className="w-4 h-4" />
                                         </button>
@@ -250,26 +199,11 @@ export default function OrdersPage() {
                                 </div>
                             ))
                         ) : (
-                            <div className="col-span-1 md:col-span-2 flex flex-col items-center justify-center py-20 text-center space-y-4 border-2 border-dashed border-border rounded-3xl bg-muted/30">
-                                <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center">
-                                    <Package className="w-8 h-8 text-muted-foreground" />
-                                </div>
-                                <div>
-                                    <h3 className="text-xl font-bold text-foreground">No Active Orders</h3>
-                                    <p className="text-muted-foreground max-w-sm mx-auto mt-2">
-                                        You don't have any orders in progress right now.
-                                    </p>
-                                </div>
+                            <div className="text-center py-20 space-y-4 opacity-50">
+                                <Package className="w-12 h-12 mx-auto text-muted-foreground" />
+                                <p className="font-bold text-muted-foreground">No active orders</p>
                             </div>
                         )}
-
-                        {/* Add New Order Placeholder */}
-                        <Link href="/create/invoice" className="border-2 border-dashed border-border rounded-3xl p-6 flex flex-col items-center justify-center gap-4 text-muted-foreground hover:text-primary hover:border-primary/50 hover:bg-primary/5 transition-all group min-h-[250px] active:scale-[0.99]">
-                            <div className="w-16 h-16 rounded-full bg-muted group-hover:bg-primary/10 flex items-center justify-center transition-colors">
-                                <Package className="w-8 h-8 opacity-50 group-hover:opacity-100 transition-opacity" />
-                            </div>
-                            <span className="font-bold text-lg">Create New PayLink</span>
-                        </Link>
                     </motion.div>
                 ) : (
                     <motion.div
@@ -278,111 +212,64 @@ export default function OrdersPage() {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
                         transition={{ duration: 0.2 }}
+                        className="space-y-3"
                     >
-                        {/* Filters & Search */}
-                        <div className="flex flex-col md:flex-row gap-4 mb-6">
-                            <div className="relative flex-1">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                                <input
-                                    type="text"
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    placeholder="Search transactions..."
-                                    className="w-full bg-card border border-border rounded-xl py-3 pl-10 pr-4 text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all shadow-sm"
-                                />
-                            </div>
-                            <div className="flex gap-2">
-                                <button
-                                    onClick={handleFilter}
-                                    className="px-5 py-3 bg-card border border-border rounded-xl text-sm font-bold hover:bg-muted transition-colors flex items-center gap-2 text-muted-foreground hover:text-foreground shadow-sm"
-                                >
-                                    <Filter className="w-4 h-4" />
-                                    Filter
-                                </button>
-                            </div>
+                        {/* Search Bubble */}
+                        <div className="bg-muted/30 rounded-2xl px-4 py-3 flex items-center gap-3 mb-6 focus-within:ring-2 focus-within:ring-primary/20 transition-all">
+                            <Search className="w-5 h-5 text-muted-foreground" />
+                            <input
+                                type="text"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                placeholder="Search history..."
+                                className="bg-transparent border-none focus:ring-0 p-0 w-full font-medium placeholder:text-muted-foreground/50"
+                            />
                         </div>
 
-                        {/* Table Container (Desktop) */}
-                        <div className="hidden md:block bg-card border border-border rounded-3xl overflow-hidden shadow-xl shadow-black/5 min-h-[300px]">
-                            {filteredHistory.length > 0 ? (
-                                <div className="overflow-x-auto">
-                                    <table className="w-full text-left text-sm">
-                                        <thead>
-                                            <tr className="border-b border-border bg-muted/30">
-                                                <th className="px-6 py-5 font-semibold text-muted-foreground">ID</th>
-                                                <th className="px-6 py-5 font-semibold text-muted-foreground">Date</th>
-                                                <th className="px-6 py-5 font-semibold text-muted-foreground">Description</th>
-                                                <th className="px-6 py-5 font-semibold text-muted-foreground">Status</th>
-                                                <th className="px-6 py-5 font-semibold text-muted-foreground text-right">Amount</th>
-                                                <th className="px-6 py-5 font-semibold text-muted-foreground"></th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-border/50">
-                                            {filteredHistory.map((tx) => (
-                                                <tr key={tx.id} className="hover:bg-muted/30 transition-colors">
-                                                    <td className="px-6 py-4 font-mono text-xs text-muted-foreground">#{tx.id.slice(0, 8)}</td>
-                                                    <td className="px-6 py-4">{new Date(tx.created_at).toLocaleDateString()}</td>
-                                                    <td className="px-6 py-4 font-medium">{tx.description}</td>
-                                                    <td className="px-6 py-4">
-                                                        <span className={clsx(
-                                                            "px-2 py-1 rounded-full text-xs font-bold uppercase tracking-wider",
-                                                            tx.status === 'paid' ? "bg-green-500/10 text-green-500" : "bg-gray-500/10 text-gray-500"
-                                                        )}>
-                                                            {tx.status}
-                                                        </span>
-                                                    </td>
-                                                    <td className="px-6 py-4 text-right font-bold">${tx.amount.toFixed(2)}</td>
-                                                    <td className="px-6 py-4 text-right">
-                                                        <button className="text-muted-foreground hover:text-foreground">
-                                                            <MoreHorizontal className="w-4 h-4" />
-                                                        </button>
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            ) : (
-                                <div className="flex flex-col items-center justify-center h-64 text-center">
-                                    <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center mb-3">
-                                        <Inbox className="w-6 h-6 text-muted-foreground" />
+                        {filteredHistory.length > 0 ? (
+                            filteredHistory.map((tx) => (
+                                <div key={tx.id} className="bg-muted/30 rounded-3xl p-4 flex items-center gap-4 animate-in slide-in-from-bottom-2">
+                                    <div className={clsx(
+                                        "w-12 h-12 rounded-2xl flex items-center justify-center shrink-0",
+                                        tx.status === 'paid' ? "bg-green-500/10 text-green-500" : "bg-gray-500/10 text-gray-500"
+                                    )}>
+                                        {tx.status === 'paid' ? <CheckCircle2 className="w-6 h-6" /> : <Clock className="w-6 h-6" />}
                                     </div>
-                                    <p className="text-muted-foreground font-medium">No transactions found.</p>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Mobile Card List */}
-                        <div className="md:hidden space-y-4">
-                            {filteredHistory.length > 0 ? (
-                                filteredHistory.map((tx) => (
-                                    <div key={tx.id} className="bg-card border border-border rounded-2xl p-4">
-                                        <div className="flex justify-between items-start mb-2">
-                                            <div>
-                                                <div className="font-bold text-foreground">{tx.description}</div>
-                                                <div className="text-xs text-muted-foreground">{new Date(tx.created_at).toLocaleDateString()}</div>
-                                            </div>
-                                            <div className="text-right">
-                                                <div className="font-bold">${tx.amount.toFixed(2)}</div>
-                                                <span className={clsx(
-                                                    "text-[10px] font-bold uppercase tracking-wider",
-                                                    tx.status === 'paid' ? "text-green-500" : "text-gray-500"
-                                                )}>
-                                                    {tx.status}
-                                                </span>
-                                            </div>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="font-bold text-foreground truncate">{tx.description || "Untitled"}</div>
+                                        <div className="text-xs text-muted-foreground font-medium">{new Date(tx.created_at).toLocaleDateString()}</div>
+                                    </div>
+                                    <div className="text-right">
+                                        <div className="font-black text-foreground">${tx.amount.toFixed(2)}</div>
+                                        <div className={clsx(
+                                            "text-[10px] font-bold uppercase tracking-wider",
+                                            tx.status === 'paid' ? "text-green-500" : "text-muted-foreground"
+                                        )}>
+                                            {tx.status}
                                         </div>
                                     </div>
-                                ))
-                            ) : (
-                                <div className="flex flex-col items-center justify-center py-12 text-center border-2 border-dashed border-border rounded-3xl bg-muted/30">
-                                    <p className="text-muted-foreground font-medium">No transactions found.</p>
                                 </div>
-                            )}
-                        </div>
+                            ))
+                        ) : (
+                            <div className="text-center py-20 space-y-4 opacity-50">
+                                <Clock className="w-12 h-12 mx-auto text-muted-foreground" />
+                                <p className="font-bold text-muted-foreground">No history found</p>
+                            </div>
+                        )}
                     </motion.div>
                 )}
             </AnimatePresence>
+
+            {/* Floating Action Button */}
+            <div className="fixed bottom-8 left-0 right-0 px-6 flex justify-center z-20 pointer-events-none">
+                <Link
+                    href="/create/invoice"
+                    className="pointer-events-auto px-6 py-4 bg-primary text-primary-foreground rounded-full font-black text-lg shadow-xl shadow-primary/30 hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
+                >
+                    <Plus className="w-6 h-6" />
+                    New PayLink
+                </Link>
+            </div>
         </div>
     );
 }

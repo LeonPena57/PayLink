@@ -2,12 +2,13 @@
 
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Loader2, Image as ImageIcon, X, Hash, Smile } from "lucide-react";
+import { ArrowLeft, Loader2, Image as ImageIcon, X, Hash, Smile, MapPin, Calendar, Globe, Send } from "lucide-react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
 import { useUser } from "@/context/UserContext";
+import { clsx } from "clsx";
 
-const TAGS = ["Digital Art", "Graphic Design", "Photography", "3D Modeling", "Animation"];
+const TAGS = ["Digital Art", "Graphic Design", "Photography", "3D Modeling", "Animation", "Sketch", "Tutorial"];
 
 export default function CreatePostPage() {
     const router = useRouter();
@@ -82,91 +83,110 @@ export default function CreatePostPage() {
 
     return (
         <div className="min-h-screen bg-background pb-32">
-            {/* Header */}
-            <div className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border px-4 py-3 flex items-center justify-between">
-                <Link href="/create" className="text-muted-foreground hover:text-foreground transition-colors font-medium">
-                    Cancel
+            {/* Minimal Header */}
+            <div className="sticky top-0 z-50 bg-background/80 backdrop-blur-md px-4 py-4 flex items-center justify-between">
+                <Link href="/create" className="p-2 -ml-2 rounded-full hover:bg-muted transition-colors">
+                    <ArrowLeft className="w-6 h-6 text-foreground" />
                 </Link>
-                <button
-                    onClick={handleSubmit}
-                    disabled={loading || !title || !image}
-                    className="px-6 py-2 bg-primary text-primary-foreground rounded-full font-bold text-sm shadow-sm hover:opacity-90 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                >
-                    {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Post"}
-                </button>
+                <div className="font-bold text-lg">New Post</div>
+                <div className="w-10" /> {/* Spacer */}
             </div>
 
-            <div className="max-w-2xl mx-auto p-4 md:pt-8">
-                <div className="flex gap-4">
-                    {/* Avatar */}
-                    <div className="shrink-0">
-                        <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-muted overflow-hidden border border-border">
-                            {profile?.avatar_url ? (
-                                <img src={profile.avatar_url} alt="User" className="w-full h-full object-cover" />
-                            ) : (
-                                <div className="w-full h-full bg-primary/10" />
-                            )}
-                        </div>
-                    </div>
+            <div className="max-w-xl mx-auto p-6 space-y-8">
 
-                    {/* Input Area */}
-                    <div className="flex-1 space-y-4">
-                        <div className="space-y-2">
-                            <input
-                                type="text"
-                                value={title}
-                                onChange={(e) => setTitle(e.target.value)}
-                                placeholder="Title (optional)"
-                                className="w-full bg-transparent text-xl font-bold text-foreground placeholder:text-muted-foreground/50 border-none focus:ring-0 p-0"
-                            />
-                            <textarea
-                                value={description}
-                                onChange={(e) => setDescription(e.target.value)}
-                                placeholder="What's happening?"
-                                className="w-full bg-transparent text-lg text-foreground placeholder:text-muted-foreground/50 border-none focus:ring-0 p-0 min-h-[150px] resize-none leading-relaxed"
-                            />
-                        </div>
-
-                        {/* Tag Selection */}
-                        <div className="flex flex-wrap gap-2">
-                            {TAGS.map((t) => (
-                                <button
-                                    key={t}
-                                    onClick={() => setTag(t)}
-                                    className={`px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${tag === t
-                                            ? "bg-primary text-primary-foreground"
-                                            : "bg-muted text-muted-foreground hover:bg-muted/80"
-                                        }`}
-                                >
-                                    {t}
-                                </button>
-                            ))}
-                        </div>
-
-                        {/* Image Preview */}
-                        {imagePreview && (
-                            <div className="relative rounded-2xl overflow-hidden border border-border group shadow-sm bg-muted/10">
-                                <img src={imagePreview} alt="Preview" className="w-full h-auto object-cover max-h-[500px]" />
-                                <button
-                                    onClick={removeImage}
-                                    className="absolute top-3 right-3 p-1.5 bg-black/50 hover:bg-black/70 text-white rounded-full backdrop-blur-md transition-all"
-                                >
-                                    <X className="w-4 h-4" />
-                                </button>
-                            </div>
+                {/* User Info (Optional, adds context) */}
+                <div className="flex items-center gap-3 animate-in fade-in slide-in-from-bottom-2">
+                    <div className="w-10 h-10 rounded-full bg-muted overflow-hidden border border-border">
+                        {profile?.avatar_url ? (
+                            <img src={profile.avatar_url} alt="User" className="w-full h-full object-cover" />
+                        ) : (
+                            <div className="w-full h-full bg-primary/10" />
                         )}
-
-                        {/* Toolbar */}
-                        <div className="pt-4 border-t border-border flex items-center gap-4 text-primary">
-                            <button
-                                onClick={() => fileInputRef.current?.click()}
-                                className="p-2 -ml-2 rounded-full hover:bg-primary/10 transition-colors"
-                                title="Add Image"
-                            >
-                                <ImageIcon className="w-5 h-5" />
-                            </button>
-                        </div>
                     </div>
+                    <div className="text-sm font-bold text-foreground">
+                        Posting as <span className="text-primary">@{profile?.username || 'user'}</span>
+                    </div>
+                </div>
+
+                {/* Title Input */}
+                <div className="space-y-2 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <input
+                        type="text"
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
+                        placeholder="Title (optional)"
+                        className="w-full text-3xl font-black bg-transparent border-none placeholder:text-muted-foreground/30 focus:ring-0 p-0"
+                        autoFocus
+                    />
+                </div>
+
+                {/* Description Input */}
+                <div className="animate-in fade-in slide-in-from-bottom-6 duration-500">
+                    <textarea
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
+                        placeholder="What's happening?"
+                        className="w-full bg-transparent text-lg border-none focus:ring-0 p-0 min-h-[120px] resize-none text-foreground placeholder:text-muted-foreground/50 leading-relaxed"
+                    />
+                </div>
+
+                {/* Image Preview */}
+                {imagePreview && (
+                    <div className="relative rounded-3xl overflow-hidden border border-border group shadow-sm bg-muted/10 animate-in zoom-in-95 duration-300">
+                        <img src={imagePreview} alt="Preview" className="w-full h-auto object-cover max-h-[500px]" />
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
+                        <button
+                            onClick={removeImage}
+                            className="absolute top-4 right-4 p-2 bg-black/50 text-white rounded-full backdrop-blur-md transition-all opacity-0 group-hover:opacity-100 hover:bg-red-500"
+                        >
+                            <X className="w-5 h-5" />
+                        </button>
+                    </div>
+                )}
+
+                {/* Tag Selection */}
+                <div className="space-y-3 pt-4">
+                    <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
+                        <Hash className="w-3 h-3" />
+                        Select Topic
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                        {TAGS.map((t) => (
+                            <button
+                                key={t}
+                                onClick={() => setTag(t)}
+                                className={clsx(
+                                    "px-4 py-2 rounded-full text-sm font-bold transition-all border",
+                                    tag === t
+                                        ? "bg-primary text-primary-foreground border-primary shadow-md shadow-primary/20"
+                                        : "bg-muted/30 border-transparent text-muted-foreground hover:bg-muted hover:text-foreground"
+                                )}
+                            >
+                                {t}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Toolbar */}
+                <div className="flex items-center gap-4 pt-4 border-t border-border/50">
+                    <button
+                        onClick={() => fileInputRef.current?.click()}
+                        className="p-3 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                        title="Add Image"
+                    >
+                        <ImageIcon className="w-5 h-5" />
+                    </button>
+                    <div className="h-8 w-px bg-border" />
+                    <button className="text-muted-foreground hover:text-primary transition-colors">
+                        <Smile className="w-5 h-5" />
+                    </button>
+                    <button className="text-muted-foreground hover:text-primary transition-colors">
+                        <Calendar className="w-5 h-5" />
+                    </button>
+                    <button className="text-muted-foreground hover:text-primary transition-colors">
+                        <MapPin className="w-5 h-5" />
+                    </button>
                 </div>
 
                 <input
@@ -176,6 +196,23 @@ export default function CreatePostPage() {
                     className="hidden"
                     accept="image/*"
                 />
+
+                {/* Floating Action Button */}
+                <div className="fixed bottom-8 left-0 right-0 px-6 flex justify-center z-20">
+                    <button
+                        onClick={handleSubmit}
+                        disabled={loading || !title || !image}
+                        className="w-full max-w-md py-4 bg-primary text-primary-foreground rounded-full font-black text-lg shadow-xl shadow-primary/30 hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                        {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : (
+                            <>
+                                Post Now
+                                <Send className="w-5 h-5" />
+                            </>
+                        )}
+                    </button>
+                </div>
+
             </div>
         </div>
     );

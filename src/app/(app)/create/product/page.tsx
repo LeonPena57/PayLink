@@ -2,11 +2,12 @@
 
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Loader2, ShoppingBag, X, FileText, Upload } from "lucide-react";
+import { ArrowLeft, Loader2, ShoppingBag, X, FileText, Upload, DollarSign, Image as ImageIcon, Sparkles, Plus } from "lucide-react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
 import { useUser } from "@/context/UserContext";
 import { generateWatermarkedPreview } from "@/lib/watermark";
+import { clsx } from "clsx";
 
 export default function CreateProductPage() {
     const router = useRouter();
@@ -33,14 +34,12 @@ export default function CreateProductPage() {
         }
 
         const newImages = await Promise.all(selectedFiles.map(async (file) => {
-            // Generate watermarked preview
             try {
                 const watermarkedBlob = await generateWatermarkedPreview(file);
                 const previewUrl = URL.createObjectURL(watermarkedBlob);
                 return { file, preview: previewUrl, watermarkedBlob };
             } catch (error) {
                 console.error("Error generating watermark:", error);
-                // Fallback to normal preview if watermark fails
                 return { file, preview: URL.createObjectURL(file) };
             }
         }));
@@ -58,9 +57,6 @@ export default function CreateProductPage() {
             alert("You can only upload up to 5 files.");
             return;
         }
-
-        // Note: The "1GB vs 10GB" limit enforcement is not yet implemented in code (it requires backend logic to check total usage)
-
         setFiles(prev => [...prev, ...selectedFiles]);
     };
 
@@ -89,24 +85,20 @@ export default function CreateProductPage() {
             if (productError) throw productError;
             const productId = product.id;
 
-            // 2. Upload Images & Insert into product_images
+            // 2. Upload Images
             if (images.length > 0) {
                 await Promise.all(images.map(async (img, index) => {
                     const fileExt = img.file.name.split('.').pop();
                     const randomId = Math.random().toString(36).substring(7);
-
-                    // Paths
                     const originalPath = `${user.id}/${productId}/original_${index}_${randomId}.${fileExt}`;
-                    const previewPath = `${user.id}/${productId}/preview_${index}_${randomId}.jpg`; // Previews are always JPG
+                    const previewPath = `${user.id}/${productId}/preview_${index}_${randomId}.jpg`;
 
-                    // A. Upload Original to Secure Bucket (Private)
                     const { error: secureError } = await supabase.storage
                         .from('secure_uploads')
                         .upload(originalPath, img.file);
 
                     if (secureError) throw secureError;
 
-                    // B. Upload Watermarked Preview to Public Bucket
                     let publicUrl = "";
                     if (img.watermarkedBlob) {
                         const { error: publicError } = await supabase.storage
@@ -118,9 +110,6 @@ export default function CreateProductPage() {
                             publicUrl = data.publicUrl;
                         }
                     } else {
-                        // Fallback: Upload original to public if watermark failed (not ideal but keeps flow working)
-                        // Or we could upload the original file as the preview if we don't care about security for this edge case
-                        // For now, let's just upload the original to public_previews
                         const { error: publicError } = await supabase.storage
                             .from('public_previews')
                             .upload(previewPath, img.file);
@@ -131,39 +120,32 @@ export default function CreateProductPage() {
                         }
                     }
 
-                    // C. Insert Record
-                    // Note: We might need to update the product_images table to support secure_url if we want to link to the original later
-                    // For now, we assume 'image_url' is the public preview.
                     await supabase.from('product_images').insert({
                         product_id: productId,
                         image_url: publicUrl,
                         display_order: index
                     });
 
-                    // Update main thumbnail if it's the first image
                     if (index === 0) {
                         await supabase.from('products').update({ thumbnail_url: publicUrl }).eq('id', productId);
                     }
                 }));
             }
 
-            // 3. Upload Files & Insert into product_files
+            // 3. Upload Files
             if (files.length > 0) {
                 await Promise.all(files.map(async (file, index) => {
                     const fileExt = file.name.split('.').pop();
                     const fileName = `${user.id}/${productId}/file_${index}_${Math.random()}.${fileExt}`;
 
-                    // Upload to Secure Bucket
                     const { error: uploadError } = await supabase.storage
                         .from('secure_uploads')
                         .upload(fileName, file);
 
                     if (!uploadError) {
-                        // We don't get a public URL for secure files.
-                        // We store the path, and generate a signed URL when the user buys it.
                         await supabase.from('product_files').insert({
                             product_id: productId,
-                            file_url: fileName, // Store PATH, not URL
+                            file_url: fileName,
                             file_name: file.name,
                             file_size: file.size
                         });
@@ -182,45 +164,65 @@ export default function CreateProductPage() {
 
     return (
         <div className="min-h-screen bg-background pb-32">
-            <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-md border-b border-border px-4 py-3 flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                    <Link href="/create" className="p-2 -ml-2 rounded-full hover:bg-muted transition-colors">
-                        <ArrowLeft className="w-6 h-6 text-foreground" />
-                    </Link>
-                    <h1 className="text-lg font-bold text-foreground">New Product</h1>
-                </div>
-                <button
-                    type="submit"
-                    form="create-product-form"
-                    disabled={loading || !title || !description || !price}
-                    className="px-6 py-2 bg-primary text-primary-foreground rounded-full font-bold text-sm shadow-lg hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                >
-                    {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Create"}
-                </button>
+            {/* Minimal Header */}
+            <div className="sticky top-0 z-20 bg-background/80 backdrop-blur-md px-4 py-4 flex items-center justify-between">
+                <Link href="/create" className="p-2 -ml-2 rounded-full hover:bg-muted transition-colors">
+                    <ArrowLeft className="w-6 h-6 text-foreground" />
+                </Link>
+                <div className="font-bold text-lg">New Product</div>
+                <div className="w-10" /> {/* Spacer */}
             </div>
 
-            <div className="max-w-2xl mx-auto p-4 md:p-8">
-                <form id="create-product-form" onSubmit={handleSubmit} className="space-y-8">
+            <div className="max-w-xl mx-auto p-6 space-y-10">
+                <form id="create-product-form" onSubmit={handleSubmit} className="space-y-10">
+
+                    {/* Big Title Input */}
+                    <div className="space-y-2 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        <input
+                            type="text"
+                            value={title}
+                            onChange={(e) => setTitle(e.target.value)}
+                            placeholder="Product Name"
+                            className="w-full text-center text-3xl md:text-4xl font-black bg-transparent border-none placeholder:text-muted-foreground/30 focus:ring-0 p-0"
+                            autoFocus
+                            required
+                        />
+                        <div className="h-1 w-24 bg-primary mx-auto rounded-full opacity-20" />
+                    </div>
+
+                    {/* Price Bubble */}
+                    <div className="flex justify-center">
+                        <div className="bg-muted/30 rounded-full px-6 py-3 flex items-center gap-2 focus-within:ring-2 focus-within:ring-primary/20 transition-all">
+                            <DollarSign className="w-5 h-5 text-muted-foreground" />
+                            <input
+                                type="number"
+                                value={price}
+                                onChange={(e) => setPrice(e.target.value)}
+                                placeholder="0.00"
+                                className="bg-transparent font-bold text-xl w-24 border-none focus:ring-0 p-0 text-foreground placeholder:text-muted-foreground/50"
+                                required
+                                min="0"
+                                step="0.01"
+                            />
+                        </div>
+                    </div>
 
                     {/* Images Section */}
-                    <div className="space-y-4">
-                        <label className="text-sm font-bold text-muted-foreground uppercase tracking-wider flex justify-between">
-                            <span>Product Images</span>
-                            <span>{images.length}/5</span>
-                        </label>
-                        <div className="grid grid-cols-3 gap-3 md:gap-4">
+                    <div className="space-y-3">
+                        <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider ml-2">Images ({images.length}/5)</label>
+                        <div className="flex gap-3 overflow-x-auto pb-2 custom-scrollbar snap-x">
                             {images.map((img, index) => (
-                                <div key={index} className="relative aspect-square rounded-2xl overflow-hidden border border-border group">
-                                    <img src={img.preview} alt={`Preview ${index}`} className="w-full h-full object-cover" />
+                                <div key={index} className="relative w-32 h-32 shrink-0 rounded-2xl overflow-hidden border border-border snap-start group">
+                                    <img src={img.preview} alt="" className="w-full h-full object-cover" />
                                     <button
                                         type="button"
                                         onClick={() => removeImage(index)}
-                                        className="absolute top-2 right-2 p-1.5 bg-black/50 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                        className="absolute top-2 right-2 p-1.5 bg-black/50 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all hover:bg-red-500"
                                     >
-                                        <X className="w-4 h-4" />
+                                        <X className="w-3 h-3" />
                                     </button>
                                     {index === 0 && (
-                                        <div className="absolute bottom-2 left-2 px-2 py-1 bg-black/50 text-white text-[10px] font-bold rounded-full backdrop-blur-md">
+                                        <div className="absolute bottom-2 left-2 px-2 py-0.5 bg-black/60 text-white text-[10px] font-bold rounded-full backdrop-blur-md">
                                             Cover
                                         </div>
                                     )}
@@ -229,9 +231,11 @@ export default function CreateProductPage() {
                             {images.length < 5 && (
                                 <div
                                     onClick={() => imageInputRef.current?.click()}
-                                    className="aspect-square rounded-2xl border-2 border-dashed border-border hover:border-primary/50 bg-muted/30 flex flex-col items-center justify-center cursor-pointer transition-all hover:bg-muted/50"
+                                    className="w-32 h-32 shrink-0 rounded-2xl bg-muted/30 border-2 border-dashed border-border hover:border-primary/50 hover:bg-muted/50 transition-all flex flex-col items-center justify-center cursor-pointer snap-start gap-2"
                                 >
-                                    <ShoppingBag className="w-6 h-6 text-muted-foreground mb-2" />
+                                    <div className="w-10 h-10 rounded-full bg-background flex items-center justify-center shadow-sm">
+                                        <Plus className="w-5 h-5 text-muted-foreground" />
+                                    </div>
                                     <span className="text-xs font-bold text-muted-foreground">Add Image</span>
                                     <input
                                         type="file"
@@ -246,82 +250,50 @@ export default function CreateProductPage() {
                         </div>
                     </div>
 
-                    {/* Product Details */}
-                    <div className="space-y-4">
-                        <div className="space-y-2">
-                            <label className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Product Name</label>
-                            <input
-                                type="text"
-                                value={title}
-                                onChange={(e) => setTitle(e.target.value)}
-                                placeholder="E.g. Ultimate Brush Pack"
-                                className="w-full bg-card border border-border rounded-xl px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 font-medium"
-                                required
-                            />
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Price ($)</label>
-                            <input
-                                type="number"
-                                value={price}
-                                onChange={(e) => setPrice(e.target.value)}
-                                placeholder="15.00"
-                                className="w-full bg-card border border-border rounded-xl px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 font-medium"
-                                required
-                                min="0"
-                            />
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Description</label>
+                    {/* Description Bubble */}
+                    <div className="space-y-2">
+                        <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider ml-2">Description</label>
+                        <div className="bg-muted/30 rounded-3xl p-4 focus-within:ring-2 focus-within:ring-primary/20 transition-all">
                             <textarea
                                 value={description}
                                 onChange={(e) => setDescription(e.target.value)}
                                 placeholder="Describe your product..."
-                                className="w-full bg-card border border-border rounded-xl px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 font-medium min-h-[150px] resize-none"
+                                className="w-full bg-transparent border-none focus:ring-0 p-0 min-h-[150px] resize-none text-foreground placeholder:text-muted-foreground/50 leading-relaxed"
                                 required
                             />
                         </div>
                     </div>
 
                     {/* Files Section */}
-                    <div className="space-y-4">
-                        <label className="text-sm font-bold text-muted-foreground uppercase tracking-wider flex justify-between">
-                            <span>Product Files</span>
-                            <span>{files.length}/5</span>
-                        </label>
-
-                        <div className="space-y-3">
+                    <div className="space-y-3">
+                        <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider ml-2">Digital Files ({files.length}/5)</label>
+                        <div className="space-y-2">
                             {files.map((file, index) => (
-                                <div key={index} className="flex items-center justify-between p-3 bg-card border border-border rounded-xl">
-                                    <div className="flex items-center gap-3 overflow-hidden">
-                                        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                                            <FileText className="w-5 h-5 text-primary" />
-                                        </div>
-                                        <div className="min-w-0">
-                                            <p className="font-medium text-sm truncate">{file.name}</p>
-                                            <p className="text-xs text-muted-foreground">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
-                                        </div>
+                                <div key={index} className="flex items-center gap-3 p-3 bg-muted/30 rounded-2xl group">
+                                    <div className="w-10 h-10 rounded-xl bg-background flex items-center justify-center shrink-0 shadow-sm">
+                                        <FileText className="w-5 h-5 text-primary" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="font-bold text-sm truncate">{file.name}</div>
+                                        <div className="text-xs text-muted-foreground">{(file.size / 1024 / 1024).toFixed(2)} MB</div>
                                     </div>
                                     <button
                                         type="button"
                                         onClick={() => removeFile(index)}
-                                        className="p-2 hover:bg-destructive/10 hover:text-destructive rounded-lg transition-colors"
+                                        className="p-2 text-muted-foreground/50 hover:text-destructive transition-colors"
                                     >
                                         <X className="w-4 h-4" />
                                     </button>
                                 </div>
                             ))}
-
                             {files.length < 5 && (
                                 <button
                                     type="button"
                                     onClick={() => fileInputRef.current?.click()}
-                                    className="w-full py-4 border-2 border-dashed border-border rounded-xl flex items-center justify-center gap-2 text-muted-foreground hover:text-primary hover:border-primary/50 hover:bg-primary/5 transition-all"
+                                    className="w-full py-4 border-2 border-dashed border-border rounded-2xl flex items-center justify-center gap-2 text-muted-foreground hover:text-primary hover:border-primary/50 hover:bg-primary/5 transition-all font-bold text-sm"
                                 >
-                                    <Upload className="w-5 h-5" />
-                                    <span className="font-bold text-sm">Upload File</span>
+                                    <Upload className="w-4 h-4" />
+                                    Upload File
                                 </button>
                             )}
                             <input
@@ -332,9 +304,22 @@ export default function CreateProductPage() {
                                 multiple
                             />
                         </div>
-                        <p className="text-xs text-muted-foreground">
-                            Upload the files that customers will receive after purchase. Supports ZIP, PDF, PSD, etc.
-                        </p>
+                    </div>
+
+                    {/* Floating Action Button */}
+                    <div className="fixed bottom-8 left-0 right-0 px-6 flex justify-center z-20">
+                        <button
+                            type="submit"
+                            disabled={loading || !title || !description || !price}
+                            className="w-full max-w-md py-4 bg-primary text-primary-foreground rounded-full font-black text-lg shadow-xl shadow-primary/30 hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        >
+                            {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : (
+                                <>
+                                    Publish Product
+                                    <Sparkles className="w-5 h-5" />
+                                </>
+                            )}
+                        </button>
                     </div>
 
                 </form>

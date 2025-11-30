@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
-import { MoreVertical, User, ChevronRight, Send, Plus, ArrowLeft } from "lucide-react";
+import { User, ChevronRight, Send, Plus, ArrowLeft, Search, MessageSquare } from "lucide-react";
 import clsx from "clsx";
 import { supabase } from "@/lib/supabase/client";
 import { useUser } from "@/context/UserContext";
@@ -43,11 +43,125 @@ export function MessagesWidget() {
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
+    const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    };
+
+    const fetchConversations = useCallback(async () => {
+        if (!user) return;
+        // setLoading(true); // Removed to avoid lint error
+
+        const { data: myConvos, error: myConvosError } = await supabase
+            .from('conversation_participants')
+            .select('conversation_id')
+            .eq('user_id', user.id);
+
+        if (myConvosError || !myConvos || myConvos.length === 0) {
+            setConversations([]);
+            setLoading(false);
+            return;
+        }
+
+        const conversationIds = myConvos.map(c => c.conversation_id);
+
+        const { data: participants, error: participantsError } = await supabase
+            .from('conversation_participants')
+            .select('conversation_id, user_id')
+            .in('conversation_id', conversationIds)
+            .neq('user_id', user.id);
+
+        if (participantsError || !participants) {
+            setLoading(false);
+            return;
+        }
+
+        const userIds = participants.map(p => p.user_id);
+        const { data: profiles } = await supabase
+            .from('profiles')
+            .select('id, username, full_name, avatar_url')
+            .in('id', userIds);
+
+        const loadedConversations: Conversation[] = participants.map(p => {
+            const profile = profiles?.find(prof => prof.id === p.user_id) || null;
+            return {
+                id: p.conversation_id,
+                other_user: profile,
+                last_message: null
+            };
+        });
+
+        setConversations(loadedConversations);
+        setLoading(false);
+    }, [user]);
+
+    const fetchMessages = useCallback(async (conversationId: string) => {
+        const { data } = await supabase
+            .from('messages')
+            .select('*')
+            .eq('conversation_id', conversationId)
+            .order('created_at', { ascending: true });
+
+        if (data) {
+            setMessages(data);
+            setTimeout(scrollToBottom, 100);
+        }
+    }, []);
+
+    const handleSearchUsers = async () => {
+        if (!searchUsername.trim()) return;
+
+        const { data } = await supabase
+            .from('profiles')
+            .select('id, username, full_name, avatar_url')
+            .ilike('username', `%${searchUsername}%`)
+            .limit(5);
+
+        if (data) {
+            setSearchResults(data);
+        }
+    };
+
+    const startConversation = useCallback(async (otherUserId: string) => {
+        if (!user) return;
+
+        const { data: convo } = await supabase
+            .from('conversations')
+            .insert({})
+            .select()
+            .single();
+
+        if (convo) {
+            await supabase.from('conversation_participants').insert([
+                { conversation_id: convo.id, user_id: user.id },
+                { conversation_id: convo.id, user_id: otherUserId }
+            ]);
+
+            await fetchConversations();
+            const otherUser = searchResults.find(r => r.id === otherUserId);
+            let targetUser = otherUser || null;
+
+            if (!targetUser) {
+                const { data: profile } = await supabase.from('profiles').select('*').eq('id', otherUserId).single();
+                if (profile) targetUser = profile;
+            }
+
+            setActiveConversation({
+                id: convo.id,
+                other_user: targetUser,
+                last_message: null
+            });
+            setIsNewChatOpen(false);
+        }
+    }, [user, fetchConversations, searchResults]);
+
     useEffect(() => {
         if (user) {
-            fetchConversations();
+            const timer = setTimeout(() => {
+                fetchConversations();
+            }, 0);
+            return () => clearTimeout(timer);
         }
-    }, [user]);
+    }, [user, fetchConversations]);
 
     useEffect(() => {
         if (activeConversation) {
@@ -64,104 +178,19 @@ export function MessagesWidget() {
                 supabase.removeChannel(channel);
             };
         }
-    }, [activeConversation]);
+    }, [activeConversation, fetchMessages]);
 
     // Handle chat_with param
     useEffect(() => {
         if (user && chatWithUserId && !loading) {
-            // Check if we already have a conversation with this user
             const existingConvo = conversations.find(c => c.other_user?.id === chatWithUserId);
             if (existingConvo) {
                 setActiveConversation(existingConvo);
             } else {
-                // If not found in loaded conversations, try to create/find one
-                // We only do this if conversations are loaded (loading is false)
-                // But wait, if conversations are empty, we might still need to create one.
-                // startConversation handles finding or creating.
                 startConversation(chatWithUserId);
             }
         }
-    }, [user, chatWithUserId, loading, conversations]);
-
-
-    const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    };
-
-    const fetchConversations = async () => {
-        if (!user) return;
-        setLoading(true);
-
-        // 1. Get all conversation IDs the user is part of
-        const { data: myConvos, error: myConvosError } = await supabase
-            .from('conversation_participants')
-            .select('conversation_id')
-            .eq('user_id', user.id);
-
-        if (myConvosError) {
-            // Table doesn't exist or other error - just show empty state
-            console.warn('Conversations feature not available:', myConvosError.message);
-            setConversations([]);
-            setLoading(false);
-            return;
-        }
-
-        if (!myConvos || myConvos.length === 0) {
-            setConversations([]);
-            setLoading(false);
-            return;
-        }
-
-        const conversationIds = myConvos.map(c => c.conversation_id);
-
-        // 2. Get the other participants for these conversations
-        const { data: participants, error: participantsError } = await supabase
-            .from('conversation_participants')
-            .select('conversation_id, user_id')
-            .in('conversation_id', conversationIds)
-            .neq('user_id', user.id);
-
-        if (participantsError || !participants) {
-            setLoading(false);
-            return;
-        }
-
-        // 3. Get profile details for these participants
-        const userIds = participants.map(p => p.user_id);
-        const { data: profiles } = await supabase
-            .from('profiles')
-            .select('id, username, full_name, avatar_url')
-            .in('id', userIds);
-
-        // 4. Get last message for each conversation (simplified: just get latest message overall for now or skip)
-        // For MVP, we won't fetch last message preview efficiently without a complex query. 
-        // We'll just list the users.
-
-        const loadedConversations: Conversation[] = participants.map(p => {
-            const profile = profiles?.find(prof => prof.id === p.user_id) || null;
-            return {
-                id: p.conversation_id,
-                other_user: profile,
-                last_message: null // TODO: Implement last message fetch
-            };
-        });
-
-        setConversations(loadedConversations);
-        setLoading(false);
-    };
-
-    const fetchMessages = async (conversationId: string) => {
-        const { data, error } = await supabase
-            .from('messages')
-            .select('*')
-            .eq('conversation_id', conversationId)
-            .order('created_at', { ascending: true });
-
-        if (data) {
-            setMessages(data);
-            setTimeout(scrollToBottom, 100);
-        }
-    };
+    }, [user, chatWithUserId, loading, conversations, startConversation]);
 
     const handleSendMessage = async () => {
         if (!newMessage.trim() || !activeConversation || !user) return;
@@ -179,66 +208,13 @@ export function MessagesWidget() {
         }
     };
 
-    const handleSearchUsers = async () => {
-        if (!searchUsername.trim()) return;
-
-        const { data, error } = await supabase
-            .from('profiles')
-            .select('id, username, full_name, avatar_url')
-            .ilike('username', `%${searchUsername}%`)
-            .limit(5);
-
-        if (data) {
-            setSearchResults(data);
-        }
-    };
-
-    const startConversation = async (otherUserId: string) => {
-        if (!user) return;
-
-        // Check if conversation already exists
-        // This check is complex client-side. For MVP, just create a new one or rely on backend constraints if we had them.
-        // Better: Create conversation, insert participants.
-
-        const { data: convo, error: convoError } = await supabase
-            .from('conversations')
-            .insert({})
-            .select()
-            .single();
-
-        if (convo) {
-            await supabase.from('conversation_participants').insert([
-                { conversation_id: convo.id, user_id: user.id },
-                { conversation_id: convo.id, user_id: otherUserId }
-            ]);
-
-            // Refresh list and open
-            await fetchConversations();
-            const otherUser = searchResults.find(r => r.id === otherUserId);
-            // If we came from URL, we might not have searchResults.
-            // We should fetch the other user profile if missing.
-            let targetUser = otherUser || null;
-            if (!targetUser) {
-                const { data: profile } = await supabase.from('profiles').select('*').eq('id', otherUserId).single();
-                if (profile) targetUser = profile;
-            }
-
-            setActiveConversation({
-                id: convo.id,
-                other_user: targetUser,
-                last_message: null
-            });
-            setIsNewChatOpen(false);
-        }
-    };
-
     if (activeConversation) {
         return (
-            <div className="w-full max-w-2xl mx-auto h-[80vh] flex flex-col bg-card border border-border rounded-3xl overflow-hidden shadow-2xl">
+            <div className="w-full max-w-2xl mx-auto h-[85vh] md:h-[800px] flex flex-col bg-background md:bg-card md:border md:border-border md:rounded-[2.5rem] overflow-hidden md:shadow-2xl">
                 {/* Chat Header */}
-                <div className="p-4 border-b border-border flex items-center gap-4 bg-muted/30">
-                    <button onClick={() => setActiveConversation(null)} className="p-2 hover:bg-muted rounded-full transition-colors">
-                        <ArrowLeft className="w-6 h-6" />
+                <div className="p-4 flex items-center gap-4 bg-background/80 backdrop-blur-md sticky top-0 z-10 border-b border-border/50">
+                    <button onClick={() => setActiveConversation(null)} className="p-2 -ml-2 hover:bg-muted rounded-full transition-colors">
+                        <ArrowLeft className="w-6 h-6 text-foreground" />
                     </button>
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-muted overflow-hidden border border-border">
@@ -251,21 +227,23 @@ export function MessagesWidget() {
                             )}
                         </div>
                         <div>
-                            <h3 className="font-bold text-foreground">{activeConversation.other_user?.full_name || "Unknown User"}</h3>
-                            <p className="text-xs text-muted-foreground">@{activeConversation.other_user?.username}</p>
+                            <h3 className="font-bold text-foreground leading-tight">{activeConversation.other_user?.full_name || "Unknown User"}</h3>
+                            <p className="text-xs text-muted-foreground font-medium">@{activeConversation.other_user?.username}</p>
                         </div>
                     </div>
                 </div>
 
                 {/* Messages Area */}
-                <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-background/50">
+                <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-muted/10">
                     {messages.map((msg) => {
                         const isMe = msg.sender_id === user?.id;
                         return (
                             <div key={msg.id} className={clsx("flex", isMe ? "justify-end" : "justify-start")}>
                                 <div className={clsx(
-                                    "max-w-[80%] px-4 py-2 rounded-2xl text-sm",
-                                    isMe ? "bg-primary text-primary-foreground rounded-br-none" : "bg-muted text-foreground rounded-bl-none"
+                                    "max-w-[80%] px-5 py-3 rounded-2xl text-sm font-medium leading-relaxed shadow-sm",
+                                    isMe
+                                        ? "bg-primary text-primary-foreground rounded-br-sm"
+                                        : "bg-card border border-border text-foreground rounded-bl-sm"
                                 )}>
                                     {msg.content}
                                 </div>
@@ -276,22 +254,22 @@ export function MessagesWidget() {
                 </div>
 
                 {/* Input Area */}
-                <div className="p-4 border-t border-border bg-card">
-                    <div className="flex gap-2">
+                <div className="p-4 bg-background border-t border-border/50">
+                    <div className="flex gap-2 items-end bg-muted/30 p-2 rounded-3xl border border-transparent focus-within:border-primary/20 focus-within:bg-background transition-all">
                         <input
                             type="text"
                             value={newMessage}
                             onChange={(e) => setNewMessage(e.target.value)}
                             onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
                             placeholder="Type a message..."
-                            className="flex-1 bg-muted/50 border border-border rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-primary transition-colors"
+                            className="flex-1 bg-transparent border-none px-4 py-2 text-sm focus:ring-0 placeholder:text-muted-foreground/50 max-h-32"
                         />
                         <button
                             onClick={handleSendMessage}
                             disabled={!newMessage.trim()}
-                            className="p-2 bg-primary text-primary-foreground rounded-xl hover:bg-primary/90 transition-colors disabled:opacity-50"
+                            className="p-2 bg-primary text-primary-foreground rounded-full hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:hover:scale-100 shadow-md shadow-primary/20"
                         >
-                            <Send className="w-5 h-5" />
+                            <Send className="w-5 h-5 ml-0.5" />
                         </button>
                     </div>
                 </div>
@@ -300,69 +278,76 @@ export function MessagesWidget() {
     }
 
     return (
-        <div className="w-full max-w-2xl mx-auto pb-20 md:pb-0">
+        <div className="w-full max-w-2xl mx-auto pb-24 md:pb-0">
             {/* Header */}
-            <div className="flex items-center justify-between mb-6">
-                <h1 className="text-3xl font-bold font-header italic tracking-tight text-foreground">Messages</h1>
+            <div className="flex items-center justify-between mb-8 px-2">
+                <h1 className="text-3xl font-black text-foreground tracking-tight">Messages</h1>
                 <button
-                    onClick={() => setIsNewChatOpen(true)}
-                    className="p-2 bg-primary text-primary-foreground rounded-full shadow-lg hover:bg-primary/90 transition-colors"
+                    onClick={() => setIsNewChatOpen(!isNewChatOpen)}
+                    className={clsx(
+                        "p-3 rounded-full transition-all shadow-lg",
+                        isNewChatOpen ? "bg-muted text-foreground rotate-45" : "bg-primary text-primary-foreground hover:scale-105"
+                    )}
                 >
                     <Plus className="w-6 h-6" />
                 </button>
             </div>
 
-            {/* New Chat Modal / Area */}
+            {/* New Chat Area */}
             {isNewChatOpen && (
-                <div className="mb-6 p-4 bg-card border border-border rounded-2xl animate-in fade-in slide-in-from-top-4">
-                    <div className="flex items-center justify-between mb-4">
-                        <h3 className="font-bold">New Message</h3>
-                        <button onClick={() => setIsNewChatOpen(false)} className="text-muted-foreground hover:text-foreground">
-                            <ArrowLeft className="w-5 h-5" />
-                        </button>
-                    </div>
-                    <div className="flex gap-2 mb-4">
+                <div className="mb-8 p-5 bg-card border border-border rounded-[2rem] animate-in fade-in slide-in-from-top-4 shadow-xl shadow-black/5">
+                    <div className="flex items-center gap-3 mb-4 bg-muted/30 p-3 rounded-2xl">
+                        <Search className="w-5 h-5 text-muted-foreground ml-1" />
                         <input
                             type="text"
                             value={searchUsername}
                             onChange={(e) => setSearchUsername(e.target.value)}
                             placeholder="Search username..."
-                            className="flex-1 bg-muted/50 border border-border rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-primary"
+                            className="flex-1 bg-transparent border-none focus:ring-0 p-0 text-sm font-medium"
+                            autoFocus
                         />
-                        <button onClick={handleSearchUsers} className="px-4 py-2 bg-muted hover:bg-muted/80 rounded-xl font-bold text-sm">
-                            Search
+                        <button onClick={handleSearchUsers} className="px-4 py-1.5 bg-background rounded-xl font-bold text-xs shadow-sm hover:bg-muted transition-colors">
+                            Find
                         </button>
                     </div>
+
                     <div className="space-y-2">
-                        {searchResults.map(profile => (
-                            <button
-                                key={profile.id}
-                                onClick={() => startConversation(profile.id)}
-                                className="w-full flex items-center gap-3 p-2 hover:bg-muted rounded-xl transition-colors text-left"
-                            >
-                                <div className="w-10 h-10 rounded-full bg-muted overflow-hidden border border-border">
-                                    {profile.avatar_url ? (
-                                        <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
-                                    ) : (
-                                        <div className="w-full h-full flex items-center justify-center">
-                                            <User className="w-5 h-5 text-muted-foreground" />
-                                        </div>
-                                    )}
-                                </div>
-                                <div>
-                                    <div className="font-bold text-sm">{profile.full_name}</div>
-                                    <div className="text-xs text-muted-foreground">@{profile.username}</div>
-                                </div>
-                            </button>
-                        ))}
+                        {searchResults.length > 0 ? (
+                            searchResults.map(profile => (
+                                <button
+                                    key={profile.id}
+                                    onClick={() => startConversation(profile.id)}
+                                    className="w-full flex items-center gap-3 p-3 hover:bg-muted/50 rounded-2xl transition-colors text-left group"
+                                >
+                                    <div className="w-10 h-10 rounded-full bg-muted overflow-hidden border border-border">
+                                        {profile.avatar_url ? (
+                                            <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center">
+                                                <User className="w-5 h-5 text-muted-foreground" />
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div>
+                                        <div className="font-bold text-sm text-foreground group-hover:text-primary transition-colors">{profile.full_name}</div>
+                                        <div className="text-xs text-muted-foreground">@{profile.username}</div>
+                                    </div>
+                                    <ChevronRight className="w-4 h-4 ml-auto text-muted-foreground/50" />
+                                </button>
+                            ))
+                        ) : searchUsername && (
+                            <div className="text-center py-4 text-sm text-muted-foreground">
+                                No users found
+                            </div>
+                        )}
                     </div>
                 </div>
             )}
 
             {/* Conversation List */}
-            <div className="space-y-4">
+            <div className="space-y-3">
                 {loading ? (
-                    <div className="text-center py-10">
+                    <div className="text-center py-20 opacity-50">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
                     </div>
                 ) : conversations.length > 0 ? (
@@ -370,47 +355,43 @@ export function MessagesWidget() {
                         <div
                             key={convo.id}
                             onClick={() => setActiveConversation(convo)}
-                            className="bg-card/95 backdrop-blur-sm border border-border/50 p-4 rounded-3xl flex items-center gap-4 shadow-lg shadow-black/5 hover:scale-[1.02] transition-all cursor-pointer group"
+                            className="bg-muted/30 hover:bg-muted/50 p-4 rounded-[2rem] flex items-center gap-4 transition-all cursor-pointer group active:scale-[0.98]"
                         >
                             {/* Avatar */}
-                            <div className="w-16 h-16 rounded-full p-0.5 bg-gradient-to-br from-white/20 to-transparent shrink-0">
-                                <div className="w-full h-full rounded-full bg-muted flex items-center justify-center overflow-hidden border-2 border-background">
+                            <div className="w-14 h-14 rounded-full bg-background p-0.5 shrink-0 shadow-sm group-hover:scale-105 transition-transform">
+                                <div className="w-full h-full rounded-full bg-muted flex items-center justify-center overflow-hidden">
                                     {convo.other_user?.avatar_url ? (
                                         <img src={convo.other_user.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
                                     ) : (
-                                        <div className="w-full h-full flex items-center justify-center">
-                                            <span className="font-bold text-muted-foreground text-lg">
-                                                {convo.other_user?.full_name?.charAt(0) || "?"}
-                                            </span>
-                                        </div>
+                                        <span className="font-bold text-muted-foreground text-lg">
+                                            {convo.other_user?.full_name?.charAt(0) || "?"}
+                                        </span>
                                     )}
                                 </div>
                             </div>
 
                             {/* Content */}
                             <div className="flex-1 min-w-0">
-                                <h3 className="font-bold text-xl text-foreground tracking-tight mb-1">
+                                <h3 className="font-bold text-lg text-foreground tracking-tight mb-0.5 truncate">
                                     {convo.other_user?.full_name || "Unknown User"}
                                 </h3>
-                                <p className="text-muted-foreground text-sm font-medium truncate">
+                                <p className="text-muted-foreground text-xs font-bold uppercase tracking-wider">
                                     @{convo.other_user?.username}
                                 </p>
                             </div>
 
                             {/* Actions */}
-                            <div className="flex items-center gap-3">
-                                <ChevronRight className="w-6 h-6 text-muted-foreground group-hover:text-foreground transition-colors" />
+                            <div className="w-10 h-10 rounded-full bg-background flex items-center justify-center shadow-sm opacity-0 group-hover:opacity-100 transition-opacity">
+                                <ChevronRight className="w-5 h-5 text-muted-foreground" />
                             </div>
                         </div>
                     ))
                 ) : (
-                    <div className="text-center py-10 space-y-4">
-                        <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto">
-                            <MoreVertical className="w-8 h-8 text-muted-foreground" />
-                        </div>
+                    <div className="text-center py-20 space-y-4 opacity-50">
+                        <MessageSquare className="w-12 h-12 mx-auto text-muted-foreground" />
                         <div>
                             <h3 className="font-bold text-lg">No messages yet</h3>
-                            <p className="text-muted-foreground">Start a conversation with someone!</p>
+                            <p className="text-muted-foreground text-sm">Start a conversation with someone!</p>
                         </div>
                     </div>
                 )}

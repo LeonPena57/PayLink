@@ -12,7 +12,7 @@ export default function ShopPage() {
         { title: "Cozy Vibes Emotes", price: 15.00, sales: 89, color: "bg-orange-500" },
         { title: "Twitch Panel Bundle", price: 10.00, sales: 256, color: "bg-purple-500" },
         { title: "Animated Alerts", price: 30.00, sales: 45, color: "bg-pink-500" },
-        { title: "Stinger Transitions", price: 20.00, sales: 67, color: "bg-blue-500" },
+        { title: "Stinger Transitions", price: 20.00, sales: 67, color: "bg-primary" },
         { title: "Stream Schedule Template", price: 5.00, sales: 312, color: "bg-green-500" },
     ];
 

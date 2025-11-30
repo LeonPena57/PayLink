@@ -1,6 +1,6 @@
 "use client";
 
-import { Home, Receipt, QrCode, User, Plus, Menu, ChevronLeft, ChevronRight, LogOut, Settings, Sun, Moon, FolderOpen, MessageCircle, ShoppingBag, Globe, X } from "lucide-react";
+import { Home, Receipt, QrCode, User, Plus, Menu, LogOut, Settings, Sun, Moon, FolderOpen, MessageCircle, ShoppingBag, Globe, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import clsx from "clsx";
@@ -78,7 +78,7 @@ export function Navigation() {
                             <Link href="/#features" className="hover:text-black dark:hover:text-white transition-colors">Features</Link>
                             <Link href="/#how-it-works" className="hover:text-black dark:hover:text-white transition-colors">How it Works</Link>
                             <Link href="/#pricing" className="hover:text-black dark:hover:text-white transition-colors">Pricing</Link>
-                            <Link href="/home" className={clsx("hover:text-black dark:hover:text-white transition-colors", pathname === "/home" ? "text-blue-500 dark:text-blue-400" : "")}>Explore</Link>
+                            <Link href="/home" className={clsx("hover:text-black dark:hover:text-white transition-colors", pathname === "/home" ? "text-primary dark:text-primary" : "")}>Explore</Link>
                         </nav>
                     </div>
                     <div className="hidden md:flex items-center gap-4">
@@ -126,7 +126,7 @@ export function Navigation() {
                             <Link href="/#features" className="text-lg font-bold text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white" onClick={() => setIsMobileMenuOpen(false)}>Features</Link>
                             <Link href="/#how-it-works" className="text-lg font-bold text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white" onClick={() => setIsMobileMenuOpen(false)}>How it Works</Link>
                             <Link href="/#pricing" className="text-lg font-bold text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white" onClick={() => setIsMobileMenuOpen(false)}>Pricing</Link>
-                            <Link href="/home" className="text-lg font-bold text-blue-500 dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-300" onClick={() => setIsMobileMenuOpen(false)}>Explore</Link>
+                            <Link href="/home" className="text-lg font-bold text-primary dark:text-primary hover:text-primary/80 dark:hover:text-primary/80" onClick={() => setIsMobileMenuOpen(false)}>Explore</Link>
                             <div className="h-px bg-gray-200 dark:bg-white/10 my-2" />
                             <Link href="/login" className="text-lg font-bold text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white" onClick={() => setIsMobileMenuOpen(false)}>Log in</Link>
                             <Link href="/signup" className="px-6 py-3 bg-black dark:bg-white text-white dark:text-black text-center font-bold rounded-full hover:opacity-90 transition-opacity" onClick={() => setIsMobileMenuOpen(false)}>Get Started</Link>
@@ -191,7 +191,7 @@ export function Navigation() {
                     <Link href="/qr" className="p-2 text-gray-400 hover:text-black dark:hover:text-white transition-colors">
                         <QrCode className="w-5 h-5" />
                     </Link>
-                    <Link href={user ? "/settings" : "/login"} className="w-8 h-8 rounded-full overflow-hidden border border-gray-200 dark:border-[#333] hover:ring-2 ring-blue-500 transition-all">
+                    <Link href={user ? "/settings" : "/login"} className="w-8 h-8 rounded-full overflow-hidden border border-gray-200 dark:border-[#333] hover:ring-2 ring-primary transition-all">
                         {profile?.avatar_url ? (
                             <img src={profile.avatar_url} alt="User" className="w-full h-full object-cover" />
                         ) : (
@@ -204,12 +204,12 @@ export function Navigation() {
             </header>
 
             {/* Mobile Bottom Navigation */}
-            <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-md bg-blue-600 rounded-full px-2 py-3 grid grid-cols-5 items-center shadow-2xl z-50 shadow-blue-900/40">
+            <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-md bg-primary rounded-full px-2 py-3 grid grid-cols-5 items-center shadow-2xl z-50 shadow-primary/40">
                 <Link
                     href="/home"
                     className={clsx(
                         "flex flex-col items-center gap-1 transition-colors",
-                        pathname === "/home" ? "text-white" : "text-blue-200 hover:text-white"
+                        pathname === "/home" ? "text-white" : "text-white/60 hover:text-white"
                     )}
                 >
                     <div className="h-8 flex items-center justify-center">
@@ -221,14 +221,14 @@ export function Navigation() {
                     href="/receipts"
                     className={clsx(
                         "flex flex-col items-center gap-1 transition-colors",
-                        pathname === "/receipts" ? "text-white" : "text-blue-200 hover:text-white"
+                        pathname === "/receipts" ? "text-white" : "text-white/60 hover:text-white"
                     )}
                 >
                     <div className="h-8 flex items-center justify-center">
                         <Receipt
                             className="w-6 h-6 shrink-0"
                             fill={pathname === "/receipts" ? "white" : "none"}
-                            stroke={pathname === "/receipts" ? "#2563eb" : "currentColor"}
+                            stroke={pathname === "/receipts" ? "currentColor" : "currentColor"}
                         />
                     </div>
                     <span className="text-[10px] font-bold">ORDERS</span>
@@ -237,11 +237,11 @@ export function Navigation() {
                     href="/create"
                     className={clsx(
                         "flex flex-col items-center gap-1 transition-colors",
-                        pathname === "/create" ? "text-white" : "text-blue-200 hover:text-white"
+                        pathname === "/create" ? "text-white" : "text-white/60 hover:text-white"
                     )}
                 >
-                    <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-lg shadow-blue-900/20 shrink-0">
-                        <Plus className="w-5 h-5 text-blue-600" strokeWidth={4} />
+                    <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-lg shadow-black/10 shrink-0">
+                        <Plus className="w-5 h-5 text-primary" strokeWidth={4} />
                     </div>
                     <span className="text-[10px] font-bold">CREATE</span>
                 </Link>
@@ -249,7 +249,7 @@ export function Navigation() {
                     href="/messages"
                     className={clsx(
                         "flex flex-col items-center gap-1 transition-colors",
-                        pathname === "/messages" ? "text-white" : "text-blue-200 hover:text-white"
+                        pathname === "/messages" ? "text-white" : "text-white/60 hover:text-white"
                     )}
                 >
                     <div className="h-8 flex items-center justify-center">
@@ -261,7 +261,7 @@ export function Navigation() {
                     href={user ? "/settings" : "/login"}
                     className={clsx(
                         "flex flex-col items-center gap-1 transition-colors",
-                        pathname === "/settings" ? "text-white" : "text-blue-200 hover:text-white"
+                        pathname === "/settings" ? "text-white" : "text-white/60 hover:text-white"
                     )}
                 >
                     <div className="h-8 flex items-center justify-center">

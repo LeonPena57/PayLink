@@ -106,40 +106,40 @@ export default function SettingsPage() {
                 return (
                     <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
                         <div>
-                            <h2 className="text-2xl font-bold mb-1">General Settings</h2>
-                            <p className="text-muted-foreground">Manage your account preferences.</p>
+                            <h2 className="text-2xl font-black mb-1">General Settings</h2>
+                            <p className="text-muted-foreground font-medium">Manage your account preferences.</p>
                         </div>
 
                         <div className="space-y-4">
-                            <div className="p-4 bg-card border border-border rounded-2xl flex items-center justify-between">
+                            <div className="p-5 bg-muted/30 rounded-[2rem] flex items-center justify-between">
                                 <div className="flex items-center gap-4">
-                                    <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center">
+                                    <div className="w-12 h-12 bg-background rounded-full flex items-center justify-center shadow-sm">
                                         <User className="w-6 h-6 text-muted-foreground" />
                                     </div>
                                     <div>
-                                        <div className="font-bold">Profile Details</div>
-                                        <div className="text-sm text-muted-foreground">Update your name, bio, and avatar.</div>
+                                        <div className="font-bold text-lg">Profile Details</div>
+                                        <div className="text-sm text-muted-foreground font-medium">Update your name, bio, and avatar.</div>
                                     </div>
                                 </div>
                                 <button
                                     onClick={() => setIsEditProfileOpen(true)}
-                                    className="px-4 py-2 bg-primary text-primary-foreground rounded-lg font-bold text-sm"
+                                    className="px-5 py-2.5 bg-primary text-primary-foreground rounded-xl font-bold text-sm shadow-md shadow-primary/20 hover:scale-105 transition-all"
                                 >
                                     Edit
                                 </button>
                             </div>
 
-                            <div className="p-4 bg-card border border-border rounded-2xl flex items-center justify-between">
+                            <div className="p-5 bg-muted/30 rounded-[2rem] flex items-center justify-between">
                                 <div className="flex items-center gap-4">
-                                    <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center">
+                                    <div className="w-12 h-12 bg-background rounded-full flex items-center justify-center shadow-sm">
                                         <Mail className="w-6 h-6 text-muted-foreground" />
                                     </div>
                                     <div>
-                                        <div className="font-bold">Email Address</div>
-                                        <div className="text-sm text-muted-foreground">{user?.email}</div>
+                                        <div className="font-bold text-lg">Email Address</div>
+                                        <div className="text-sm text-muted-foreground font-medium">{user?.email}</div>
                                     </div>
                                 </div>
-                                <button className="px-4 py-2 border border-border hover:bg-muted rounded-lg font-bold text-sm transition-colors">
+                                <button className="px-5 py-2.5 bg-background hover:bg-muted rounded-xl font-bold text-sm transition-colors shadow-sm">
                                     Change
                                 </button>
                             </div>
@@ -150,40 +150,40 @@ export default function SettingsPage() {
                 return (
                     <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
                         <div>
-                            <h2 className="text-2xl font-bold mb-1">Appearance</h2>
-                            <p className="text-muted-foreground">Customize how PayLink looks on your device.</p>
+                            <h2 className="text-2xl font-black mb-1">Appearance</h2>
+                            <p className="text-muted-foreground font-medium">Customize how PayLink looks on your device.</p>
                         </div>
 
                         <div className="grid grid-cols-3 gap-4">
                             <button
                                 onClick={() => setTheme("light")}
                                 className={clsx(
-                                    "p-4 rounded-2xl border-2 flex flex-col items-center gap-3 transition-all",
-                                    theme === "light" ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"
+                                    "p-6 rounded-[2rem] border-2 flex flex-col items-center gap-4 transition-all",
+                                    theme === "light" ? "border-primary bg-primary/5 shadow-lg shadow-primary/10" : "border-transparent bg-muted/30 hover:bg-muted/50"
                                 )}
                             >
-                                <Sun className="w-8 h-8" />
-                                <span className="font-bold text-sm">Light</span>
+                                <Sun className={clsx("w-8 h-8", theme === "light" ? "text-primary" : "text-muted-foreground")} />
+                                <span className={clsx("font-bold text-sm", theme === "light" ? "text-primary" : "text-muted-foreground")}>Light</span>
                             </button>
                             <button
                                 onClick={() => setTheme("dark")}
                                 className={clsx(
-                                    "p-4 rounded-2xl border-2 flex flex-col items-center gap-3 transition-all",
-                                    theme === "dark" ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"
+                                    "p-6 rounded-[2rem] border-2 flex flex-col items-center gap-4 transition-all",
+                                    theme === "dark" ? "border-primary bg-primary/5 shadow-lg shadow-primary/10" : "border-transparent bg-muted/30 hover:bg-muted/50"
                                 )}
                             >
-                                <Moon className="w-8 h-8" />
-                                <span className="font-bold text-sm">Dark</span>
+                                <Moon className={clsx("w-8 h-8", theme === "dark" ? "text-primary" : "text-muted-foreground")} />
+                                <span className={clsx("font-bold text-sm", theme === "dark" ? "text-primary" : "text-muted-foreground")}>Dark</span>
                             </button>
                             <button
                                 onClick={() => setTheme("system")}
                                 className={clsx(
-                                    "p-4 rounded-2xl border-2 flex flex-col items-center gap-3 transition-all",
-                                    theme === "system" ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"
+                                    "p-6 rounded-[2rem] border-2 flex flex-col items-center gap-4 transition-all",
+                                    theme === "system" ? "border-primary bg-primary/5 shadow-lg shadow-primary/10" : "border-transparent bg-muted/30 hover:bg-muted/50"
                                 )}
                             >
-                                <Monitor className="w-8 h-8" />
-                                <span className="font-bold text-sm">System</span>
+                                <Monitor className={clsx("w-8 h-8", theme === "system" ? "text-primary" : "text-muted-foreground")} />
+                                <span className={clsx("font-bold text-sm", theme === "system" ? "text-primary" : "text-muted-foreground")}>System</span>
                             </button>
                         </div>
                     </div>
@@ -192,24 +192,24 @@ export default function SettingsPage() {
                 return (
                     <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
                         <div>
-                            <h2 className="text-2xl font-bold mb-1">Payments & Payouts</h2>
-                            <p className="text-muted-foreground">Manage how you get paid and your payment methods.</p>
+                            <h2 className="text-2xl font-black mb-1">Payments & Payouts</h2>
+                            <p className="text-muted-foreground font-medium">Manage how you get paid and your payment methods.</p>
                         </div>
 
                         {/* Payouts Section */}
-                        <div className="p-6 bg-card border border-border rounded-2xl space-y-6">
+                        <div className="p-6 bg-muted/30 rounded-[2rem] space-y-6">
                             <div className="flex items-start justify-between">
                                 <div>
                                     <h3 className="text-lg font-bold flex items-center gap-2">
                                         <CreditCard className="w-5 h-5 text-primary" />
                                         Payout Method
                                     </h3>
-                                    <p className="text-sm text-muted-foreground mt-1">
+                                    <p className="text-sm text-muted-foreground font-medium mt-1">
                                         Connect your Stripe account to receive payouts from your sales.
                                     </p>
                                 </div>
                                 <div className={clsx(
-                                    "px-3 py-1 text-xs font-bold rounded-full border",
+                                    "px-3 py-1 text-xs font-black uppercase tracking-wider rounded-full border",
                                     stripeConnected
                                         ? "bg-green-500/10 text-green-500 border-green-500/20"
                                         : "bg-yellow-500/10 text-yellow-500 border-yellow-500/20"
@@ -218,18 +218,18 @@ export default function SettingsPage() {
                                 </div>
                             </div>
 
-                            <div className="p-4 bg-muted/50 rounded-xl border border-border flex items-center gap-4">
-                                <div className="w-12 h-12 bg-[#635BFF] rounded-lg flex items-center justify-center shrink-0">
+                            <div className="p-4 bg-background rounded-2xl shadow-sm flex items-center gap-4">
+                                <div className="w-12 h-12 bg-[#635BFF] rounded-xl flex items-center justify-center shrink-0 shadow-md shadow-[#635BFF]/30">
                                     <span className="text-white font-bold text-xl italic">S</span>
                                 </div>
                                 <div className="flex-1">
                                     <div className="font-bold text-foreground">Stripe Connect</div>
-                                    <div className="text-xs text-muted-foreground">Secure payouts to your bank account.</div>
+                                    <div className="text-xs text-muted-foreground font-medium">Secure payouts to your bank account.</div>
                                 </div>
                                 {stripeConnected ? (
                                     <button
                                         disabled
-                                        className="px-4 py-2 bg-green-600 text-white rounded-lg font-bold text-sm opacity-50 cursor-not-allowed"
+                                        className="px-4 py-2 bg-green-600 text-white rounded-xl font-bold text-sm opacity-50 cursor-not-allowed"
                                     >
                                         Connected
                                     </button>
@@ -237,14 +237,14 @@ export default function SettingsPage() {
                                     <button
                                         onClick={handleConnectStripe}
                                         disabled={loadingStripe}
-                                        className="px-4 py-2 bg-[#635BFF] text-white rounded-lg font-bold text-sm hover:bg-[#635BFF]/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                        className="px-4 py-2 bg-[#635BFF] text-white rounded-xl font-bold text-sm hover:bg-[#635BFF]/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-[#635BFF]/20"
                                     >
                                         {loadingStripe ? "Connecting..." : "Connect Stripe"}
                                     </button>
                                 )}
                             </div>
                             {!stripeConnected && (
-                                <p className="text-xs text-red-500 font-bold">
+                                <p className="text-xs text-red-500 font-bold bg-red-500/10 p-3 rounded-xl">
                                     * Stripe Secret Key is required to enable payouts. Please add it to your environment variables.
                                 </p>
                             )}
@@ -255,13 +255,13 @@ export default function SettingsPage() {
                 return (
                     <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
                         <div>
-                            <h2 className="text-2xl font-bold mb-1">Subscription Plans</h2>
-                            <p className="text-muted-foreground">Choose the plan that fits your growth.</p>
+                            <h2 className="text-2xl font-black mb-1">Subscription Plans</h2>
+                            <p className="text-muted-foreground font-medium">Choose the plan that fits your growth.</p>
                         </div>
 
                         <div className="grid md:grid-cols-2 gap-6">
                             {/* Free Plan */}
-                            <div className="p-6 rounded-3xl border border-border bg-card relative overflow-hidden">
+                            <div className="p-6 rounded-[2rem] bg-muted/30 relative overflow-hidden group hover:bg-muted/40 transition-colors">
                                 <div className="absolute top-0 right-0 p-4 opacity-10">
                                     <User className="w-24 h-24" />
                                 </div>
@@ -271,85 +271,85 @@ export default function SettingsPage() {
                                         <span className="text-4xl font-black">$0</span>
                                         <span className="text-muted-foreground font-medium">/month</span>
                                     </div>
-                                    <p className="text-sm text-muted-foreground mt-2">Perfect for getting started.</p>
+                                    <p className="text-sm text-muted-foreground font-medium mt-2">Perfect for getting started.</p>
 
                                     <div className="mt-6 space-y-3">
-                                        <div className="flex items-center gap-3 text-sm">
-                                            <div className="w-5 h-5 rounded-full bg-blue-500/10 flex items-center justify-center shrink-0">
-                                                <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                                        <div className="flex items-center gap-3 text-sm font-medium">
+                                            <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-primary" />
                                             </div>
                                             <span>5% Transaction Fee</span>
                                         </div>
-                                        <div className="flex items-center gap-3 text-sm">
-                                            <div className="w-5 h-5 rounded-full bg-blue-500/10 flex items-center justify-center shrink-0">
-                                                <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                                        <div className="flex items-center gap-3 text-sm font-medium">
+                                            <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-primary" />
                                             </div>
                                             <span>Unlimited Products</span>
                                         </div>
-                                        <div className="flex items-center gap-3 text-sm">
-                                            <div className="w-5 h-5 rounded-full bg-blue-500/10 flex items-center justify-center shrink-0">
-                                                <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                                        <div className="flex items-center gap-3 text-sm font-medium">
+                                            <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-primary" />
                                             </div>
                                             <span>Basic Analytics</span>
                                         </div>
-                                        <div className="flex items-center gap-3 text-sm">
-                                            <div className="w-5 h-5 rounded-full bg-blue-500/10 flex items-center justify-center shrink-0">
-                                                <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                                        <div className="flex items-center gap-3 text-sm font-medium">
+                                            <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-primary" />
                                             </div>
                                             <span>1GB File Uploads</span>
                                         </div>
                                     </div>
 
-                                    <button className="w-full mt-8 py-3 rounded-xl border border-border font-bold text-sm hover:bg-muted transition-colors">
+                                    <button className="w-full mt-8 py-3 rounded-xl bg-background font-bold text-sm hover:bg-muted transition-colors shadow-sm">
                                         Current Plan
                                     </button>
                                 </div>
                             </div>
 
                             {/* Pro Plan */}
-                            <div className="p-6 rounded-3xl border border-blue-500/20 bg-blue-500/5 relative overflow-hidden ring-1 ring-blue-500/50">
+                            <div className="p-6 rounded-[2rem] border-2 border-primary/20 bg-primary/5 relative overflow-hidden ring-1 ring-primary/50">
                                 <div className="absolute top-0 right-0 p-4 opacity-10">
-                                    <Crown className="w-24 h-24 text-blue-500" />
+                                    <Crown className="w-24 h-24 text-primary" />
                                 </div>
                                 <div className="relative z-10">
                                     <div className="flex items-center justify-between">
-                                        <h3 className="text-xl font-black italic text-blue-500">PRO CREATOR</h3>
-                                        <span className="px-3 py-1 bg-blue-500 text-white text-[10px] font-bold rounded-full">RECOMMENDED</span>
+                                        <h3 className="text-xl font-black italic text-primary">PRO CREATOR</h3>
+                                        <span className="px-3 py-1 bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-wider rounded-full shadow-md shadow-primary/20">RECOMMENDED</span>
                                     </div>
                                     <div className="mt-4 flex items-baseline gap-1">
                                         <span className="text-4xl font-black">$9</span>
                                         <span className="text-muted-foreground font-medium">/month</span>
                                     </div>
-                                    <p className="text-sm text-muted-foreground mt-2">For serious sellers scaling up.</p>
+                                    <p className="text-sm text-muted-foreground font-medium mt-2">For serious sellers scaling up.</p>
 
                                     <div className="mt-6 space-y-3">
                                         <div className="flex items-center gap-3 text-sm font-bold">
-                                            <div className="w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center shrink-0">
-                                                <Shield className="w-3 h-3 text-white" />
+                                            <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center shrink-0 shadow-sm">
+                                                <Shield className="w-3 h-3 text-primary-foreground" />
                                             </div>
                                             <span>0% Transaction Fee</span>
                                         </div>
-                                        <div className="flex items-center gap-3 text-sm">
-                                            <div className="w-5 h-5 rounded-full bg-blue-500/20 flex items-center justify-center shrink-0">
-                                                <Crown className="w-3 h-3 text-blue-500" />
+                                        <div className="flex items-center gap-3 text-sm font-medium">
+                                            <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+                                                <Crown className="w-3 h-3 text-primary" />
                                             </div>
                                             <span>Verified Badge</span>
                                         </div>
-                                        <div className="flex items-center gap-3 text-sm">
-                                            <div className="w-5 h-5 rounded-full bg-blue-500/20 flex items-center justify-center shrink-0">
-                                                <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                                        <div className="flex items-center gap-3 text-sm font-medium">
+                                            <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-primary" />
                                             </div>
                                             <span>Advanced Analytics</span>
                                         </div>
-                                        <div className="flex items-center gap-3 text-sm">
-                                            <div className="w-5 h-5 rounded-full bg-blue-500/20 flex items-center justify-center shrink-0">
-                                                <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                                        <div className="flex items-center gap-3 text-sm font-medium">
+                                            <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-primary" />
                                             </div>
                                             <span>10GB File Uploads</span>
                                         </div>
                                     </div>
 
-                                    <button className="w-full mt-8 py-3 rounded-xl bg-blue-600 text-white font-bold text-sm hover:bg-blue-700 transition-colors shadow-lg shadow-blue-500/20">
+                                    <button className="w-full mt-8 py-3 rounded-xl bg-primary text-primary-foreground font-bold text-sm hover:scale-105 active:scale-95 transition-all shadow-lg shadow-primary/30">
                                         Upgrade to Pro
                                     </button>
                                 </div>
@@ -360,11 +360,11 @@ export default function SettingsPage() {
             default:
                 return (
                     <div className="flex flex-col items-center justify-center h-full text-center p-8 animate-in fade-in slide-in-from-right-4 duration-300">
-                        <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
+                        <div className="w-20 h-20 bg-muted/30 rounded-full flex items-center justify-center mb-6">
                             <SettingsIcon tabId={activeTab} />
                         </div>
                         <h3 className="text-xl font-bold mb-2">Coming Soon</h3>
-                        <p className="text-muted-foreground max-w-sm">
+                        <p className="text-muted-foreground font-medium max-w-sm">
                             The {tabs.find(t => t.id === activeTab)?.label} settings are currently under development.
                         </p>
                     </div>
@@ -379,15 +379,15 @@ export default function SettingsPage() {
             <div className="max-w-6xl mx-auto flex flex-col md:flex-row gap-8 min-h-[600px]">
                 {/* Sidebar */}
                 <div className={clsx(
-                    "w-full md:w-64 shrink-0 space-y-2",
+                    "w-full md:w-72 shrink-0 space-y-2",
                     mobileView ? "hidden md:block" : "block"
                 )}>
-                    <h1 className="text-3xl font-bold font-header italic tracking-tight mb-6 px-2">Settings</h1>
+                    <h1 className="text-3xl font-black text-foreground tracking-tight mb-8 px-2">Settings</h1>
 
                     {/* Account Mode Toggle */}
-                    <div className="mb-6 p-1 bg-muted/50 rounded-2xl flex relative">
+                    <div className="mb-8 p-1.5 bg-muted/30 rounded-[2rem] flex relative">
                         <motion.div
-                            className="absolute inset-y-1 bg-background shadow-sm border border-border rounded-xl z-10"
+                            className="absolute inset-y-1.5 bg-background shadow-sm rounded-[1.5rem] z-10"
                             initial={false}
                             animate={{
                                 x: userMode === "SELLER" ? 0 : "100%",
@@ -398,7 +398,7 @@ export default function SettingsPage() {
                         <button
                             onClick={() => userMode !== "SELLER" && toggleUserMode()}
                             className={clsx(
-                                "flex-1 py-3 px-4 rounded-xl text-sm font-bold relative z-20 transition-colors flex items-center justify-center gap-2",
+                                "flex-1 py-3 px-4 rounded-[1.5rem] text-sm font-bold relative z-20 transition-colors flex items-center justify-center gap-2",
                                 userMode === "SELLER" ? "text-foreground" : "text-muted-foreground hover:text-foreground"
                             )}
                         >
@@ -408,7 +408,7 @@ export default function SettingsPage() {
                         <button
                             onClick={() => userMode !== "BUYER" && toggleUserMode()}
                             className={clsx(
-                                "flex-1 py-3 px-4 rounded-xl text-sm font-bold relative z-20 transition-colors flex items-center justify-center gap-2",
+                                "flex-1 py-3 px-4 rounded-[1.5rem] text-sm font-bold relative z-20 transition-colors flex items-center justify-center gap-2",
                                 userMode === "BUYER" ? "text-foreground" : "text-muted-foreground hover:text-foreground"
                             )}
                         >
@@ -417,29 +417,31 @@ export default function SettingsPage() {
                         </button>
                     </div>
 
-                    {tabs.map((tab) => (
-                        <button
-                            key={tab.id}
-                            onClick={() => handleTabClick(tab.id)}
-                            className={clsx(
-                                "w-full flex items-center justify-between px-4 py-3 rounded-xl font-medium transition-all group",
-                                activeTab === tab.id
-                                    ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20 md:bg-primary md:text-primary-foreground"
-                                    : "bg-card border border-border md:border-transparent md:bg-transparent hover:bg-muted text-muted-foreground hover:text-foreground"
-                            )}
-                        >
-                            <div className="flex items-center gap-3">
-                                <tab.icon className="w-5 h-5" />
-                                {tab.label}
-                            </div>
-                            <ChevronRight className={clsx("w-4 h-4 md:hidden", activeTab === tab.id ? "text-primary-foreground" : "text-muted-foreground")} />
-                        </button>
-                    ))}
+                    <div className="space-y-1">
+                        {tabs.map((tab) => (
+                            <button
+                                key={tab.id}
+                                onClick={() => handleTabClick(tab.id)}
+                                className={clsx(
+                                    "w-full flex items-center justify-between px-5 py-4 rounded-[2rem] font-bold transition-all group",
+                                    activeTab === tab.id
+                                        ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
+                                        : "hover:bg-muted/50 text-muted-foreground hover:text-foreground"
+                                )}
+                            >
+                                <div className="flex items-center gap-3">
+                                    <tab.icon className={clsx("w-5 h-5", activeTab === tab.id ? "text-primary-foreground" : "text-muted-foreground group-hover:text-foreground")} />
+                                    {tab.label}
+                                </div>
+                                <ChevronRight className={clsx("w-4 h-4 transition-transform", activeTab === tab.id ? "text-primary-foreground rotate-90 md:rotate-0" : "text-muted-foreground/50")} />
+                            </button>
+                        ))}
+                    </div>
 
-                    <div className="pt-4 mt-4 md:border-t border-border">
+                    <div className="pt-6 mt-6 md:border-t border-border/50">
                         <button
                             onClick={handleSignOut}
-                            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-red-500 bg-card border border-border md:border-transparent md:bg-transparent hover:bg-red-500/10 transition-colors"
+                            className="w-full flex items-center gap-3 px-5 py-4 rounded-[2rem] font-bold text-red-500 hover:bg-red-500/10 transition-colors"
                         >
                             <LogOut className="w-5 h-5" />
                             Log Out
@@ -449,15 +451,15 @@ export default function SettingsPage() {
 
                 {/* Content Area */}
                 <div className={clsx(
-                    "flex-1 min-h-[500px]",
+                    "flex-1 min-h-[500px] bg-card md:border border-border/50 md:rounded-[2.5rem] md:p-8 md:shadow-sm",
                     mobileView ? "block" : "hidden md:block"
                 )}>
                     {/* Mobile Header */}
-                    <div className="md:hidden flex items-center gap-4 mb-6">
-                        <button onClick={handleBackToList} className="p-2 -ml-2 hover:bg-muted rounded-full">
+                    <div className="md:hidden flex items-center gap-4 mb-8">
+                        <button onClick={handleBackToList} className="p-2 -ml-2 hover:bg-muted rounded-full transition-colors">
                             <ArrowLeft className="w-6 h-6" />
                         </button>
-                        <h2 className="text-xl font-bold">{tabs.find(t => t.id === activeTab)?.label}</h2>
+                        <h2 className="text-2xl font-black tracking-tight">{tabs.find(t => t.id === activeTab)?.label}</h2>
                     </div>
 
                     {renderContent()}

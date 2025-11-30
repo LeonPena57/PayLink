@@ -421,7 +421,7 @@ export default function HomePage() {
         return matchesTag && matchesSearch;
     });
 
-    const accentColor = profile?.accent_color || "#3b82f6";
+    const accentColor = profile?.accent_color || "#5975fa";
 
     if (loading) {
         return (
@@ -605,7 +605,7 @@ export default function HomePage() {
                                                 <span className="text-2xl font-bold text-gray-900 dark:text-white">0</span>
                                             </div>
                                             <div className="bg-gray-50 dark:bg-[#2a2a2a] rounded-xl p-4 flex flex-col items-center justify-center aspect-[4/3]">
-                                                <UserPlus className="w-6 h-6 text-blue-500 dark:text-blue-400 mb-2" />
+                                                <UserPlus className="w-6 h-6 text-primary dark:text-primary mb-2" />
                                                 <span className="text-2xl font-bold text-gray-900 dark:text-white">0</span>
                                             </div>
                                             <div className="bg-gray-50 dark:bg-[#2a2a2a] rounded-xl p-4 flex flex-col items-center justify-center aspect-[4/3]">
@@ -815,7 +815,7 @@ export default function HomePage() {
                                                         <div className="font-bold text-gray-900 dark:text-white text-sm flex items-center gap-1">
                                                             {user.full_name}
                                                             {user.verification_status === 'verified' && (
-                                                                <div className="bg-blue-500 text-white p-0.5 rounded-full">
+                                                                <div className="bg-primary text-white p-0.5 rounded-full">
                                                                     <Check className="w-2 h-2 stroke-[4]" />
                                                                 </div>
                                                             )}
@@ -925,7 +925,7 @@ export default function HomePage() {
                                                         <Link href={`/${item.user.username}`} className="flex items-center gap-1 font-bold text-gray-900 dark:text-white text-sm hover:underline">
                                                             {item.user.name}
                                                             {(item.user.username === "leonp" || item.user.username === "paylink") && (
-                                                                <div className="bg-blue-500 text-white p-0.5 rounded-full">
+                                                                <div className="bg-primary text-white p-0.5 rounded-full">
                                                                     <Check className="w-2 h-2 stroke-[4]" />
                                                                 </div>
                                                             )}
@@ -986,7 +986,7 @@ export default function HomePage() {
                                                     </p>
                                                     <div className="flex flex-wrap gap-2 mt-2">
                                                         {item.tags.map((tag: string, idx: number) => (
-                                                            <span key={idx} className="text-xs text-blue-500 hover:underline cursor-pointer">#{tag}</span>
+                                                            <span key={idx} className="text-xs text-primary hover:underline cursor-pointer">#{tag}</span>
                                                         ))}
                                                     </div>
                                                     <button
@@ -1006,13 +1006,13 @@ export default function HomePage() {
                                                                 onChange={(e) => setInlineComment(e.target.value)}
                                                                 onKeyDown={(e) => e.key === 'Enter' && handleInlineCommentSubmit(item.id)}
                                                                 placeholder="Add a comment..."
-                                                                className="flex-1 bg-gray-100 dark:bg-[#333] border-none rounded-full px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 transition-all"
+                                                                className="flex-1 bg-gray-100 dark:bg-[#333] border-none rounded-full px-4 py-2 text-sm focus:ring-2 focus:ring-primary/20 transition-all"
                                                                 autoFocus
                                                             />
                                                             <button
                                                                 onClick={() => handleInlineCommentSubmit(item.id)}
                                                                 disabled={!inlineComment.trim()}
-                                                                className="text-blue-500 font-bold text-sm disabled:opacity-50 hover:text-blue-600 transition-colors px-2"
+                                                                className="text-primary font-bold text-sm disabled:opacity-50 hover:text-primary/80 transition-colors px-2"
                                                             >
                                                                 Post
                                                             </button>
@@ -1078,7 +1078,7 @@ export default function HomePage() {
                                                     <div className="font-bold text-gray-900 dark:text-white text-sm flex items-center gap-1 truncate">
                                                         {user.full_name}
                                                         {user.verification_status === 'verified' && (
-                                                            <div className="bg-blue-500 text-white p-0.5 rounded-full shrink-0">
+                                                            <div className="bg-primary text-white p-0.5 rounded-full shrink-0">
                                                                 <Check className="w-2 h-2 stroke-[4]" />
                                                             </div>
                                                         )}

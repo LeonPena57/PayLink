@@ -2,10 +2,11 @@
 
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Upload, Loader2, Check } from "lucide-react";
+import { ArrowLeft, Upload, Loader2, Check, Sparkles, DollarSign, Image as ImageIcon, Briefcase, Plus, X } from "lucide-react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
 import { useUser } from "@/context/UserContext";
+import { clsx } from "clsx";
 
 export default function CreateServicePage() {
     const router = useRouter();
@@ -19,6 +20,10 @@ export default function CreateServicePage() {
     const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
+    const categories = [
+        "Graphic Design", "Digital Art", "Video Editing", "Writing", "Programming", "Music & Audio", "Business", "Other"
+    ];
+
     const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
@@ -29,6 +34,12 @@ export default function CreateServicePage() {
             };
             reader.readAsDataURL(file);
         }
+    };
+
+    const removeThumbnail = () => {
+        setThumbnail(null);
+        setThumbnailPreview(null);
+        if (fileInputRef.current) fileInputRef.current.value = "";
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -45,7 +56,7 @@ export default function CreateServicePage() {
                 const filePath = `service-thumbnails/${fileName}`;
 
                 const { error: uploadError } = await supabase.storage
-                    .from('public-images') // Assuming this bucket exists
+                    .from('public-images')
                     .upload(filePath, thumbnail);
 
                 if (uploadError) throw uploadError;
@@ -97,106 +108,140 @@ export default function CreateServicePage() {
 
     return (
         <div className="min-h-screen bg-background pb-32">
-            {/* Header */}
-            <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-md border-b border-border px-4 py-3 flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                    <Link href="/create" className="p-2 -ml-2 rounded-full hover:bg-muted transition-colors">
-                        <ArrowLeft className="w-6 h-6 text-foreground" />
-                    </Link>
-                    <h1 className="text-lg font-bold text-foreground">New Service</h1>
-                </div>
-                <button
-                    type="submit"
-                    form="create-service-form"
-                    disabled={loading || !title || !description || !price}
-                    className="px-6 py-2 bg-primary text-primary-foreground rounded-full font-bold text-sm shadow-lg hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                >
-                    {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Create"}
-                </button>
+            {/* Minimal Header */}
+            <div className="sticky top-0 z-20 bg-background/80 backdrop-blur-md px-4 py-4 flex items-center justify-between">
+                <Link href="/create" className="p-2 -ml-2 rounded-full hover:bg-muted transition-colors">
+                    <ArrowLeft className="w-6 h-6 text-foreground" />
+                </Link>
+                <div className="font-bold text-lg">New Service</div>
+                <div className="w-10" /> {/* Spacer */}
             </div>
 
-            <div className="max-w-2xl mx-auto p-4 md:p-8">
-                <form id="create-service-form" onSubmit={handleSubmit} className="space-y-8">
-                    {/* Image Upload */}
-                    <div className="space-y-2">
-                        <label className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Thumbnail</label>
-                        <div
-                            onClick={() => fileInputRef.current?.click()}
-                            className="aspect-video rounded-2xl border-2 border-dashed border-border hover:border-primary/50 bg-muted/30 flex flex-col items-center justify-center cursor-pointer transition-all group overflow-hidden relative"
-                        >
-                            {thumbnailPreview ? (
-                                <img src={thumbnailPreview} alt="Preview" className="w-full h-full object-cover" />
-                            ) : (
-                                <>
-                                    <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
-                                        <Upload className="w-6 h-6 text-muted-foreground" />
-                                    </div>
-                                    <p className="text-sm text-muted-foreground font-medium">Click to upload thumbnail</p>
-                                </>
-                            )}
-                            <input
-                                type="file"
-                                ref={fileInputRef}
-                                onChange={handleImageSelect}
-                                className="hidden"
-                                accept="image/*"
-                            />
-                        </div>
+            <div className="max-w-xl mx-auto p-6 space-y-10">
+                <form id="create-service-form" onSubmit={handleSubmit} className="space-y-10">
+
+                    {/* Big Title Input */}
+                    <div className="space-y-2 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        <input
+                            type="text"
+                            value={title}
+                            onChange={(e) => setTitle(e.target.value)}
+                            placeholder="I will..."
+                            className="w-full text-center text-3xl md:text-4xl font-black bg-transparent border-none placeholder:text-muted-foreground/30 focus:ring-0 p-0"
+                            autoFocus
+                            required
+                        />
+                        <div className="h-1 w-24 bg-primary mx-auto rounded-full opacity-20" />
                     </div>
 
-                    {/* Basic Info */}
-                    <div className="space-y-4">
-                        <div className="space-y-2">
-                            <label className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Title</label>
-                            <input
-                                type="text"
-                                value={title}
-                                onChange={(e) => setTitle(e.target.value)}
-                                placeholder="I will design a..."
-                                className="w-full bg-card border border-border rounded-xl px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 font-medium"
-                                required
-                            />
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Category</label>
-                            <select
-                                value={category}
-                                onChange={(e) => setCategory(e.target.value)}
-                                className="w-full bg-card border border-border rounded-xl px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 font-medium appearance-none"
-                            >
-                                <option>Graphic Design</option>
-                                <option>Digital Art</option>
-                                <option>Video Editing</option>
-                                <option>Writing</option>
-                                <option>Programming</option>
-                            </select>
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Starting Price ($)</label>
+                    {/* Price Bubble */}
+                    <div className="flex justify-center">
+                        <div className="bg-muted/30 rounded-full px-6 py-3 flex items-center gap-2 focus-within:ring-2 focus-within:ring-primary/20 transition-all">
+                            <span className="text-sm font-bold text-muted-foreground uppercase tracking-wider mr-2">Starts at</span>
+                            <DollarSign className="w-5 h-5 text-muted-foreground" />
                             <input
                                 type="number"
                                 value={price}
                                 onChange={(e) => setPrice(e.target.value)}
-                                placeholder="50.00"
-                                className="w-full bg-card border border-border rounded-xl px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 font-medium"
+                                placeholder="0.00"
+                                className="bg-transparent font-bold text-xl w-24 border-none focus:ring-0 p-0 text-foreground placeholder:text-muted-foreground/50"
                                 required
                                 min="1"
+                                step="0.01"
                             />
                         </div>
+                    </div>
 
-                        <div className="space-y-2">
-                            <label className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Description</label>
+                    {/* Category Chips */}
+                    <div className="space-y-2">
+                        <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider ml-2">Category</label>
+                        <div className="flex gap-2 overflow-x-auto pb-2 custom-scrollbar snap-x">
+                            {categories.map((cat) => (
+                                <button
+                                    key={cat}
+                                    type="button"
+                                    onClick={() => setCategory(cat)}
+                                    className={clsx(
+                                        "px-4 py-2 rounded-full text-sm font-bold transition-all shrink-0 snap-start border",
+                                        category === cat
+                                            ? "bg-primary text-primary-foreground border-primary shadow-md shadow-primary/20"
+                                            : "bg-muted/30 border-transparent text-muted-foreground hover:bg-muted hover:text-foreground"
+                                    )}
+                                >
+                                    {cat}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Thumbnail Section */}
+                    <div className="space-y-2">
+                        <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider ml-2">Thumbnail</label>
+                        {thumbnailPreview ? (
+                            <div className="relative aspect-video rounded-3xl overflow-hidden border border-border group shadow-sm">
+                                <img src={thumbnailPreview} alt="Preview" className="w-full h-full object-cover" />
+                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
+                                <button
+                                    type="button"
+                                    onClick={removeThumbnail}
+                                    className="absolute top-3 right-3 p-2 bg-black/50 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all hover:bg-red-500 backdrop-blur-md"
+                                >
+                                    <X className="w-5 h-5" />
+                                </button>
+                            </div>
+                        ) : (
+                            <div
+                                onClick={() => fileInputRef.current?.click()}
+                                className="aspect-video rounded-3xl bg-muted/30 border-2 border-dashed border-border hover:border-primary/50 hover:bg-muted/50 transition-all flex flex-col items-center justify-center cursor-pointer gap-3 group"
+                            >
+                                <div className="w-14 h-14 rounded-full bg-background flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
+                                    <ImageIcon className="w-7 h-7 text-muted-foreground group-hover:text-primary transition-colors" />
+                                </div>
+                                <div className="text-center">
+                                    <p className="font-bold text-foreground">Upload Thumbnail</p>
+                                    <p className="text-xs text-muted-foreground mt-1">16:9 Recommended</p>
+                                </div>
+                            </div>
+                        )}
+                        <input
+                            type="file"
+                            ref={fileInputRef}
+                            onChange={handleImageSelect}
+                            className="hidden"
+                            accept="image/*"
+                        />
+                    </div>
+
+                    {/* Description Bubble */}
+                    <div className="space-y-2">
+                        <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider ml-2">Description</label>
+                        <div className="bg-muted/30 rounded-3xl p-4 focus-within:ring-2 focus-within:ring-primary/20 transition-all">
                             <textarea
                                 value={description}
                                 onChange={(e) => setDescription(e.target.value)}
-                                placeholder="Describe your service..."
-                                className="w-full bg-card border border-border rounded-xl px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 font-medium min-h-[150px] resize-none"
+                                placeholder="Describe your service, what's included, and your process..."
+                                className="w-full bg-transparent border-none focus:ring-0 p-0 min-h-[200px] resize-none text-foreground placeholder:text-muted-foreground/50 leading-relaxed"
                                 required
                             />
                         </div>
                     </div>
+
+                    {/* Floating Action Button */}
+                    <div className="fixed bottom-8 left-0 right-0 px-6 flex justify-center z-20">
+                        <button
+                            type="submit"
+                            disabled={loading || !title || !description || !price}
+                            className="w-full max-w-md py-4 bg-primary text-primary-foreground rounded-full font-black text-lg shadow-xl shadow-primary/30 hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        >
+                            {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : (
+                                <>
+                                    Publish Service
+                                    <Sparkles className="w-5 h-5" />
+                                </>
+                            )}
+                        </button>
+                    </div>
+
                 </form>
             </div>
         </div>

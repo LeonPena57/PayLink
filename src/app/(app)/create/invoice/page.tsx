@@ -2,10 +2,11 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Loader2, Check, FileText, Mail, DollarSign, Calendar, User, ShoppingBag, X, Image as ImageIcon, Plus } from "lucide-react";
+import { ArrowLeft, Loader2, Check, X, Image as ImageIcon, Plus, Sparkles, Search, Briefcase, DollarSign } from "lucide-react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
 import { useUser } from "@/context/UserContext";
+import { clsx } from "clsx";
 
 export default function CreateInvoicePage() {
     const router = useRouter();
@@ -22,12 +23,16 @@ export default function CreateInvoicePage() {
     }
 
     // Form State
-    const [title, setTitle] = useState(""); // Invoice Title
+    const [title, setTitle] = useState("");
     const [items, setItems] = useState<InvoiceCreationItem[]>([{ id: 1, name: "", price: "", image: null, preview: null, saveAsService: false }]);
-    const [paymentType, setPaymentType] = useState("full"); // 'full', '50-50'
+    const [paymentType, setPaymentType] = useState("full");
     const [dueDate, setDueDate] = useState("");
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [services, setServices] = useState<any[]>([]);
+
+    // UI State
+    const [isServicePickerOpen, setIsServicePickerOpen] = useState(false);
+    const [searchQuery, setSearchQuery] = useState("");
 
     const fileInputRefs = useRef<{ [key: number]: HTMLInputElement | null }>({});
 
@@ -43,8 +48,20 @@ export default function CreateInvoicePage() {
         fetchServices();
     }, [user]);
 
-    const addItem = () => {
+    const addCustomItem = () => {
         setItems([...items, { id: Date.now(), name: "", price: "", image: null, preview: null, saveAsService: false }]);
+    };
+
+    const addServiceItem = (service: any) => {
+        setItems([...items, {
+            id: Date.now(),
+            name: service.title || "",
+            price: (service.price !== undefined && service.price !== null) ? service.price.toString() : "",
+            image: null,
+            preview: service.thumbnail_url || null,
+            saveAsService: false
+        }]);
+        setIsServicePickerOpen(false);
     };
 
     const removeItem = (id: number) => {
@@ -56,19 +73,6 @@ export default function CreateInvoicePage() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const updateItem = (id: number, field: keyof InvoiceCreationItem, value: any) => {
         setItems(prev => prev.map(item => item.id === id ? { ...item, [field]: value } : item));
-    };
-
-    const handleServiceSelect = (id: number, serviceId: string) => {
-        const service = services.find(s => s.id === serviceId);
-        if (service) {
-            setItems(items.map(item => item.id === id ? {
-                ...item,
-                name: service.title || "",
-                price: (service.price !== undefined && service.price !== null) ? service.price.toString() : "",
-                preview: service.image_url || null,
-                saveAsService: false
-            } : item));
-        }
     };
 
     const handleItemImageSelect = (id: number, e: React.ChangeEvent<HTMLInputElement>) => {
@@ -93,9 +97,8 @@ export default function CreateInvoicePage() {
 
         setLoading(true);
         try {
-            // 1. Upload Images & Create Services if needed
             const processedItems = await Promise.all(items.map(async (item) => {
-                let imageUrl = item.preview; // Default to existing preview (URL) if no new file
+                let imageUrl = item.preview;
 
                 if (item.image) {
                     const fileExt = item.image.name.split('.').pop();
@@ -112,7 +115,6 @@ export default function CreateInvoicePage() {
                     }
                 }
 
-                // Create new service if requested
                 if (item.saveAsService && item.name && item.price) {
                     await supabase.from('services').insert({
                         seller_id: user.id,
@@ -124,15 +126,14 @@ export default function CreateInvoicePage() {
                 }
 
                 return {
-                    title: item.name, // Changed to title to match PayLink page expectation
+                    title: item.name,
                     price: parseFloat(item.price) || 0,
-                    image: imageUrl, // Changed to image to match PayLink page expectation
-                    size: "2.4MB", // Placeholder as we don't have file size for services yet
+                    image: imageUrl,
+                    size: "2.4MB",
                     date: new Date().toLocaleDateString()
                 };
             }));
 
-            // 2. Create Invoice
             const { data: invoiceData, error } = await supabase
                 .from('invoices')
                 .insert({
@@ -142,21 +143,16 @@ export default function CreateInvoicePage() {
                     description: title,
                     due_date: dueDate || null,
                     status: 'pending',
-                    items: processedItems // Store items JSON
+                    items: processedItems
                 })
                 .select()
                 .single();
 
             if (error) throw error;
 
-            // Show success with the PayLink
             const payLink = `${window.location.origin}/pay/${invoiceData.id}`;
-
-            // Copy to clipboard
             await navigator.clipboard.writeText(payLink);
-
             alert(`PayLink created successfully!\n\nLink copied to clipboard:\n${payLink}\n\nShare this link with your client to receive payment.`);
-
             router.push('/receipts');
         } catch (error) {
             console.error('Error creating invoice:', error);
@@ -166,202 +162,221 @@ export default function CreateInvoicePage() {
         }
     };
 
+    const filteredServices = services.filter(s =>
+        s.title.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
     return (
         <div className="min-h-screen bg-background pb-32">
-            <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-md border-b border-border px-4 py-3 flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                    <Link href="/create" className="p-2 -ml-2 rounded-full hover:bg-muted transition-colors">
-                        <ArrowLeft className="w-6 h-6 text-foreground" />
-                    </Link>
-                    <h1 className="text-lg font-bold text-foreground">New PayLink</h1>
-                </div>
-                <button
-                    type="submit"
-                    form="create-invoice-form"
-                    disabled={loading || !title || calculateTotal() <= 0}
-                    className="px-6 py-2 bg-primary text-primary-foreground rounded-full font-bold text-sm shadow-lg hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                >
-                    {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Create Link"}
-                </button>
+            {/* Simple Header */}
+            <div className="sticky top-0 z-20 bg-background/80 backdrop-blur-md px-4 py-4 flex items-center justify-between">
+                <Link href="/create" className="p-2 -ml-2 rounded-full hover:bg-muted transition-colors">
+                    <ArrowLeft className="w-6 h-6 text-foreground" />
+                </Link>
+                <div className="font-bold text-lg">New Invoice</div>
+                <div className="w-10" /> {/* Spacer */}
             </div>
 
-            <div className="max-w-2xl mx-auto p-4 md:p-8">
-                <form id="create-invoice-form" onSubmit={handleSubmit} className="space-y-8">
+            <div className="max-w-xl mx-auto p-6 space-y-10">
+                <form id="create-invoice-form" onSubmit={handleSubmit} className="space-y-10">
 
-                    {/* Client Info */}
-                    <div className="space-y-4">
-                        <h2 className="text-lg font-bold flex items-center gap-2">
-                            <User className="w-5 h-5 text-primary" />
-                            Project Details
-                        </h2>
-                        <div className="grid gap-4">
-                            <div className="space-y-2">
-                                <label className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Project Title</label>
-                                <input
-                                    type="text"
-                                    value={title}
-                                    onChange={(e) => setTitle(e.target.value)}
-                                    placeholder="e.g. Website Redesign Commission"
-                                    className="w-full bg-card border border-border rounded-xl px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 font-medium"
-                                    required
-                                />
-                            </div>
+                    {/* Big Total Display */}
+                    <div className="text-center space-y-2 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        <div className="text-sm font-bold text-muted-foreground uppercase tracking-widest">Total Amount</div>
+                        <div className="text-6xl md:text-7xl font-black text-foreground tracking-tighter">
+                            ${calculateTotal().toFixed(2)}
                         </div>
                     </div>
 
-                    {/* Line Items */}
+                    {/* Title Input */}
+                    <div className="space-y-2">
+                        <input
+                            type="text"
+                            value={title}
+                            onChange={(e) => setTitle(e.target.value)}
+                            placeholder="What's this for?"
+                            className="w-full text-center text-2xl md:text-3xl font-bold bg-transparent border-none placeholder:text-muted-foreground/30 focus:ring-0 p-0"
+                            autoFocus
+                            required
+                        />
+                        <div className="h-1 w-20 bg-primary mx-auto rounded-full opacity-20" />
+                    </div>
+
+                    {/* Items List */}
                     <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                            <h2 className="text-lg font-bold flex items-center gap-2">
-                                <ShoppingBag className="w-5 h-5 text-primary" />
-                                Items / Services
-                            </h2>
-                        </div>
-
-                        <div className="space-y-4">
-                            {items.map((item, index) => (
-                                <div key={item.id} className="bg-card border border-border rounded-2xl p-4 relative group animate-in fade-in slide-in-from-bottom-4 space-y-4">
-                                    {items.length > 1 && (
-                                        <button
-                                            type="button"
-                                            onClick={() => removeItem(item.id)}
-                                            className="absolute -top-2 -right-2 bg-destructive text-white p-1.5 rounded-full shadow-md hover:scale-110 transition-transform z-10"
-                                        >
-                                            <X className="w-4 h-4" />
-                                        </button>
+                        {items.map((item, index) => (
+                            <div key={item.id} className="group flex items-center gap-3 bg-muted/30 hover:bg-muted/50 p-2 rounded-2xl transition-all animate-in slide-in-from-bottom-2">
+                                {/* Image Bubble */}
+                                <div
+                                    onClick={() => fileInputRefs.current[item.id]?.click()}
+                                    className="w-14 h-14 rounded-xl bg-background shadow-sm flex items-center justify-center cursor-pointer hover:scale-105 transition-transform overflow-hidden shrink-0"
+                                >
+                                    {item.preview ? (
+                                        <img src={item.preview} alt="" className="w-full h-full object-cover" />
+                                    ) : (
+                                        <ImageIcon className="w-5 h-5 text-muted-foreground/40" />
                                     )}
+                                    <input
+                                        type="file"
+                                        ref={(el) => { fileInputRefs.current[item.id] = el; }}
+                                        onChange={(e) => handleItemImageSelect(item.id, e)}
+                                        className="hidden"
+                                        accept="image/*"
+                                    />
+                                </div>
 
-                                    {/* Service Selection */}
-                                    {services.length > 0 && (
-                                        <select
-                                            onChange={(e) => handleServiceSelect(item.id, e.target.value)}
-                                            className="w-full bg-muted/50 border border-border rounded-xl px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-                                            defaultValue=""
-                                        >
-                                            <option value="" disabled>Select from your services...</option>
-                                            {services.map(service => (
-                                                <option key={service.id} value={service.id}>
-                                                    {service.title} - ${service.price}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    )}
-
-                                    <div className="flex gap-4">
-                                        {/* Item Image */}
-                                        <div
-                                            onClick={() => fileInputRefs.current[item.id]?.click()}
-                                            className="w-24 h-24 bg-muted rounded-xl shrink-0 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity overflow-hidden border border-border"
-                                        >
-                                            {item.preview ? (
-                                                <img src={item.preview} alt="Item" className="w-full h-full object-cover" />
-                                            ) : (
-                                                <ImageIcon className="w-8 h-8 text-muted-foreground/50" />
-                                            )}
-                                            <input
-                                                type="file"
-                                                ref={(el) => { fileInputRefs.current[item.id] = el; }}
-                                                onChange={(e) => handleItemImageSelect(item.id, e)}
-                                                className="hidden"
-                                                accept="image/*"
-                                            />
-                                        </div>
-
-                                        {/* Item Details */}
-                                        <div className="flex-1 space-y-3">
-                                            <input
-                                                type="text"
-                                                value={item.name}
-                                                onChange={(e) => updateItem(item.id, 'name', e.target.value)}
-                                                placeholder="Item Name (e.g. Logo Design)"
-                                                className="w-full bg-transparent border-b border-border focus:border-primary px-0 py-1 font-bold text-foreground focus:outline-none transition-colors"
-                                                required
-                                            />
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-muted-foreground font-bold">$</span>
-                                                <input
-                                                    type="number"
-                                                    value={item.price}
-                                                    onChange={(e) => updateItem(item.id, 'price', e.target.value)}
-                                                    placeholder="0.00"
-                                                    className="w-32 bg-transparent border-b border-border focus:border-primary px-0 py-1 font-medium text-foreground focus:outline-none transition-colors"
-                                                    required
-                                                    min="0"
-                                                />
-                                            </div>
-
-                                            <label className="flex items-center gap-2 cursor-pointer group/check">
-                                                <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${item.saveAsService ? 'bg-primary border-primary' : 'border-muted-foreground group-hover/check:border-primary'}`}>
-                                                    {item.saveAsService && <Check className="w-3 h-3 text-primary-foreground" />}
-                                                </div>
-                                                <input
-                                                    type="checkbox"
-                                                    checked={item.saveAsService}
-                                                    onChange={(e) => updateItem(item.id, 'saveAsService', e.target.checked)}
-                                                    className="hidden"
-                                                />
-                                                <span className="text-xs font-medium text-muted-foreground group-hover/check:text-foreground transition-colors">Save to my Services</span>
-                                            </label>
-                                        </div>
+                                {/* Inputs */}
+                                <div className="flex-1 min-w-0 flex flex-col justify-center gap-1">
+                                    <input
+                                        type="text"
+                                        value={item.name}
+                                        onChange={(e) => updateItem(item.id, 'name', e.target.value)}
+                                        placeholder="Item name..."
+                                        className="w-full bg-transparent font-bold text-base border-none focus:ring-0 p-0 placeholder:text-muted-foreground/50"
+                                    />
+                                    <div className="flex items-center gap-1">
+                                        <span className="text-muted-foreground text-sm font-bold">$</span>
+                                        <input
+                                            type="number"
+                                            value={item.price}
+                                            onChange={(e) => updateItem(item.id, 'price', e.target.value)}
+                                            placeholder="0"
+                                            className="w-24 bg-transparent font-bold text-sm border-none focus:ring-0 p-0 text-primary"
+                                            min="0"
+                                        />
                                     </div>
                                 </div>
-                            ))}
-                        </div>
 
-                        <button
-                            type="button"
-                            onClick={addItem}
-                            className="w-full py-3 border-2 border-dashed border-border rounded-xl text-muted-foreground font-bold hover:border-primary/50 hover:text-primary transition-all flex items-center justify-center gap-2"
-                        >
-                            <Plus className="w-5 h-5" />
-                            Add Item
-                        </button>
+                                {/* Delete Action */}
+                                {items.length > 1 && (
+                                    <button
+                                        type="button"
+                                        onClick={() => removeItem(item.id)}
+                                        className="p-2 text-muted-foreground/30 hover:text-destructive transition-colors"
+                                    >
+                                        <X className="w-5 h-5" />
+                                    </button>
+                                )}
+                            </div>
+                        ))}
+
+                        {/* Add Buttons */}
+                        <div className="flex gap-3 pt-2">
+                            <button
+                                type="button"
+                                onClick={addCustomItem}
+                                className="flex-1 py-3 rounded-2xl bg-muted/30 hover:bg-muted text-foreground font-bold text-sm transition-all flex items-center justify-center gap-2"
+                            >
+                                <Plus className="w-4 h-4" />
+                                Add Item
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setIsServicePickerOpen(true)}
+                                className="px-4 py-3 rounded-2xl bg-primary/10 hover:bg-primary/20 text-primary font-bold text-sm transition-all flex items-center justify-center gap-2"
+                            >
+                                <Briefcase className="w-4 h-4" />
+                            </button>
+                        </div>
                     </div>
 
-                    {/* Payment Terms */}
-                    <div className="space-y-4">
-                        <h2 className="text-lg font-bold flex items-center gap-2">
-                            <DollarSign className="w-5 h-5 text-primary" />
-                            Payment Terms
-                        </h2>
-                        <div className="grid grid-cols-2 gap-4">
+                    {/* Payment Terms Toggle */}
+                    <div className="flex justify-center">
+                        <div className="bg-muted/30 p-1 rounded-full inline-flex">
                             <button
                                 type="button"
                                 onClick={() => setPaymentType('full')}
-                                className={`p-4 rounded-xl border-2 text-left transition-all ${paymentType === 'full' ? 'border-primary bg-primary/5' : 'border-border bg-card hover:border-primary/50'}`}
+                                className={clsx(
+                                    "px-4 py-2 rounded-full text-sm font-bold transition-all",
+                                    paymentType === 'full' ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
+                                )}
                             >
-                                <div className="font-bold text-foreground mb-1">Full Payment</div>
-                                <div className="text-xs text-muted-foreground">Client pays 100% upfront</div>
+                                Full Payment
                             </button>
                             <button
                                 type="button"
                                 onClick={() => setPaymentType('50-50')}
-                                className={`p-4 rounded-xl border-2 text-left transition-all ${paymentType === '50-50' ? 'border-primary bg-primary/5' : 'border-border bg-card hover:border-primary/50'}`}
+                                className={clsx(
+                                    "px-4 py-2 rounded-full text-sm font-bold transition-all",
+                                    paymentType === '50-50' ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
+                                )}
                             >
-                                <div className="font-bold text-foreground mb-1">50/50 Split</div>
-                                <div className="text-xs text-muted-foreground">50% now, 50% on completion</div>
+                                50/50 Split
                             </button>
                         </div>
                     </div>
 
-                    {/* Summary */}
-                    <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
-                        <div className="flex items-center justify-between text-sm text-muted-foreground">
-                            <span>Subtotal</span>
-                            <span>${calculateTotal().toFixed(2)}</span>
-                        </div>
-                        <div className="flex items-center justify-between text-sm text-muted-foreground">
-                            <span>Platform Fee (0%)</span>
-                            <span>$0.00</span>
-                        </div>
-                        <div className="border-t border-border pt-4 flex items-center justify-between font-bold text-xl text-foreground">
-                            <span>Total</span>
-                            <span>${calculateTotal().toFixed(2)}</span>
-                        </div>
+                    {/* Create Button */}
+                    <div className="fixed bottom-8 left-0 right-0 px-6 flex justify-center z-20">
+                        <button
+                            type="submit"
+                            disabled={loading || !title || calculateTotal() <= 0}
+                            className="w-full max-w-md py-4 bg-primary text-primary-foreground rounded-full font-black text-lg shadow-xl shadow-primary/30 hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        >
+                            {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : (
+                                <>
+                                    Create PayLink
+                                    <Sparkles className="w-5 h-5" />
+                                </>
+                            )}
+                        </button>
                     </div>
 
                 </form>
             </div>
+
+            {/* Minimal Service Picker Modal */}
+            {isServicePickerOpen && (
+                <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-card border border-border w-full max-w-md max-h-[70vh] rounded-3xl shadow-2xl flex flex-col animate-in slide-in-from-bottom-10 duration-300">
+                        <div className="p-4 flex items-center gap-3 border-b border-border/50">
+                            <Search className="w-5 h-5 text-muted-foreground" />
+                            <input
+                                type="text"
+                                placeholder="Search services..."
+                                className="flex-1 bg-transparent border-none focus:ring-0 p-0 text-base font-medium"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                autoFocus
+                            />
+                            <button onClick={() => setIsServicePickerOpen(false)} className="p-1 hover:bg-muted rounded-full">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto p-2 custom-scrollbar">
+                            {filteredServices.length > 0 ? (
+                                <div className="space-y-1">
+                                    {filteredServices.map(service => (
+                                        <button
+                                            key={service.id}
+                                            onClick={() => addServiceItem(service)}
+                                            className="w-full flex items-center gap-3 p-3 rounded-2xl hover:bg-muted/50 transition-colors text-left group"
+                                        >
+                                            <div className="w-10 h-10 rounded-lg bg-muted overflow-hidden shrink-0">
+                                                {service.thumbnail_url ? (
+                                                    <img src={service.thumbnail_url} alt="" className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <div className="w-full h-full bg-primary/10" />
+                                                )}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="font-bold text-sm truncate">{service.title}</div>
+                                                <div className="text-xs text-muted-foreground">${service.price}</div>
+                                            </div>
+                                            <Plus className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                                        </button>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="py-8 text-center text-muted-foreground text-sm">
+                                    No services found
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

@@ -177,7 +177,7 @@ function DriveContent() {
                 )}
 
                 <div className="flex items-start justify-between mb-6">
-                  <div className="w-14 h-14 bg-blue-500/10 rounded-2xl flex items-center justify-center text-blue-500 group-hover:scale-110 transition-transform shadow-sm">
+                  <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center text-primary group-hover:scale-110 transition-transform shadow-sm">
                     <Folder className="w-7 h-7 fill-current" />
                   </div>
                   <div className="flex -space-x-2">
