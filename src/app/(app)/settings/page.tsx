@@ -264,98 +264,19 @@ export default function SettingsPage() {
                             <div className="p-6 rounded-[2rem] bg-muted/30 relative overflow-hidden group hover:bg-muted/40 transition-colors">
                                 <div className="absolute top-0 right-0 p-4 opacity-10">
                                     <User className="w-24 h-24" />
-                                </div>
-                                <div className="relative z-10">
-                                    <h3 className="text-xl font-black italic">STARTER</h3>
-                                    <div className="mt-4 flex items-baseline gap-1">
-                                        <span className="text-4xl font-black">$0</span>
-                                        <span className="text-muted-foreground font-medium">/month</span>
+                                    <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-primary" />
                                     </div>
-                                    <p className="text-sm text-muted-foreground font-medium mt-2">Perfect for getting started.</p>
-
-                                    <div className="mt-6 space-y-3">
-                                        <div className="flex items-center gap-3 text-sm font-medium">
-                                            <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                                                <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                                            </div>
-                                            <span>5% Transaction Fee</span>
-                                        </div>
-                                        <div className="flex items-center gap-3 text-sm font-medium">
-                                            <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                                                <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                                            </div>
-                                            <span>Unlimited Products</span>
-                                        </div>
-                                        <div className="flex items-center gap-3 text-sm font-medium">
-                                            <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                                                <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                                            </div>
-                                            <span>Basic Analytics</span>
-                                        </div>
-                                        <div className="flex items-center gap-3 text-sm font-medium">
-                                            <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                                                <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                                            </div>
-                                            <span>1GB File Uploads</span>
-                                        </div>
-                                    </div>
-
-                                    <button className="w-full mt-8 py-3 rounded-xl bg-background font-bold text-sm hover:bg-muted transition-colors shadow-sm">
-                                        Current Plan
-                                    </button>
+                                    <span>10GB File Uploads</span>
                                 </div>
                             </div>
 
-                            {/* Pro Plan */}
-                            <div className="p-6 rounded-[2rem] border-2 border-primary/20 bg-primary/5 relative overflow-hidden ring-1 ring-primary/50">
-                                <div className="absolute top-0 right-0 p-4 opacity-10">
-                                    <Crown className="w-24 h-24 text-primary" />
-                                </div>
-                                <div className="relative z-10">
-                                    <div className="flex items-center justify-between">
-                                        <h3 className="text-xl font-black italic text-primary">PRO CREATOR</h3>
-                                        <span className="px-3 py-1 bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-wider rounded-full shadow-md shadow-primary/20">RECOMMENDED</span>
-                                    </div>
-                                    <div className="mt-4 flex items-baseline gap-1">
-                                        <span className="text-4xl font-black">$9</span>
-                                        <span className="text-muted-foreground font-medium">/month</span>
-                                    </div>
-                                    <p className="text-sm text-muted-foreground font-medium mt-2">For serious sellers scaling up.</p>
-
-                                    <div className="mt-6 space-y-3">
-                                        <div className="flex items-center gap-3 text-sm font-bold">
-                                            <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center shrink-0 shadow-sm">
-                                                <Shield className="w-3 h-3 text-primary-foreground" />
-                                            </div>
-                                            <span>0% Transaction Fee</span>
-                                        </div>
-                                        <div className="flex items-center gap-3 text-sm font-medium">
-                                            <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
-                                                <Crown className="w-3 h-3 text-primary" />
-                                            </div>
-                                            <span>Verified Badge</span>
-                                        </div>
-                                        <div className="flex items-center gap-3 text-sm font-medium">
-                                            <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
-                                                <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                                            </div>
-                                            <span>Advanced Analytics</span>
-                                        </div>
-                                        <div className="flex items-center gap-3 text-sm font-medium">
-                                            <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
-                                                <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                                            </div>
-                                            <span>10GB File Uploads</span>
-                                        </div>
-                                    </div>
-
-                                    <button className="w-full mt-8 py-3 rounded-xl bg-primary text-primary-foreground font-bold text-sm hover:scale-105 active:scale-95 transition-all shadow-lg shadow-primary/30">
-                                        Upgrade to Pro
-                                    </button>
-                                </div>
-                            </div>
+                            <button className="w-full mt-8 py-3 rounded-xl bg-primary text-primary-foreground font-bold text-sm hover:scale-105 active:scale-95 transition-all shadow-lg shadow-primary/30">
+                                Upgrade to Pro
+                            </button>
                         </div>
                     </div>
+
                 );
             default:
                 return (
@@ -451,7 +372,7 @@ export default function SettingsPage() {
 
                 {/* Content Area */}
                 <div className={clsx(
-                    "flex-1 min-h-[500px] bg-card md:border border-border/50 md:rounded-[2.5rem] md:p-8 md:shadow-sm",
+                    "flex-1 min-h-[500px] bg-card md:rounded-[2.5rem] md:p-8 md:shadow-sm",
                     mobileView ? "block" : "hidden md:block"
                 )}>
                     {/* Mobile Header */}

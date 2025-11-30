@@ -161,13 +161,7 @@ export default function HomePage() {
     const [loadingFeed, setLoadingFeed] = useState(false);
     const [suggestedUsers, setSuggestedUsers] = useState<any[]>([]);
 
-    useEffect(() => {
-        // Fetch feed if in BUYER mode OR if user is not logged in (public view)
-        if (userMode === "BUYER" || !user) {
-            fetchFeed();
-            fetchSuggestedUsers();
-        }
-    }, [userMode, user]);
+
 
     const fetchFeed = async () => {
         setLoadingFeed(true);
@@ -229,6 +223,14 @@ export default function HomePage() {
             setSuggestedUsers(formattedUsers);
         }
     };
+
+    useEffect(() => {
+        // Fetch feed if in BUYER mode OR if user is not logged in (public view)
+        if (userMode === "BUYER" || !user) {
+            fetchFeed();
+            fetchSuggestedUsers();
+        }
+    }, [userMode, user]);
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handleLike = async (post: any) => {
@@ -316,11 +318,7 @@ export default function HomePage() {
     const [commentingPostId, setCommentingPostId] = useState<string | null>(null);
     const [inlineComment, setInlineComment] = useState("");
 
-    useEffect(() => {
-        if (userMode === "SELLER" && profile) {
-            fetchSellerData();
-        }
-    }, [userMode, profile]);
+
 
     const handleInlineCommentSubmit = async (postId: string) => {
         if (!user) {
@@ -410,6 +408,12 @@ export default function HomePage() {
             setProducts(productsData);
         }
     };
+
+    useEffect(() => {
+        if (userMode === "SELLER" && profile) {
+            fetchSellerData();
+        }
+    }, [userMode, profile]);
 
     const filteredFeed = feedItems.filter(item => {
         const matchesTag = activeTag === "All" || item.tags.includes(activeTag);
@@ -547,17 +551,17 @@ export default function HomePage() {
                     </div>
 
                     {/* Sticky Tabs */}
-                    <div className="sticky top-16 z-30 bg-gray-50/95 dark:bg-[#1a1a1a]/95 backdrop-blur-md w-full border-b border-gray-200 dark:border-[#333] mt-6">
-                        <div className="flex gap-6 overflow-x-auto w-full px-4 md:px-0 no-scrollbar justify-start md:justify-center">
+                    <div className="sticky top-16 z-30 bg-background/95 backdrop-blur-md w-full mt-6 py-4">
+                        <div className="flex gap-2 overflow-x-auto w-full px-4 md:px-0 no-scrollbar justify-start md:justify-center">
                             {PROFILE_TABS.map((tab) => (
                                 <button
                                     key={tab}
                                     onClick={() => setActiveProfileTab(tab)}
                                     className={clsx(
-                                        "py-4 text-xs font-bold tracking-widest border-b-[3px] transition-all flex items-center gap-2 uppercase min-w-max",
+                                        "px-6 py-3 rounded-full text-xs font-black tracking-wider transition-all flex items-center gap-2 uppercase min-w-max",
                                         activeProfileTab === tab
-                                            ? "text-gray-900 dark:text-white border-red-500"
-                                            : "border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                                            ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25 scale-105"
+                                            : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
                                     )}
                                 >
                                     {tab === "HOME" && <Home className="w-4 h-4" />}
@@ -576,60 +580,73 @@ export default function HomePage() {
                         {activeProfileTab === "HOME" && (
                             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-6">
                                 {/* Revenue Chart Section */}
-                                <div className="bg-white dark:bg-[#222] border border-gray-200 dark:border-[#333] rounded-2xl p-6 relative overflow-hidden">
-                                    <div className="flex justify-between items-center mb-6">
-                                        <h3 className="text-xl font-bold italic tracking-wider text-gray-900 dark:text-white">REVENUE</h3>
-                                        <div className="flex items-center gap-2 text-xs font-bold bg-gray-100 dark:bg-[#333] px-3 py-1 rounded-full text-green-500 dark:text-green-400">
-                                            <div className="w-2 h-2 rounded-full bg-green-500 dark:bg-green-400 animate-pulse" />
+                                <div className="bg-card rounded-[2.5rem] p-8 relative overflow-hidden shadow-sm border border-border/50">
+                                    <div className="flex justify-between items-center mb-8">
+                                        <div>
+                                            <h3 className="text-2xl font-black italic tracking-tight text-foreground">REVENUE</h3>
+                                            <p className="text-muted-foreground font-medium">Your earnings over time.</p>
+                                        </div>
+                                        <div className="flex items-center gap-2 text-xs font-bold bg-primary/10 px-4 py-2 rounded-full text-primary">
+                                            <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
                                             2025
                                         </div>
                                     </div>
 
-                                    <div className="h-48 w-full relative flex items-center justify-center bg-gray-50 dark:bg-[#1a1a1a] rounded-xl border border-dashed border-gray-200 dark:border-[#333]">
+                                    <div className="h-64 w-full relative flex items-center justify-center bg-muted/30 rounded-[2rem] border-2 border-dashed border-border/50">
                                         <div className="text-center">
-                                            <p className="text-gray-400 dark:text-gray-500 font-bold">No Data Available</p>
-                                            <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Revenue data will appear here once you start selling.</p>
+                                            <div className="w-16 h-16 bg-background rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
+                                                <DollarSign className="w-8 h-8 text-muted-foreground" />
+                                            </div>
+                                            <p className="text-foreground font-bold text-lg">No Data Available</p>
+                                            <p className="text-sm text-muted-foreground mt-1 font-medium">Revenue data will appear here once you start selling.</p>
                                         </div>
                                     </div>
                                 </div>
 
                                 {/* Overview Cards */}
                                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                                    <div className="lg:col-span-2 bg-white dark:bg-[#222] border border-gray-200 dark:border-[#333] rounded-2xl p-6">
-                                        <div className="flex justify-between items-center mb-6">
-                                            <h4 className="text-sm font-bold text-gray-500 dark:text-gray-400 italic">Orders - This week</h4>
+                                    <div className="lg:col-span-2 bg-card rounded-[2.5rem] p-8 shadow-sm border border-border/50">
+                                        <div className="flex justify-between items-center mb-8">
+                                            <h4 className="text-xl font-black italic text-foreground">WEEKLY STATS</h4>
                                         </div>
                                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                            <div className="bg-gray-50 dark:bg-[#2a2a2a] rounded-xl p-4 flex flex-col items-center justify-center aspect-[4/3]">
-                                                <TrendingUp className="w-6 h-6 text-gray-900 dark:text-white mb-2" />
-                                                <span className="text-2xl font-bold text-gray-900 dark:text-white">0</span>
+                                            <div className="bg-muted/30 rounded-[2rem] p-6 flex flex-col items-center justify-center aspect-square hover:bg-muted/50 transition-colors group">
+                                                <TrendingUp className="w-8 h-8 text-foreground mb-3 group-hover:scale-110 transition-transform" />
+                                                <span className="text-3xl font-black text-foreground">0</span>
+                                                <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider mt-1">Orders</span>
                                             </div>
-                                            <div className="bg-gray-50 dark:bg-[#2a2a2a] rounded-xl p-4 flex flex-col items-center justify-center aspect-[4/3]">
-                                                <UserPlus className="w-6 h-6 text-primary dark:text-primary mb-2" />
-                                                <span className="text-2xl font-bold text-gray-900 dark:text-white">0</span>
+                                            <div className="bg-primary/5 rounded-[2rem] p-6 flex flex-col items-center justify-center aspect-square hover:bg-primary/10 transition-colors group">
+                                                <UserPlus className="w-8 h-8 text-primary mb-3 group-hover:scale-110 transition-transform" />
+                                                <span className="text-3xl font-black text-foreground">0</span>
+                                                <span className="text-xs font-bold text-primary uppercase tracking-wider mt-1">Visits</span>
                                             </div>
-                                            <div className="bg-gray-50 dark:bg-[#2a2a2a] rounded-xl p-4 flex flex-col items-center justify-center aspect-[4/3]">
-                                                <Star className="w-6 h-6 text-yellow-500 dark:text-yellow-400 mb-2 fill-current" />
-                                                <span className="text-2xl font-bold text-gray-900 dark:text-white">0.0</span>
+                                            <div className="bg-muted/30 rounded-[2rem] p-6 flex flex-col items-center justify-center aspect-square hover:bg-muted/50 transition-colors group">
+                                                <Star className="w-8 h-8 text-yellow-500 mb-3 fill-current group-hover:scale-110 transition-transform" />
+                                                <span className="text-3xl font-black text-foreground">0.0</span>
+                                                <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider mt-1">Rating</span>
                                             </div>
-                                            <div className="bg-gray-50 dark:bg-[#2a2a2a] rounded-xl p-4 flex flex-col items-center justify-center aspect-[4/3]">
-                                                <RefreshCw className="w-6 h-6 text-gray-900 dark:text-white mb-2" />
-                                                <span className="text-2xl font-bold text-gray-900 dark:text-white">0</span>
+                                            <div className="bg-muted/30 rounded-[2rem] p-6 flex flex-col items-center justify-center aspect-square hover:bg-muted/50 transition-colors group">
+                                                <RefreshCw className="w-8 h-8 text-foreground mb-3 group-hover:scale-110 transition-transform" />
+                                                <span className="text-3xl font-black text-foreground">0</span>
+                                                <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider mt-1">Refunds</span>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <div className="bg-white dark:bg-[#222] border border-gray-200 dark:border-[#333] rounded-2xl p-6 flex flex-col justify-between">
-                                        <div>
-                                            <h4 className="text-sm font-bold text-gray-500 dark:text-gray-400 italic mb-6">Earnings</h4>
-                                            <div className="space-y-4">
-                                                <div className="bg-gray-50 dark:bg-[#2a2a2a] rounded-xl p-6 text-center">
-                                                    <span className="text-xs text-gray-500 dark:text-gray-400 block mb-1">This Week</span>
-                                                    <span className="text-3xl font-black text-gray-900 dark:text-white tracking-tight">$0.00</span>
+                                    <div className="bg-primary text-primary-foreground rounded-[2.5rem] p-8 shadow-lg shadow-primary/20 flex flex-col justify-between relative overflow-hidden">
+                                        <div className="absolute top-0 right-0 p-8 opacity-10">
+                                            <DollarSign className="w-32 h-32" />
+                                        </div>
+                                        <div className="relative z-10">
+                                            <h4 className="text-xl font-black italic mb-8">EARNINGS</h4>
+                                            <div className="space-y-6">
+                                                <div className="bg-white/10 backdrop-blur-md rounded-[2rem] p-6 text-center border border-white/20">
+                                                    <span className="text-xs font-bold uppercase tracking-wider opacity-80 block mb-1">This Week</span>
+                                                    <span className="text-4xl font-black tracking-tight">$0.00</span>
                                                 </div>
-                                                <div className="bg-gray-50 dark:bg-[#2a2a2a] rounded-xl p-6 text-center">
-                                                    <span className="text-xs text-gray-500 dark:text-gray-400 block mb-1">Total</span>
-                                                    <span className="text-3xl font-black text-gray-900 dark:text-white tracking-tight">$0.00</span>
+                                                <div className="bg-white/10 backdrop-blur-md rounded-[2rem] p-6 text-center border border-white/20">
+                                                    <span className="text-xs font-bold uppercase tracking-wider opacity-80 block mb-1">Total</span>
+                                                    <span className="text-4xl font-black tracking-tight">$0.00</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -639,30 +656,33 @@ export default function HomePage() {
                         )}
 
                         {activeProfileTab === "SERVICES" && (
-                            <div className="p-4 md:p-6 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
                                 <div className="space-y-4">
-                                    <h3 className="text-xl font-bold text-gray-900 dark:text-white px-1">Active Services</h3>
+                                    <div className="flex items-center justify-between px-2">
+                                        <h3 className="text-2xl font-black text-foreground tracking-tight">Active Services</h3>
+                                        <button className="text-sm font-bold text-primary hover:underline">Manage</button>
+                                    </div>
                                     <div className="space-y-4">
                                         {services.length > 0 ? (
                                             services.map((service) => (
-                                                <div key={service.id} className="bg-white dark:bg-[#222] border border-gray-200 dark:border-[#333] rounded-2xl p-4">
-                                                    <div className="flex items-start justify-between mb-4">
-                                                        <div className="flex items-center gap-3">
-                                                            <div className="w-10 h-10 bg-gray-100 dark:bg-[#333] rounded-full flex items-center justify-center text-gray-900 dark:text-white">
-                                                                <service.icon className="w-5 h-5" />
+                                                <div key={service.id} className="bg-card rounded-[2rem] p-6 shadow-sm border border-border/50 hover:shadow-md transition-all">
+                                                    <div className="flex items-start justify-between mb-6">
+                                                        <div className="flex items-center gap-4">
+                                                            <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary">
+                                                                <service.icon className="w-6 h-6" />
                                                             </div>
                                                             <div>
-                                                                <h4 className="font-bold text-gray-900 dark:text-white">{service.title}</h4>
-                                                                <p className="text-sm text-green-500 dark:text-green-400 font-bold">Starting at ${service.price}</p>
+                                                                <h4 className="font-bold text-lg text-foreground">{service.title}</h4>
+                                                                <p className="text-sm text-primary font-bold">Starting at ${service.price}</p>
                                                             </div>
                                                         </div>
-                                                        <button className="text-gray-400 hover:text-gray-900 dark:hover:text-white">
+                                                        <button className="p-2 hover:bg-muted rounded-full transition-colors text-muted-foreground hover:text-foreground">
                                                             <MoreHorizontal className="w-5 h-5" />
                                                         </button>
                                                     </div>
                                                     <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
                                                         {service.previews.map((preview: string, idx: number) => (
-                                                            <div key={idx} className="w-32 h-20 flex-shrink-0 rounded-lg overflow-hidden border border-gray-200 dark:border-[#333]">
+                                                            <div key={idx} className="w-40 h-24 flex-shrink-0 rounded-2xl overflow-hidden border border-border/50 bg-muted/30">
                                                                 <img src={preview} alt="Preview" className="w-full h-full object-cover" />
                                                             </div>
                                                         ))}
@@ -670,8 +690,12 @@ export default function HomePage() {
                                                 </div>
                                             ))
                                         ) : (
-                                            <div className="text-center py-10 text-gray-500 dark:text-gray-400">
-                                                No services available.
+                                            <div className="text-center py-16 bg-muted/30 rounded-[2.5rem] border-2 border-dashed border-border/50">
+                                                <div className="w-16 h-16 bg-background rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
+                                                    <ShoppingBag className="w-8 h-8 text-muted-foreground" />
+                                                </div>
+                                                <h3 className="text-lg font-bold text-foreground">No services yet</h3>
+                                                <p className="text-muted-foreground font-medium mt-1">Create your first service to start selling.</p>
                                             </div>
                                         )}
                                     </div>
@@ -681,27 +705,31 @@ export default function HomePage() {
 
                         {activeProfileTab === "PORTFOLIO" && (
                             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                                <div className="grid grid-cols-3 gap-0.5 md:gap-4">
+                                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                                     {portfolioItems.length > 0 ? (
                                         portfolioItems.map((item) => (
                                             <div
                                                 key={item.id}
                                                 onClick={() => handlePostClick(item)}
-                                                className="aspect-square relative group cursor-pointer bg-gray-100 dark:bg-[#222]"
+                                                className="aspect-square relative group cursor-pointer bg-muted/30 rounded-[2rem] overflow-hidden border border-border/50 hover:shadow-lg transition-all"
                                             >
                                                 <img
                                                     src={item.image_url}
                                                     alt={item.title}
-                                                    className="w-full h-full object-cover"
+                                                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                                                 />
-                                                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                                    <Heart className="w-6 h-6 text-white fill-white" />
+                                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
+                                                    <Heart className="w-8 h-8 text-white fill-white animate-in zoom-in duration-300" />
                                                 </div>
                                             </div>
                                         ))
                                     ) : (
-                                        <div className="col-span-full text-center py-10 text-gray-500 dark:text-gray-400">
-                                            No portfolio items yet.
+                                        <div className="col-span-full text-center py-16 bg-muted/30 rounded-[2.5rem] border-2 border-dashed border-border/50">
+                                            <div className="w-16 h-16 bg-background rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
+                                                <GridIcon className="w-8 h-8 text-muted-foreground" />
+                                            </div>
+                                            <h3 className="text-lg font-bold text-foreground">Portfolio is empty</h3>
+                                            <p className="text-muted-foreground font-medium mt-1">Upload your best work to showcase here.</p>
                                         </div>
                                     )}
                                 </div>
@@ -709,12 +737,12 @@ export default function HomePage() {
                         )}
 
                         {activeProfileTab === "SHOP" && (
-                            <div className="p-4 md:p-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                                 {products.length > 0 ? (
-                                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                                         {products.map((product) => (
-                                            <div key={product.id} className="bg-white dark:bg-[#222] border border-gray-200 dark:border-[#333] rounded-2xl overflow-hidden group hover:shadow-lg transition-all">
-                                                <div className="aspect-square bg-gray-100 dark:bg-[#2a2a2a] relative overflow-hidden">
+                                            <div key={product.id} className="bg-card border border-border/50 rounded-[2rem] overflow-hidden group hover:shadow-xl hover:shadow-primary/5 transition-all duration-300 flex flex-col">
+                                                <div className="aspect-square bg-muted/30 relative overflow-hidden">
                                                     {product.product_images && product.product_images.length > 0 ? (
                                                         <img
                                                             src={product.product_images[0].image_url}
@@ -722,30 +750,30 @@ export default function HomePage() {
                                                             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                                                         />
                                                     ) : (
-                                                        <div className="w-full h-full flex items-center justify-center text-gray-400">
-                                                            <ShoppingBag className="w-10 h-10" />
+                                                        <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                                                            <ShoppingBag className="w-10 h-10 opacity-20" />
                                                         </div>
                                                     )}
-                                                    <div className="absolute top-2 right-2 flex gap-2">
-                                                        <div className="bg-black/50 text-white text-xs font-bold px-2 py-1 rounded-full backdrop-blur-sm">
+                                                    <div className="absolute top-3 right-3 flex gap-2">
+                                                        <div className="bg-background/80 backdrop-blur-md text-foreground text-xs font-black px-3 py-1.5 rounded-full shadow-sm">
                                                             ${product.price}
                                                         </div>
-                                                        <button
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                deleteProduct(product.id);
-                                                            }}
-                                                            className="bg-red-500/80 hover:bg-red-500 text-white p-1 rounded-full backdrop-blur-sm transition-colors"
-                                                            title="Delete Product"
-                                                        >
-                                                            <X className="w-3 h-3" />
-                                                        </button>
                                                     </div>
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            deleteProduct(product.id);
+                                                        }}
+                                                        className="absolute top-3 left-3 bg-red-500 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-sm hover:bg-red-600"
+                                                        title="Delete Product"
+                                                    >
+                                                        <X className="w-4 h-4" />
+                                                    </button>
                                                 </div>
-                                                <div className="p-4">
-                                                    <h4 className="font-bold text-gray-900 dark:text-white truncate">{product.title}</h4>
-                                                    <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 mt-1">{product.description}</p>
-                                                    <button className="w-full mt-3 bg-gray-900 dark:bg-white text-white dark:text-black py-2 rounded-xl text-xs font-bold hover:opacity-90 transition-opacity">
+                                                <div className="p-5 flex-1 flex flex-col">
+                                                    <h4 className="font-bold text-foreground truncate text-lg mb-1">{product.title}</h4>
+                                                    <p className="text-xs text-muted-foreground line-clamp-2 mb-4 font-medium">{product.description}</p>
+                                                    <button className="w-full mt-auto bg-primary text-primary-foreground py-3 rounded-xl text-sm font-bold hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20">
                                                         Buy Now
                                                     </button>
                                                 </div>
@@ -753,13 +781,13 @@ export default function HomePage() {
                                         ))}
                                     </div>
                                 ) : (
-                                    <div className="flex flex-col items-center justify-center py-20 text-center space-y-4 border-2 border-dashed border-gray-200 dark:border-[#333] rounded-3xl bg-gray-50/50 dark:bg-[#222]/30">
-                                        <div className="w-16 h-16 bg-gray-100 dark:bg-[#2a2a2a] rounded-full flex items-center justify-center">
-                                            <ShoppingBag className="w-8 h-8 text-gray-500" />
+                                    <div className="flex flex-col items-center justify-center py-20 text-center space-y-4 border-2 border-dashed border-border/50 rounded-[2.5rem] bg-muted/10">
+                                        <div className="w-20 h-20 bg-muted/30 rounded-full flex items-center justify-center">
+                                            <ShoppingBag className="w-10 h-10 text-muted-foreground" />
                                         </div>
                                         <div>
-                                            <h3 className="text-xl font-bold text-gray-900 dark:text-white">Shop is Empty</h3>
-                                            <p className="text-gray-500 dark:text-gray-400 max-w-sm mx-auto mt-2">
+                                            <h3 className="text-xl font-black text-foreground">Shop is Empty</h3>
+                                            <p className="text-muted-foreground font-medium max-w-sm mx-auto mt-2">
                                                 You haven't listed any products yet.
                                             </p>
                                         </div>
