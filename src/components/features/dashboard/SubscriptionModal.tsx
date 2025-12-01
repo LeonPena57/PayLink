@@ -174,7 +174,7 @@ export function SubscriptionModal({ isOpen, onClose }: SubscriptionModalProps) {
                                                     "w-full py-3 rounded-xl font-bold transition-all active:scale-95",
                                                     plan.popular
                                                         ? "bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/25"
-                                                        : "bg-white text-black border border-border hover:bg-gray-50 dark:bg-white dark:text-black"
+                                                        : "bg-muted text-foreground border border-border hover:bg-muted/80"
                                                 )}
                                             >
                                                 {plan.buttonText}

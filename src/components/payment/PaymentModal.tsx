@@ -35,12 +35,12 @@ export function PaymentModal({ isOpen, onClose, onConfirm, subtotal, isProcessin
                         initial={{ opacity: 0, scale: 0.95, y: 20 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                        className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-[#111] border border-white/10 rounded-2xl shadow-2xl z-50 overflow-hidden"
+                        className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-card border border-border rounded-2xl shadow-2xl z-50 overflow-hidden"
                     >
                         {/* Header */}
-                        <div className="p-6 border-b border-white/5 flex items-center justify-between">
-                            <h2 className="text-xl font-bold text-white">Confirm Payment</h2>
-                            <button onClick={onClose} className="text-white/50 hover:text-white transition-colors">
+                        <div className="p-6 border-b border-border flex items-center justify-between">
+                            <h2 className="text-xl font-bold text-foreground">Confirm Payment</h2>
+                            <button onClick={onClose} className="text-muted-foreground hover:text-foreground transition-colors">
                                 <X className="w-5 h-5" />
                             </button>
                         </div>
@@ -49,7 +49,7 @@ export function PaymentModal({ isOpen, onClose, onConfirm, subtotal, isProcessin
                         <div className="p-6 space-y-6">
                             {/* Breakdown */}
                             <div className="space-y-3">
-                                <div className="flex justify-between text-white/70">
+                                <div className="flex justify-between text-muted-foreground">
                                     <span>Subtotal (Freelancer Rate)</span>
                                     <span>${subtotal.toFixed(2)}</span>
                                 </div>
@@ -57,16 +57,16 @@ export function PaymentModal({ isOpen, onClose, onConfirm, subtotal, isProcessin
                                     <div className="flex items-center gap-2">
                                         <span>Secure Transaction Fee (5%)</span>
                                         <div className="group relative">
-                                            <Info className="w-4 h-4 text-white/30 cursor-help" />
-                                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 bg-black border border-white/10 rounded-lg text-[10px] text-white/70 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                                            <Info className="w-4 h-4 text-muted-foreground/50 cursor-help" />
+                                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 bg-popover border border-border rounded-lg text-[10px] text-popover-foreground opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-md">
                                                 Funds held in Escrow until file delivery is verified.
                                             </div>
                                         </div>
                                     </div>
                                     <span>${feeAmount.toFixed(2)}</span>
                                 </div>
-                                <div className="h-px bg-white/10 my-2" />
-                                <div className="flex justify-between text-xl font-bold text-white">
+                                <div className="h-px bg-border my-2" />
+                                <div className="flex justify-between text-xl font-bold text-foreground">
                                     <span>Total Due</span>
                                     <span>${total.toFixed(2)}</span>
                                 </div>
@@ -85,7 +85,7 @@ export function PaymentModal({ isOpen, onClose, onConfirm, subtotal, isProcessin
                         </div>
 
                         {/* Footer */}
-                        <div className="p-6 bg-white/5 border-t border-white/5">
+                        <div className="p-6 bg-muted/50 border-t border-border">
                             <button
                                 onClick={onConfirm}
                                 disabled={isProcessing}

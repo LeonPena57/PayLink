@@ -264,12 +264,18 @@ export function PostModal({ isOpen, onClose, post, onUpdate }: PostModalProps) {
                     {/* Image Section */}
                     <div className="flex-1 bg-black flex items-center justify-center relative group overflow-hidden">
                         <div className="relative w-full h-full flex items-center justify-center">
-                            <Image
-                                src={post.image_url}
-                                alt={post.title}
-                                fill
-                                className="object-contain"
-                            />
+                            {(post.image || post.image_url) ? (
+                                <Image
+                                    src={post.image || post.image_url}
+                                    alt={post.title || "Post"}
+                                    fill
+                                    className="object-contain"
+                                />
+                            ) : (
+                                <div className="w-full h-full flex items-center justify-center text-white">
+                                    No Image
+                                </div>
+                            )}
                         </div>
                     </div>
 
@@ -407,12 +413,18 @@ export function PostModal({ isOpen, onClose, post, onUpdate }: PostModalProps) {
                     <div className="flex-1 overflow-y-auto">
                         {/* Image */}
                         <div className="w-full bg-black min-h-[40vh] flex items-center justify-center">
-                            <Image
-                                src={post.image_url}
-                                alt={post.title}
-                                fill
-                                className="object-contain"
-                            />
+                            {(post.image || post.image_url) ? (
+                                <Image
+                                    src={post.image || post.image_url}
+                                    alt={post.title || "Post"}
+                                    fill
+                                    className="object-contain"
+                                />
+                            ) : (
+                                <div className="w-full h-full flex items-center justify-center text-white">
+                                    No Image
+                                </div>
+                            )}
                         </div>
 
                         {/* Actions */}

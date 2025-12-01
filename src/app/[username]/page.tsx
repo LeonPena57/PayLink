@@ -4,7 +4,7 @@ import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import { useUser } from "@/context/UserContext";
-import { MapPin, Twitter, Instagram, Twitch, Grid as GridIcon, ShoppingBag, Heart, UserPlus, UserCheck, MessageCircle, DollarSign } from "lucide-react";
+import { MapPin, Twitter, Instagram, Twitch, Grid as GridIcon, ShoppingBag, Heart, UserPlus, UserCheck, MessageCircle, DollarSign, Briefcase, Star, Clock } from "lucide-react";
 import clsx from "clsx";
 import Link from "next/link";
 import Image from "next/image";
@@ -21,6 +21,8 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
     const [profile, setProfile] = useState<any>(null);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [portfolioItems, setPortfolioItems] = useState<any[]>([]);
+    const [services, setServices] = useState<any[]>([]);
+    const [products, setProducts] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [isFollowing, setIsFollowing] = useState(false);
     const [activeTab, setActiveTab] = useState("POSTS");
@@ -81,6 +83,25 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
                 .order('created_at', { ascending: false });
 
             if (portfolioData) setPortfolioItems(portfolioData);
+
+            // 3. Fetch Services
+            const { data: servicesData } = await supabase
+                .from('services')
+                .select('*, service_tiers(price, delivery_days)')
+                .eq('seller_id', profileData.id)
+                .order('created_at', { ascending: false });
+
+            if (servicesData) setServices(servicesData);
+
+            // 4. Fetch Products
+            const { data: productsData } = await supabase
+                .from('products')
+                .select('*, product_images(image_url)')
+                .eq('seller_id', profileData.id)
+                .order('created_at', { ascending: false });
+
+            if (productsData) setProducts(productsData);
+
             setLoading(false);
         };
         fetchProfile();
@@ -350,7 +371,7 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
             {/* Navigation Tabs */}
             <div className="border-b border-border">
                 <div className="flex gap-8 overflow-x-auto max-w-full pb-px no-scrollbar justify-start px-4 md:px-0 max-w-7xl mx-auto">
-                    {["POSTS", "SHOP"].map((tab) => (
+                    {["POSTS", "SERVICES", "SHOP"].map((tab) => (
                         <button
                             key={tab}
                             onClick={() => setActiveTab(tab)}
@@ -366,6 +387,7 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
                             }}
                         >
                             {tab === "POSTS" && <GridIcon className="w-4 h-4" />}
+                            {tab === "SERVICES" && <Briefcase className="w-4 h-4" />}
                             {tab === "SHOP" && <ShoppingBag className="w-4 h-4" />}
                             {tab}
                         </button>
@@ -434,22 +456,117 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
                     </div>
                 )}
 
+                {activeTab === "SERVICES" && (
+                    <div className="p-4 md:p-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        {services.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center py-20 text-center space-y-4 border-2 border-dashed border-border rounded-3xl bg-muted/30">
+                                <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center">
+                                    <Briefcase className="w-8 h-8 text-muted-foreground" />
+                                </div>
+                                <div>
+                                    <h3 className="text-xl font-bold text-foreground">No Services Yet</h3>
+                                    <p className="text-muted-foreground max-w-sm mx-auto mt-2">
+                                        This user hasn&apos;t listed any services yet.
+                                    </p>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {services.map((service) => (
+                                    <Link href={`/service/${service.id}`} key={service.id} className="group bg-card rounded-[2rem] border border-border overflow-hidden hover:shadow-xl transition-all flex flex-col">
+                                        <div className="aspect-video relative bg-muted overflow-hidden">
+                                            {service.thumbnail_url ? (
+                                                <Image
+                                                    src={service.thumbnail_url}
+                                                    alt={service.title}
+                                                    fill
+                                                    className="object-cover transition-transform duration-500 group-hover:scale-110"
+                                                />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center bg-muted">
+                                                    <Briefcase className="w-10 h-10 text-muted-foreground/50" />
+                                                </div>
+                                            )}
+                                            <div className="absolute top-3 right-3">
+                                                <div className="bg-background/80 backdrop-blur-md text-foreground text-xs font-black px-3 py-1.5 rounded-full shadow-sm">
+                                                    ${service.service_tiers?.[0]?.price || 'N/A'}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="p-5 flex-1 flex flex-col">
+                                            <h4 className="font-bold text-foreground line-clamp-2 text-lg mb-2 group-hover:text-primary transition-colors">{service.title}</h4>
+                                            <p className="text-xs text-muted-foreground line-clamp-2 mb-4 font-medium">{service.description}</p>
+
+                                            <div className="mt-auto flex items-center justify-between text-xs font-bold text-muted-foreground">
+                                                <div className="flex items-center gap-1">
+                                                    <Clock className="w-3 h-3" />
+                                                    {service.service_tiers?.[0]?.delivery_days || service.delivery_time_days || '?'} Days
+                                                </div>
+                                                <div className="flex items-center gap-1 text-yellow-500">
+                                                    <Star className="w-3 h-3 fill-current" />
+                                                    {service.rating_avg ? service.rating_avg.toFixed(1) : "New"}
+                                                    {service.rating_count > 0 && <span className="text-muted-foreground text-[10px] ml-0.5">({service.rating_count})</span>}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </Link>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                )}
+
                 {activeTab === "SHOP" && (
                     <div className="p-4 md:p-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                        <div className="flex flex-col items-center justify-center py-20 text-center space-y-4 border-2 border-dashed border-border rounded-3xl bg-muted/30">
-                            <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center">
-                                <ShoppingBag className="w-8 h-8 text-muted-foreground" />
+                        {products.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center py-20 text-center space-y-4 border-2 border-dashed border-border rounded-3xl bg-muted/30">
+                                <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center">
+                                    <ShoppingBag className="w-8 h-8 text-muted-foreground" />
+                                </div>
+                                <div>
+                                    <h3 className="text-xl font-bold text-foreground">Shop is Empty</h3>
+                                    <p className="text-muted-foreground max-w-sm mx-auto mt-2">
+                                        This user hasn&apos;t listed any products yet.
+                                    </p>
+                                </div>
                             </div>
-                            <div>
-                                <h3 className="text-xl font-bold text-foreground">Shop is Empty</h3>
-                                <p className="text-muted-foreground max-w-sm mx-auto mt-2">
-                                    This user hasn&apos;t listed any products yet.
-                                </p>
+                        ) : (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {products.map((product) => (
+                                    <div key={product.id} className="group bg-card rounded-[2rem] border border-border overflow-hidden hover:shadow-xl transition-all flex flex-col">
+                                        <div className="aspect-[4/3] relative bg-muted overflow-hidden">
+                                            {product.product_images?.[0]?.image_url ? (
+                                                <Image
+                                                    src={product.product_images[0].image_url}
+                                                    alt={product.title}
+                                                    fill
+                                                    className="object-cover transition-transform duration-500 group-hover:scale-110"
+                                                />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center bg-muted">
+                                                    <ShoppingBag className="w-10 h-10 text-muted-foreground/50" />
+                                                </div>
+                                            )}
+                                            <div className="absolute top-3 right-3">
+                                                <div className="bg-background/80 backdrop-blur-md text-foreground text-xs font-black px-3 py-1.5 rounded-full shadow-sm">
+                                                    ${product.price}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="p-5 flex-1 flex flex-col">
+                                            <h4 className="font-bold text-foreground truncate text-lg mb-1">{product.title}</h4>
+                                            <p className="text-xs text-muted-foreground line-clamp-2 mb-4 font-medium">{product.description}</p>
+                                            <button className="w-full mt-auto bg-primary text-primary-foreground py-3 rounded-xl text-sm font-bold hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20">
+                                                Buy Now
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
-                        </div>
+                        )}
                     </div>
                 )}
             </div>
-        </div >
+        </div>
     );
 }

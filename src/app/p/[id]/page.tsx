@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTheme } from "next-themes";
 import { supabase } from "@/lib/supabase/client";
 import { Loader2, Sun, Moon, Download, FileText, Bell, User } from "lucide-react";
 import Image from "next/image";
@@ -17,7 +18,12 @@ export default function PaylinkPage({ params }: { params: { id: string } }) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [items, setItems] = useState<any[]>([]);
     const [isPaid, setIsPaid] = useState(false); // Derived from order status
-    const [darkMode, setDarkMode] = useState(true);
+    const { theme, setTheme } = useTheme();
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     // Mock Data Fallback (for development/preview if ID doesn't exist)
     const MOCK_DATA = {
@@ -105,8 +111,8 @@ export default function PaylinkPage({ params }: { params: { id: string } }) {
 
     if (loading && !seller) {
         return (
-            <div className="min-h-screen bg-[#1a1a1a] flex items-center justify-center">
-                <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+            <div className="min-h-screen bg-background flex items-center justify-center">
+                <Loader2 className="w-8 h-8 text-primary animate-spin" />
             </div>
         );
     }
@@ -114,7 +120,7 @@ export default function PaylinkPage({ params }: { params: { id: string } }) {
     const totalAmount = items.reduce((sum, item) => sum + item.price, 0);
 
     return (
-        <div className={clsx("min-h-screen transition-colors duration-300 font-sans", darkMode ? "bg-[#1a1a1a] text-white" : "bg-gray-50 text-gray-900")}>
+        <div className="min-h-screen bg-background text-foreground transition-colors duration-300 font-sans">
             {/* Navbar */}
             <div className="flex items-center justify-between px-6 py-4">
                 <div className="flex items-center gap-2">
@@ -136,9 +142,11 @@ export default function PaylinkPage({ params }: { params: { id: string } }) {
                         <Bell className="w-6 h-6" />
                         <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-[10px] flex items-center justify-center font-bold text-white">3</div>
                     </div>
-                    <button onClick={() => setDarkMode(!darkMode)}>
-                        {darkMode ? <Sun className="w-6 h-6" /> : <Moon className="w-6 h-6" />}
-                    </button>
+                    {mounted && (
+                        <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
+                            {theme === 'dark' ? <Sun className="w-6 h-6" /> : <Moon className="w-6 h-6" />}
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -147,33 +155,33 @@ export default function PaylinkPage({ params }: { params: { id: string } }) {
                 {/* Seller Header */}
                 <div className="flex items-center justify-center gap-3 mb-6 mt-4">
                     <h1 className="text-2xl font-black italic tracking-wider uppercase">{seller?.username || "SELLER"}</h1>
-                    <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white/20 flex items-center justify-center bg-gray-800">
+                    <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-border flex items-center justify-center bg-muted">
                         {seller?.avatar_url ? (
                             <Image src={seller.avatar_url} alt="Avatar" fill className="object-cover" />
                         ) : (
-                            <User className="w-6 h-6 text-gray-400" />
+                            <User className="w-6 h-6 text-muted-foreground" />
                         )}
                     </div>
                 </div>
 
                 {/* Main Card */}
-                <div className="border-[3px] border-blue-500 rounded-3xl p-6 relative overflow-hidden bg-[#1a1a1a]">
+                <div className="border-[3px] border-primary rounded-3xl p-6 relative overflow-hidden bg-card">
                     {!isPaid ? (
                         /* UNPAID STATE */
                         <div className="space-y-6">
                             {items.map((item) => (
                                 <div key={item.id} className="flex gap-4">
-                                    <div className="w-24 h-16 rounded-lg overflow-hidden bg-gray-800 shrink-0">
+                                    <div className="w-24 h-16 rounded-lg overflow-hidden bg-muted shrink-0">
                                         <Image src={item.image} alt={item.title} fill className="object-cover" />
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <h3 className="font-bold text-sm italic truncate">{item.title}</h3>
                                         <div className="flex justify-between items-end mt-1">
-                                            <div className="text-[10px] text-gray-400">
+                                            <div className="text-[10px] text-muted-foreground">
                                                 <div>{item.size}</div>
                                                 <div>{item.date}</div>
                                             </div>
-                                            <div className="bg-gray-600/50 px-4 py-1 rounded-lg font-bold text-xl tracking-tight">
+                                            <div className="bg-muted/50 px-4 py-1 rounded-lg font-bold text-xl tracking-tight">
                                                 ${item.price}
                                             </div>
                                         </div>
@@ -182,14 +190,14 @@ export default function PaylinkPage({ params }: { params: { id: string } }) {
                             ))}
 
                             <div className="flex items-center justify-center mt-8 mb-2">
-                                <div className="bg-gray-800/80 px-6 py-2 rounded-lg font-black italic text-xl text-gray-300">
-                                    TOTAL: <span className="text-white">${totalAmount}</span>
+                                <div className="bg-muted/80 px-6 py-2 rounded-lg font-black italic text-xl text-muted-foreground">
+                                    TOTAL: <span className="text-foreground">${totalAmount}</span>
                                 </div>
                             </div>
 
                             <button
                                 onClick={handlePayment}
-                                className="w-full bg-blue-500 hover:bg-blue-600 active:scale-95 transition-all text-white font-black italic text-3xl py-4 rounded-full shadow-lg shadow-blue-500/20 uppercase tracking-widest"
+                                className="w-full bg-primary hover:bg-primary/90 active:scale-95 transition-all text-primary-foreground font-black italic text-3xl py-4 rounded-full shadow-lg shadow-primary/20 uppercase tracking-widest"
                             >
                                 PAY
                             </button>
@@ -205,7 +213,7 @@ export default function PaylinkPage({ params }: { params: { id: string } }) {
 
                             <Link
                                 href="/drive"
-                                className="w-full bg-blue-500 hover:bg-blue-600 active:scale-95 transition-all text-white font-black italic text-3xl py-4 rounded-full shadow-lg shadow-blue-500/20 uppercase tracking-widest text-center flex items-center justify-center"
+                                className="w-full bg-primary hover:bg-primary/90 active:scale-95 transition-all text-primary-foreground font-black italic text-3xl py-4 rounded-full shadow-lg shadow-primary/20 uppercase tracking-widest text-center flex items-center justify-center"
                             >
                                 TO FILES
                             </Link>
@@ -215,12 +223,12 @@ export default function PaylinkPage({ params }: { params: { id: string } }) {
 
                 {/* Items Seller Sent Section */}
                 <div className="mt-8">
-                    <h2 className="text-2xl font-black italic tracking-wider text-center mb-6 text-white">Items Seller Sent</h2>
+                    <h2 className="text-2xl font-black italic tracking-wider text-center mb-6 text-foreground">Items Seller Sent</h2>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {items.map((item) => (
-                            <div key={item.id} className="bg-[#222] border border-blue-500/30 rounded-2xl p-3 flex flex-col gap-3">
-                                <div className="aspect-video rounded-xl overflow-hidden bg-gray-800 relative group cursor-pointer">
+                            <div key={item.id} className="bg-card border border-primary/30 rounded-2xl p-3 flex flex-col gap-3">
+                                <div className="aspect-video rounded-xl overflow-hidden bg-muted relative group cursor-pointer">
                                     <Image src={item.image} alt={item.title} fill className="object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
                                     {/* Overlay for file type/actions */}
                                     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40">
@@ -228,15 +236,15 @@ export default function PaylinkPage({ params }: { params: { id: string } }) {
                                     </div>
                                 </div>
                                 <div>
-                                    <h3 className="font-medium text-sm text-white">{item.title}</h3>
-                                    <div className="flex justify-between items-end mt-1 text-[10px] text-gray-400">
+                                    <h3 className="font-medium text-sm text-foreground">{item.title}</h3>
+                                    <div className="flex justify-between items-end mt-1 text-[10px] text-muted-foreground">
                                         <div>
                                             <div>File Size</div>
-                                            <div className="text-white">{item.size}</div>
+                                            <div className="text-foreground">{item.size}</div>
                                         </div>
                                         <div className="text-right">
                                             <div>Date</div>
-                                            <div className="text-white">{item.date}</div>
+                                            <div className="text-foreground">{item.date}</div>
                                         </div>
                                     </div>
                                 </div>
@@ -247,7 +255,7 @@ export default function PaylinkPage({ params }: { params: { id: string } }) {
             </div>
 
             {/* Bottom Navigation (Mock) */}
-            <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-blue-500 text-white px-8 py-4 rounded-full shadow-2xl flex items-center gap-8 z-50">
+            <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground px-8 py-4 rounded-full shadow-2xl flex items-center gap-8 z-50">
                 <Link href="/home" className="flex flex-col items-center gap-1 opacity-100 hover:opacity-80">
                     <HomeIcon className="w-6 h-6 fill-current" />
                     <span className="text-[10px] font-bold">HOME</span>
@@ -257,7 +265,7 @@ export default function PaylinkPage({ params }: { params: { id: string } }) {
                     <span className="text-[10px] font-bold">RECEIPTS</span>
                 </Link>
                 <Link href="/create" className="flex flex-col items-center gap-1 opacity-100 hover:opacity-80 -mt-8">
-                    <div className="w-12 h-12 bg-white text-blue-500 rounded-full flex items-center justify-center shadow-lg">
+                    <div className="w-12 h-12 bg-primary-foreground text-primary rounded-full flex items-center justify-center shadow-lg">
                         <div className="w-6 h-6 bg-current rounded-sm rotate-45" /> {/* Plus icon mock */}
                     </div>
                     <span className="text-[10px] font-bold">UPLOAD</span>
@@ -272,11 +280,11 @@ export default function PaylinkPage({ params }: { params: { id: string } }) {
                     <span className="text-[10px] font-bold">QR CODE</span>
                 </Link>
                 <Link href="/account" className="flex flex-col items-center gap-1 opacity-70 hover:opacity-100">
-                    <div className="w-6 h-6 rounded-full bg-black border border-white/20 overflow-hidden flex items-center justify-center">
+                    <div className="w-6 h-6 rounded-full bg-muted border border-border overflow-hidden flex items-center justify-center">
                         {seller?.avatar_url ? (
                             <Image src={seller.avatar_url} alt="Seller Avatar" fill className="object-cover" />
                         ) : (
-                            <User className="w-4 h-4 text-gray-400" />
+                            <User className="w-4 h-4 text-muted-foreground" />
                         )}
                     </div>
                     <span className="text-[10px] font-bold">ACCOUNT</span>

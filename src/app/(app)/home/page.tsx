@@ -33,6 +33,7 @@ import clsx from "clsx";
 import { useUserMode, useUser } from "@/context/UserContext";
 import { supabase } from "@/lib/supabase/client";
 import { useToast } from "@/context/ToastContext";
+import { motion, AnimatePresence } from "framer-motion";
 
 const PROFILE_TABS = ["HOME", "SERVICES", "PORTFOLIO", "SHOP"];
 const TAGS = ["All", "Digital Art", "Graphic Design", "Photography", "3D Modeling", "Animation"];
@@ -51,9 +52,13 @@ export default function HomePage() {
     const [activeTag, setActiveTag] = useState("All");
     const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
     const [stats, setStats] = useState({ followers: 0, following: 0, is_following: false });
+    const [earnings, setEarnings] = useState({ total: 0, weekly: 0, orders: 0 });
 
     // Feed State
     const [feedTab, setFeedTab] = useState<'foryou' | 'following'>('foryou');
+    const [likedPosts, setLikedPosts] = useState<Record<string, boolean>>({});
+    const lastTapTime = useRef<Record<string, number>>({});
+    const singleTapTimer = useRef<Record<string, NodeJS.Timeout>>({});
 
     // Scroll Direction State for Mobile Header
     const [isHeaderVisible, setIsHeaderVisible] = useState(true);
@@ -106,6 +111,8 @@ export default function HomePage() {
         setIsPostModalOpen(true);
     };
 
+
+
     const fetchStats = async () => {
         if (!profile) return;
         const { data } = await supabase
@@ -116,10 +123,32 @@ export default function HomePage() {
         }
     };
 
+    const fetchEarnings = async () => {
+        if (!user) return;
+
+        const { data: orders } = await supabase
+            .from('orders')
+            .select('amount, created_at, status')
+            .eq('seller_id', user.id)
+            .in('status', ['completed', 'delivered']);
+
+        if (orders) {
+            const total = orders.reduce((sum, order) => sum + (order.amount || 0), 0);
+            const oneWeekAgo = new Date();
+            oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+            const weekly = orders
+                .filter(order => new Date(order.created_at) > oneWeekAgo)
+                .reduce((sum, order) => sum + (order.amount || 0), 0);
+
+            setEarnings({ total, weekly, orders: orders.length });
+        }
+    };
+
     useEffect(() => {
         if (profile) {
             // eslint-disable-next-line react-hooks/set-state-in-effect
             fetchStats();
+            fetchEarnings();
         }
     }, [profile]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -197,7 +226,7 @@ export default function HomePage() {
             .from('services')
             .select(`
                 *,
-                profiles (id, username, full_name, avatar_url, verification_status)
+                profiles:seller_id (id, username, full_name, avatar_url, verification_status)
             `)
             .order('created_at', { ascending: false })
             .limit(20);
@@ -207,7 +236,7 @@ export default function HomePage() {
             .from('products')
             .select(`
                 *,
-                profiles (id, username, full_name, avatar_url, verification_status),
+                profiles:seller_id (id, username, full_name, avatar_url, verification_status),
                 product_images (image_url)
             `)
             .order('created_at', { ascending: false })
@@ -374,10 +403,11 @@ export default function HomePage() {
             .eq('id', productId);
 
         if (error) {
-            toast("Error deleting product", "error");
+            console.error(error);
+            toast("Failed to delete product", "error");
         } else {
-            toast("Product deleted", "success");
             setProducts(prev => prev.filter(p => p.id !== productId));
+            toast("Product deleted", "success");
         }
     };
 
@@ -390,10 +420,11 @@ export default function HomePage() {
             .eq('id', serviceId);
 
         if (error) {
-            toast("Error deleting service", "error");
+            console.error(error);
+            toast("Failed to delete service", "error");
         } else {
-            toast("Service deleted", "success");
             setServices(prev => prev.filter(s => s.id !== serviceId));
+            toast("Service deleted", "success");
         }
     };
 
@@ -520,16 +551,16 @@ export default function HomePage() {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-gray-50 dark:bg-[#1a1a1a] flex items-center justify-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-white"></div>
+            <div className="min-h-screen bg-background flex items-center justify-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-foreground"></div>
             </div>
         );
     }
 
     return (
         <div className={clsx(
-            "min-h-screen text-gray-900 dark:text-white pb-32 selection:bg-red-500/30 transition-colors duration-300 font-sans",
-            userMode === "SELLER" ? "bg-gray-50 dark:bg-[#1a1a1a]" : "bg-white dark:bg-[#222]"
+            "min-h-screen text-foreground pb-32 selection:bg-red-500/30 transition-colors duration-300 font-sans",
+            userMode === "SELLER" ? "bg-background" : "bg-background"
         )}>
 
             <EditProfileModal isOpen={isEditProfileOpen} onClose={() => setIsEditProfileOpen(false)} />
@@ -571,7 +602,7 @@ export default function HomePage() {
                             {profile?.banner_url ? (
                                 <Image src={profile.banner_url} alt="Banner" fill className="object-cover" sizes="100vw" priority />
                             ) : (
-                                <div className="w-full h-full bg-gradient-to-b from-gray-100 to-gray-200 dark:from-[#2a2a2a] dark:to-[#1a1a1a]" />
+                                <div className="w-full h-full bg-gradient-to-b from-muted to-background" />
                             )}
                             <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-background" />
 
@@ -607,13 +638,13 @@ export default function HomePage() {
                             <div className="flex flex-col md:flex-row items-center md:items-end gap-6 md:gap-8">
                                 {/* Avatar */}
                                 <div className="relative shrink-0 mx-auto md:mx-0 group/avatar">
-                                    <div className="w-32 h-32 md:w-48 md:h-48 rounded-3xl p-1 bg-white dark:bg-[#1a1a1a] shadow-2xl">
-                                        <div className="w-full h-full rounded-2xl overflow-hidden relative border-2 border-gray-200 dark:border-[#333]">
+                                    <div className="w-32 h-32 md:w-48 md:h-48 rounded-3xl p-1 bg-card shadow-2xl">
+                                        <div className="w-full h-full rounded-2xl overflow-hidden relative border-2 border-border">
                                             {profile?.avatar_url ? (
                                                 <Image src={profile.avatar_url} alt="Avatar" fill className="object-cover" sizes="(max-width: 768px) 128px, 192px" />
                                             ) : (
-                                                <div className="w-full h-full bg-gray-200 dark:bg-[#333] flex items-center justify-center">
-                                                    <User className="w-16 h-16 text-gray-400" />
+                                                <div className="w-full h-full bg-muted flex items-center justify-center">
+                                                    <User className="w-16 h-16 text-muted-foreground" />
                                                 </div>
                                             )}
                                             <div
@@ -625,7 +656,7 @@ export default function HomePage() {
                                         </div>
                                     </div>
                                     {profile?.verification_status === 'verified' && (
-                                        <div className="absolute -bottom-2 -right-2 bg-white dark:bg-[#1a1a1a] p-1.5 rounded-full shadow-lg border border-gray-200 dark:border-[#333]">
+                                        <div className="absolute -bottom-2 -right-2 bg-card p-1.5 rounded-full shadow-lg border border-border">
                                             <div className="text-white p-1 rounded-full bg-red-500">
                                                 <Check className="w-3 h-3 stroke-[4]" />
                                             </div>
@@ -636,20 +667,20 @@ export default function HomePage() {
                                 {/* Profile Info */}
                                 <div className="flex-1 flex flex-col md:flex-row items-center md:items-end justify-between gap-6 w-full text-center md:text-left pb-4 min-w-0">
                                     <div className="space-y-1">
-                                        <h1 className="text-3xl md:text-4xl font-black text-gray-900 dark:text-white tracking-tight">
+                                        <h1 className="text-3xl md:text-4xl font-black text-foreground tracking-tight">
                                             {profile?.full_name || user?.email?.split('@')[0]}
                                         </h1>
-                                        <p className="text-gray-500 font-medium">@{profile?.username || "username"}</p>
+                                        <p className="text-muted-foreground font-medium">@{profile?.username || "username"}</p>
                                     </div>
 
                                     <div className="flex items-center gap-6 text-sm font-bold justify-center md:justify-end">
                                         <div className="text-center md:text-right">
-                                            <div className="text-gray-900 dark:text-white text-lg">{stats.followers}</div>
-                                            <div className="text-gray-500 text-xs uppercase tracking-wider">Followers</div>
+                                            <div className="text-foreground text-lg">{stats.followers}</div>
+                                            <div className="text-muted-foreground text-xs uppercase tracking-wider">Followers</div>
                                         </div>
                                         <div className="text-center md:text-right">
-                                            <div className="text-gray-900 dark:text-white text-lg">{stats.following}</div>
-                                            <div className="text-gray-500 text-xs uppercase tracking-wider">Following</div>
+                                            <div className="text-foreground text-lg">{stats.following}</div>
+                                            <div className="text-muted-foreground text-xs uppercase tracking-wider">Following</div>
                                         </div>
                                     </div>
                                 </div>
@@ -704,8 +735,17 @@ export default function HomePage() {
                                             <div className="w-16 h-16 bg-background rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
                                                 <DollarSign className="w-8 h-8 text-muted-foreground" />
                                             </div>
-                                            <p className="text-foreground font-bold text-lg">No Data Available</p>
-                                            <p className="text-sm text-muted-foreground mt-1 font-medium">Revenue data will appear here once you start selling.</p>
+                                            {earnings.total > 0 ? (
+                                                <>
+                                                    <p className="text-foreground font-bold text-3xl">${earnings.total.toFixed(2)}</p>
+                                                    <p className="text-sm text-muted-foreground mt-1 font-medium">Total Lifetime Earnings</p>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <p className="text-foreground font-bold text-lg">No Data Available</p>
+                                                    <p className="text-sm text-muted-foreground mt-1 font-medium">Revenue data will appear here once you start selling.</p>
+                                                </>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
@@ -719,7 +759,7 @@ export default function HomePage() {
                                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                             <div className="bg-muted/30 rounded-[2rem] p-6 flex flex-col items-center justify-center aspect-square hover:bg-muted/50 transition-colors group">
                                                 <TrendingUp className="w-8 h-8 text-foreground mb-3 group-hover:scale-110 transition-transform" />
-                                                <span className="text-3xl font-black text-foreground">0</span>
+                                                <span className="text-3xl font-black text-foreground">{earnings.orders}</span>
                                                 <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider mt-1">Orders</span>
                                             </div>
                                             <div className="bg-primary/5 rounded-[2rem] p-6 flex flex-col items-center justify-center aspect-square hover:bg-primary/10 transition-colors group">
@@ -749,11 +789,11 @@ export default function HomePage() {
                                             <div className="space-y-6">
                                                 <div className="bg-white/10 backdrop-blur-md rounded-[2rem] p-6 text-center border border-white/20">
                                                     <span className="text-xs font-bold uppercase tracking-wider opacity-80 block mb-1">This Week</span>
-                                                    <span className="text-4xl font-black tracking-tight">$0.00</span>
+                                                    <span className="text-4xl font-black tracking-tight">${earnings.weekly.toFixed(2)}</span>
                                                 </div>
                                                 <div className="bg-white/10 backdrop-blur-md rounded-[2rem] p-6 text-center border border-white/20">
                                                     <span className="text-xs font-bold uppercase tracking-wider opacity-80 block mb-1">Total</span>
-                                                    <span className="text-4xl font-black tracking-tight">$0.00</span>
+                                                    <span className="text-4xl font-black tracking-tight">${earnings.total.toFixed(2)}</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -942,6 +982,8 @@ export default function HomePage() {
                     </div>
                 </div>
             ) : (
+
+
                 <div className="w-full max-w-6xl mx-auto pb-24 md:pt-8 md:px-6">
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                         <div className="lg:col-span-2">
@@ -1122,11 +1164,60 @@ export default function HomePage() {
                                                 </div>
                                             </div>
 
-                                            <div
-                                                className="aspect-square w-full bg-gray-100 dark:bg-[#1a1a1a] relative group"
-                                            >
+                                            <div className="aspect-square w-full bg-gray-100 dark:bg-[#1a1a1a] relative group overflow-hidden">
+                                                <AnimatePresence>
+                                                    {likedPosts[item.id] && (
+                                                        <motion.div
+                                                            initial={{ opacity: 0, scale: 0 }}
+                                                            animate={{ opacity: 1, scale: 1 }}
+                                                            exit={{ opacity: 0, scale: 0 }}
+                                                            transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                                                            className="absolute inset-0 z-30 flex items-center justify-center pointer-events-none"
+                                                        >
+                                                            <Heart className="w-24 h-24 text-white fill-white drop-shadow-2xl" />
+                                                        </motion.div>
+                                                    )}
+                                                </AnimatePresence>
+
+                                                {item.type === 'service' ? (
+                                                    <Link href={`/service/${item.id}`} className="absolute inset-0 z-10" />
+                                                ) : (
+                                                    <div
+                                                        onClick={(e) => {
+                                                            const now = Date.now();
+                                                            const lastTap = lastTapTime.current[item.id] || 0;
+
+                                                            if (now - lastTap < 300) {
+                                                                // Double tap
+                                                                e.stopPropagation();
+                                                                if (singleTapTimer.current[item.id]) {
+                                                                    clearTimeout(singleTapTimer.current[item.id]);
+                                                                    delete singleTapTimer.current[item.id];
+                                                                }
+                                                                handleLike(item);
+                                                                setLikedPosts(prev => ({ ...prev, [item.id]: true }));
+                                                                setTimeout(() => setLikedPosts(prev => ({ ...prev, [item.id]: false })), 1000);
+                                                            } else {
+                                                                // Single tap
+                                                                singleTapTimer.current[item.id] = setTimeout(() => {
+                                                                    handlePostClick(item);
+                                                                    delete singleTapTimer.current[item.id];
+                                                                }, 300);
+                                                            }
+                                                            lastTapTime.current[item.id] = now;
+                                                        }}
+                                                        className="absolute inset-0 z-10 cursor-pointer"
+                                                    />
+                                                )}
+
                                                 {item.image ? (
-                                                    <Image src={item.image} alt="Post" fill className="object-cover" />
+                                                    <Image
+                                                        src={item.image}
+                                                        alt="Post"
+                                                        fill
+                                                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                                                        className="object-cover"
+                                                    />
                                                 ) : (
                                                     <div className="w-full h-full flex items-center justify-center bg-muted">
                                                         {item.type === 'service' ? <Briefcase className="w-12 h-12 text-muted-foreground/50" /> : <ShoppingBag className="w-12 h-12 text-muted-foreground/50" />}
@@ -1134,7 +1225,7 @@ export default function HomePage() {
                                                 )}
 
                                                 {/* Type Badge */}
-                                                <div className="absolute top-3 right-3">
+                                                <div className="absolute top-3 right-3 pointer-events-none">
                                                     {item.type === 'service' && (
                                                         <div className="bg-blue-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1">
                                                             <Briefcase className="w-3 h-3" />
@@ -1151,7 +1242,7 @@ export default function HomePage() {
 
                                                 {/* Price Tag for Services/Products */}
                                                 {(item.type === 'service' || item.type === 'product') && (
-                                                    <div className="absolute bottom-3 left-3">
+                                                    <div className="absolute bottom-3 left-3 pointer-events-none">
                                                         <div className="bg-black/60 backdrop-blur-md text-white text-sm font-black px-4 py-2 rounded-xl shadow-lg border border-white/10">
                                                             ${item.price}
                                                         </div>
@@ -1159,8 +1250,11 @@ export default function HomePage() {
                                                 )}
 
                                                 <button
-                                                    onClick={() => handlePostClick(item)}
-                                                    className="absolute bottom-3 right-3 p-2 bg-black/50 hover:bg-black/70 rounded-full text-white opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handlePostClick(item);
+                                                    }}
+                                                    className="absolute bottom-3 right-3 p-2 bg-black/50 hover:bg-black/70 rounded-full text-white opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity z-20"
                                                 >
                                                     <Maximize2 className="w-5 h-5" />
                                                 </button>
@@ -1346,8 +1440,8 @@ export default function HomePage() {
                         </div >
                     </div >
                 </div >
-            )
-            }
-        </div >
+            )}
+        </div>
     );
 }
+

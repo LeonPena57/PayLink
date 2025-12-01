@@ -2,12 +2,13 @@
 
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Loader2, X, FileText, Upload, DollarSign, Sparkles, Plus } from "lucide-react";
+import { ArrowLeft, Loader2, X, FileText, Upload, DollarSign, Sparkles, Plus, Image as ImageIcon, AlignLeft, Package } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { supabase } from "@/lib/supabase/client";
 import { useUser } from "@/context/UserContext";
 import { generateWatermarkedPreview } from "@/lib/watermark";
+import { clsx } from "clsx";
 
 export default function CreateProductPage() {
     const router = useRouter();
@@ -163,166 +164,226 @@ export default function CreateProductPage() {
     };
 
     return (
-        <div className="min-h-screen bg-background pb-32">
-            {/* Minimal Header */}
-            <div className="sticky top-0 z-20 bg-background/80 backdrop-blur-md px-4 py-4 flex items-center justify-between">
+        <div className="min-h-screen bg-muted/10 pb-32 md:pb-10">
+            {/* Desktop Header */}
+            <div className="hidden md:flex sticky top-0 z-20 bg-background/80 backdrop-blur-md border-b border-border px-8 py-4 items-center justify-between">
+                <div className="flex items-center gap-4">
+                    <Link href="/create" className="p-2 -ml-2 rounded-full hover:bg-muted transition-colors">
+                        <ArrowLeft className="w-5 h-5 text-foreground" />
+                    </Link>
+                    <h1 className="font-bold text-xl">Create Product</h1>
+                </div>
+                <div className="flex items-center gap-3">
+                    <button onClick={() => router.back()} className="px-4 py-2 font-bold text-sm text-muted-foreground hover:text-foreground transition-colors">
+                        Discard
+                    </button>
+                    <button
+                        onClick={handleSubmit}
+                        disabled={loading || !title || !description || !price}
+                        className="px-6 py-2 bg-primary text-primary-foreground rounded-full font-bold text-sm shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    >
+                        {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : (
+                            <>
+                                Publish Product
+                                <Sparkles className="w-4 h-4" />
+                            </>
+                        )}
+                    </button>
+                </div>
+            </div>
+
+            {/* Mobile Header */}
+            <div className="md:hidden sticky top-0 z-20 bg-background/80 backdrop-blur-md px-4 py-4 flex items-center justify-between border-b border-border">
                 <Link href="/create" className="p-2 -ml-2 rounded-full hover:bg-muted transition-colors">
                     <ArrowLeft className="w-6 h-6 text-foreground" />
                 </Link>
                 <div className="font-bold text-lg">New Product</div>
-                <div className="w-10" /> {/* Spacer */}
+                <div className="w-10" />
             </div>
 
-            <div className="max-w-xl mx-auto p-6 space-y-10">
-                <form id="create-product-form" onSubmit={handleSubmit} className="space-y-10">
+            <div className="max-w-6xl mx-auto p-4 md:p-8">
+                <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-[1fr_350px] gap-8">
 
-                    {/* Big Title Input */}
-                    <div className="space-y-2 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                        <input
-                            type="text"
-                            value={title}
-                            onChange={(e) => setTitle(e.target.value)}
-                            placeholder="Product Name"
-                            className="w-full text-center text-3xl md:text-4xl font-black bg-transparent border-none placeholder:text-muted-foreground/30 focus:ring-0 p-0"
-                            autoFocus
-                            required
-                        />
-                        <div className="h-1 w-24 bg-primary mx-auto rounded-full opacity-20" />
-                    </div>
+                    {/* Left Column: Main Content */}
+                    <div className="space-y-6">
 
-                    {/* Price Bubble */}
-                    <div className="flex justify-center">
-                        <div className="bg-muted/30 rounded-full px-6 py-3 flex items-center gap-2 focus-within:ring-2 focus-within:ring-primary/20 transition-all">
-                            <DollarSign className="w-5 h-5 text-muted-foreground" />
-                            <input
-                                type="number"
-                                value={price}
-                                onChange={(e) => setPrice(e.target.value)}
-                                placeholder="0.00"
-                                className="bg-transparent font-bold text-xl w-24 border-none focus:ring-0 p-0 text-foreground placeholder:text-muted-foreground/50"
-                                required
-                                min="0"
-                                step="0.01"
-                            />
+                        {/* Basic Info Card */}
+                        <div className="bg-background rounded-3xl border border-border p-6 space-y-6 shadow-sm">
+                            <div className="flex items-center gap-2 text-lg font-bold border-b border-border pb-4">
+                                <AlignLeft className="w-5 h-5 text-primary" />
+                                Product Details
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-sm font-bold text-muted-foreground ml-1">Product Name</label>
+                                <input
+                                    type="text"
+                                    value={title}
+                                    onChange={(e) => setTitle(e.target.value)}
+                                    placeholder="e.g. 3D Model Pack Vol. 1"
+                                    className="w-full text-lg font-medium bg-muted/30 border-transparent focus:border-primary focus:ring-0 rounded-xl p-4 transition-all"
+                                    required
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-sm font-bold text-muted-foreground ml-1">Description</label>
+                                <textarea
+                                    value={description}
+                                    onChange={(e) => setDescription(e.target.value)}
+                                    placeholder="Describe your product..."
+                                    className="w-full min-h-[200px] bg-muted/30 border-transparent focus:border-primary focus:ring-0 rounded-xl p-4 transition-all resize-y text-base"
+                                    required
+                                />
+                            </div>
+                        </div>
+
+                        {/* Images Card */}
+                        <div className="bg-background rounded-3xl border border-border p-6 space-y-6 shadow-sm">
+                            <div className="flex items-center justify-between border-b border-border pb-4">
+                                <div className="flex items-center gap-2 text-lg font-bold">
+                                    <ImageIcon className="w-5 h-5 text-primary" />
+                                    Images
+                                </div>
+                                <span className="text-xs font-bold text-muted-foreground">{images.length}/5</span>
+                            </div>
+
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                {images.map((img, index) => (
+                                    <div key={index} className="relative aspect-square rounded-2xl overflow-hidden border border-border group shadow-sm bg-muted/10">
+                                        <Image src={img.preview} alt="" fill className="object-cover" />
+                                        <button
+                                            type="button"
+                                            onClick={() => removeImage(index)}
+                                            className="absolute top-2 right-2 p-1.5 bg-black/50 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all hover:bg-red-500 backdrop-blur-md"
+                                        >
+                                            <X className="w-3 h-3" />
+                                        </button>
+                                        {index === 0 && (
+                                            <div className="absolute bottom-2 left-2 px-2 py-0.5 bg-black/60 text-white text-[10px] font-bold rounded-full backdrop-blur-md">
+                                                Cover
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                                {images.length < 5 && (
+                                    <div
+                                        onClick={() => imageInputRef.current?.click()}
+                                        className="aspect-square rounded-2xl bg-muted/30 border-2 border-dashed border-border hover:border-primary/50 hover:bg-primary/5 transition-all flex flex-col items-center justify-center cursor-pointer gap-2 group"
+                                    >
+                                        <div className="w-10 h-10 rounded-full bg-background flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
+                                            <Plus className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                                        </div>
+                                        <span className="text-xs font-bold text-muted-foreground">Add Image</span>
+                                        <input
+                                            type="file"
+                                            ref={imageInputRef}
+                                            onChange={handleImageSelect}
+                                            className="hidden"
+                                            accept="image/*"
+                                            multiple
+                                        />
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Files Card */}
+                        <div className="bg-background rounded-3xl border border-border p-6 space-y-6 shadow-sm">
+                            <div className="flex items-center justify-between border-b border-border pb-4">
+                                <div className="flex items-center gap-2 text-lg font-bold">
+                                    <Package className="w-5 h-5 text-primary" />
+                                    Digital Files
+                                </div>
+                                <span className="text-xs font-bold text-muted-foreground">{files.length}/5</span>
+                            </div>
+
+                            <div className="space-y-3">
+                                {files.map((file, index) => (
+                                    <div key={index} className="flex items-center gap-3 p-3 bg-muted/30 rounded-2xl group border border-transparent hover:border-primary/20 transition-all">
+                                        <div className="w-12 h-12 rounded-xl bg-background flex items-center justify-center shrink-0 shadow-sm">
+                                            <FileText className="w-6 h-6 text-primary" />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="font-bold text-sm truncate">{file.name}</div>
+                                            <div className="text-xs text-muted-foreground">{(file.size / 1024 / 1024).toFixed(2)} MB</div>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => removeFile(index)}
+                                            className="p-2 text-muted-foreground/50 hover:text-destructive transition-colors"
+                                        >
+                                            <X className="w-5 h-5" />
+                                        </button>
+                                    </div>
+                                ))}
+                                {files.length < 5 && (
+                                    <button
+                                        type="button"
+                                        onClick={() => fileInputRef.current?.click()}
+                                        className="w-full py-4 border-2 border-dashed border-border rounded-2xl flex items-center justify-center gap-2 text-muted-foreground hover:text-primary hover:border-primary/50 hover:bg-primary/5 transition-all font-bold text-sm group"
+                                    >
+                                        <Upload className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                                        Upload File
+                                    </button>
+                                )}
+                                <input
+                                    type="file"
+                                    ref={fileInputRef}
+                                    onChange={handleFileSelect}
+                                    className="hidden"
+                                    multiple
+                                />
+                            </div>
                         </div>
                     </div>
 
-                    {/* Images Section */}
-                    <div className="space-y-3">
-                        <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider ml-2">Images ({images.length}/5)</label>
-                        <div className="flex gap-3 overflow-x-auto pb-2 custom-scrollbar snap-x">
-                            {images.map((img, index) => (
-                                <div key={index} className="relative w-32 h-32 shrink-0 rounded-2xl overflow-hidden border border-border snap-start group">
-                                    <Image src={img.preview} alt="" fill className="object-cover" />
-                                    <button
-                                        type="button"
-                                        onClick={() => removeImage(index)}
-                                        className="absolute top-2 right-2 p-1.5 bg-black/50 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all hover:bg-red-500"
-                                    >
-                                        <X className="w-3 h-3" />
-                                    </button>
-                                    {index === 0 && (
-                                        <div className="absolute bottom-2 left-2 px-2 py-0.5 bg-black/60 text-white text-[10px] font-bold rounded-full backdrop-blur-md">
-                                            Cover
-                                        </div>
-                                    )}
-                                </div>
-                            ))}
-                            {images.length < 5 && (
-                                <div
-                                    onClick={() => imageInputRef.current?.click()}
-                                    className="w-32 h-32 shrink-0 rounded-2xl bg-muted/30 border-2 border-dashed border-border hover:border-primary/50 hover:bg-muted/50 transition-all flex flex-col items-center justify-center cursor-pointer snap-start gap-2"
-                                >
-                                    <div className="w-10 h-10 rounded-full bg-background flex items-center justify-center shadow-sm">
-                                        <Plus className="w-5 h-5 text-muted-foreground" />
-                                    </div>
-                                    <span className="text-xs font-bold text-muted-foreground">Add Image</span>
+                    {/* Right Column: Sidebar */}
+                    <div className="space-y-6">
+
+                        {/* Price Card */}
+                        <div className="bg-background rounded-3xl border border-border p-6 space-y-6 shadow-sm">
+                            <div className="flex items-center gap-2 text-lg font-bold border-b border-border pb-4">
+                                <DollarSign className="w-5 h-5 text-primary" />
+                                Pricing
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-sm font-bold text-muted-foreground ml-1">Price</label>
+                                <div className="relative">
+                                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground font-bold">$</div>
                                     <input
-                                        type="file"
-                                        ref={imageInputRef}
-                                        onChange={handleImageSelect}
-                                        className="hidden"
-                                        accept="image/*"
-                                        multiple
+                                        type="number"
+                                        value={price}
+                                        onChange={(e) => setPrice(e.target.value)}
+                                        placeholder="0.00"
+                                        className="w-full text-lg font-bold bg-muted/30 border-transparent focus:border-primary focus:ring-0 rounded-xl pl-8 p-4 transition-all"
+                                        required
+                                        min="0"
+                                        step="0.01"
                                     />
                                 </div>
-                            )}
+                            </div>
                         </div>
-                    </div>
 
-                    {/* Description Bubble */}
-                    <div className="space-y-2">
-                        <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider ml-2">Description</label>
-                        <div className="bg-muted/30 rounded-3xl p-4 focus-within:ring-2 focus-within:ring-primary/20 transition-all">
-                            <textarea
-                                value={description}
-                                onChange={(e) => setDescription(e.target.value)}
-                                placeholder="Describe your product..."
-                                className="w-full bg-transparent border-none focus:ring-0 p-0 min-h-[150px] resize-none text-foreground placeholder:text-muted-foreground/50 leading-relaxed"
-                                required
-                            />
-                        </div>
                     </div>
-
-                    {/* Files Section */}
-                    <div className="space-y-3">
-                        <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider ml-2">Digital Files ({files.length}/5)</label>
-                        <div className="space-y-2">
-                            {files.map((file, index) => (
-                                <div key={index} className="flex items-center gap-3 p-3 bg-muted/30 rounded-2xl group">
-                                    <div className="w-10 h-10 rounded-xl bg-background flex items-center justify-center shrink-0 shadow-sm">
-                                        <FileText className="w-5 h-5 text-primary" />
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <div className="font-bold text-sm truncate">{file.name}</div>
-                                        <div className="text-xs text-muted-foreground">{(file.size / 1024 / 1024).toFixed(2)} MB</div>
-                                    </div>
-                                    <button
-                                        type="button"
-                                        onClick={() => removeFile(index)}
-                                        className="p-2 text-muted-foreground/50 hover:text-destructive transition-colors"
-                                    >
-                                        <X className="w-4 h-4" />
-                                    </button>
-                                </div>
-                            ))}
-                            {files.length < 5 && (
-                                <button
-                                    type="button"
-                                    onClick={() => fileInputRef.current?.click()}
-                                    className="w-full py-4 border-2 border-dashed border-border rounded-2xl flex items-center justify-center gap-2 text-muted-foreground hover:text-primary hover:border-primary/50 hover:bg-primary/5 transition-all font-bold text-sm"
-                                >
-                                    <Upload className="w-4 h-4" />
-                                    Upload File
-                                </button>
-                            )}
-                            <input
-                                type="file"
-                                ref={fileInputRef}
-                                onChange={handleFileSelect}
-                                className="hidden"
-                                multiple
-                            />
-                        </div>
-                    </div>
-
-                    {/* Floating Action Button */}
-                    <div className="fixed bottom-8 left-0 right-0 px-6 flex justify-center z-20">
-                        <button
-                            type="submit"
-                            disabled={loading || !title || !description || !price}
-                            className="w-full max-w-md py-4 bg-primary text-primary-foreground rounded-full font-black text-lg shadow-xl shadow-primary/30 hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                        >
-                            {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : (
-                                <>
-                                    Publish Product
-                                    <Sparkles className="w-5 h-5" />
-                                </>
-                            )}
-                        </button>
-                    </div>
-
                 </form>
+            </div>
+
+            {/* Mobile Publish Button (Fixed Bottom) */}
+            <div className="md:hidden fixed bottom-0 left-0 right-0 p-4 bg-background/80 backdrop-blur-xl border-t border-border z-40">
+                <button
+                    onClick={handleSubmit}
+                    disabled={loading || !title || !description || !price}
+                    className="w-full py-3.5 bg-primary text-primary-foreground rounded-full font-black text-lg shadow-xl shadow-primary/30 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                    {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
+                        <>
+                            Publish Product
+                            <Sparkles className="w-5 h-5" />
+                        </>
+                    )}
+                </button>
             </div>
         </div>
     );

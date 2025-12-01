@@ -536,7 +536,7 @@ export default function SettingsPage() {
 
                 {/* Content Area */}
                 <div className={clsx(
-                    "flex-1 min-h-[500px] bg-card md:rounded-[2.5rem] md:p-8 md:shadow-sm",
+                    "flex-1 min-h-[500px] md:bg-card md:rounded-[2.5rem] md:p-8 md:shadow-sm",
                     mobileView ? "block" : "hidden md:block"
                 )}>
                     {/* Mobile Header */}

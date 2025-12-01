@@ -2,12 +2,13 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Loader2, X, Image as ImageIcon, Plus, Sparkles, Search, Briefcase } from "lucide-react";
+import { ArrowLeft, Loader2, X, Image as ImageIcon, Plus, Sparkles, Search, Briefcase, DollarSign, Calendar, ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { supabase } from "@/lib/supabase/client";
 import { useUser } from "@/context/UserContext";
 import { clsx } from "clsx";
+import { format, addDays, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isToday, addMonths, subMonths, startOfWeek, endOfWeek } from "date-fns";
 
 export default function CreateInvoicePage() {
     const router = useRouter();
@@ -33,7 +34,9 @@ export default function CreateInvoicePage() {
 
     // UI State
     const [isServicePickerOpen, setIsServicePickerOpen] = useState(false);
+    const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
+    const [currentMonth, setCurrentMonth] = useState(new Date());
 
     const fileInputRefs = useRef<{ [key: number]: HTMLInputElement | null }>({});
 
@@ -168,6 +171,20 @@ export default function CreateInvoicePage() {
         s.title.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
+    // Calendar Helpers
+    const daysInMonth = eachDayOfInterval({
+        start: startOfWeek(startOfMonth(currentMonth)),
+        end: endOfWeek(endOfMonth(currentMonth))
+    });
+
+    const handleDateSelect = (date: Date) => {
+        // Adjust for timezone offset to ensure the date string is correct
+        const offset = date.getTimezoneOffset();
+        const adjustedDate = new Date(date.getTime() - (offset * 60 * 1000));
+        setDueDate(adjustedDate.toISOString().split('T')[0]);
+        setIsDatePickerOpen(false);
+    };
+
     return (
         <div className="min-h-screen bg-background pb-32">
             {/* Simple Header */}
@@ -204,32 +221,33 @@ export default function CreateInvoicePage() {
                         <div className="h-1 w-20 bg-primary mx-auto rounded-full opacity-20" />
                     </div>
 
-                    {/* Due Date Input */}
+                    {/* Due Date Trigger */}
                     <div className="flex justify-center">
-                        <div className="inline-flex items-center gap-2 bg-muted/30 px-4 py-2 rounded-full hover:bg-muted/50 transition-colors cursor-pointer">
-                            <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Due</span>
-                            <input
-                                type="date"
-                                value={dueDate}
-                                onChange={(e) => setDueDate(e.target.value)}
-                                className="bg-transparent border-none p-0 text-sm font-bold text-foreground focus:ring-0 cursor-pointer"
-                            />
-                        </div>
+                        <button
+                            type="button"
+                            onClick={() => setIsDatePickerOpen(true)}
+                            className="inline-flex items-center gap-2 bg-muted/30 px-4 py-2 rounded-full hover:bg-muted/50 transition-colors cursor-pointer group active:scale-95"
+                        >
+                            <Calendar className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                            <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                                {dueDate ? format(new Date(dueDate), 'MMM d, yyyy') : 'Set Due Date'}
+                            </span>
+                        </button>
                     </div>
 
                     {/* Items List */}
                     <div className="space-y-4">
                         {items.map((item) => (
-                            <div key={item.id} className="group flex items-center gap-3 bg-muted/30 hover:bg-muted/50 p-2 rounded-2xl transition-all animate-in slide-in-from-bottom-2">
+                            <div key={item.id} className="group flex items-start gap-4 bg-muted/30 hover:bg-muted/50 p-4 rounded-3xl transition-all animate-in slide-in-from-bottom-2 border border-transparent hover:border-border">
                                 {/* Image Bubble */}
                                 <div
                                     onClick={() => fileInputRefs.current[item.id]?.click()}
-                                    className="w-14 h-14 rounded-xl bg-background shadow-sm flex items-center justify-center cursor-pointer hover:scale-105 transition-transform overflow-hidden shrink-0"
+                                    className="relative w-16 h-16 rounded-2xl bg-background shadow-sm flex items-center justify-center cursor-pointer hover:scale-105 transition-transform overflow-hidden shrink-0 mt-1"
                                 >
                                     {item.preview ? (
                                         <Image src={item.preview} alt="" fill className="object-cover" />
                                     ) : (
-                                        <ImageIcon className="w-5 h-5 text-muted-foreground/40" />
+                                        <ImageIcon className="w-6 h-6 text-muted-foreground/40" />
                                     )}
                                     <input
                                         type="file"
@@ -241,50 +259,56 @@ export default function CreateInvoicePage() {
                                 </div>
 
                                 {/* Inputs */}
-                                <div className="flex-1 min-w-0 flex flex-col justify-center gap-1">
+                                <div className="flex-1 min-w-0 flex flex-col gap-3">
                                     <input
                                         type="text"
                                         value={item.name}
                                         onChange={(e) => updateItem(item.id, 'name', e.target.value)}
                                         placeholder="Item name..."
-                                        className="w-full bg-transparent font-bold text-base border-none focus:ring-0 p-0 placeholder:text-muted-foreground/50"
+                                        className="w-full bg-transparent font-bold text-lg border-none focus:ring-0 p-0 placeholder:text-muted-foreground/50"
                                     />
-                                    <div className="flex items-center gap-1">
-                                        <span className="text-muted-foreground text-sm font-bold">$</span>
-                                        <input
-                                            type="number"
-                                            value={item.price}
-                                            onChange={(e) => updateItem(item.id, 'price', e.target.value)}
-                                            placeholder="0"
-                                            className="w-24 bg-transparent font-bold text-sm border-none focus:ring-0 p-0 text-primary"
-                                            min="0"
-                                        />
+                                    <div className="flex items-center gap-3">
+                                        <div className="relative flex items-center bg-background rounded-xl shadow-sm ring-1 ring-border focus-within:ring-2 focus-within:ring-primary/50 transition-all">
+                                            <span className="absolute left-3 text-muted-foreground text-lg font-bold">$</span>
+                                            <input
+                                                type="number"
+                                                value={item.price}
+                                                onChange={(e) => updateItem(item.id, 'price', e.target.value)}
+                                                placeholder="0.00"
+                                                className="w-32 bg-transparent font-black text-xl border-none focus:ring-0 pl-7 pr-3 py-2 text-primary placeholder:text-muted-foreground/30"
+                                                min="0"
+                                            />
+                                        </div>
+
+                                        {/* Actions */}
+                                        <div className="flex items-center gap-1 ml-auto">
+                                            <button
+                                                type="button"
+                                                onClick={() => updateItem(item.id, 'saveAsService', !item.saveAsService)}
+                                                className={clsx(
+                                                    "p-2.5 rounded-xl transition-colors",
+                                                    item.saveAsService ? "text-primary bg-primary/10" : "text-muted-foreground/40 hover:text-muted-foreground hover:bg-muted"
+                                                )}
+                                                title="Save as Service"
+                                            >
+                                                <Briefcase className="w-5 h-5" />
+                                            </button>
+
+                                            {items.length > 1 && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => removeItem(item.id)}
+                                                    className={clsx(
+                                                        "p-2.5 rounded-xl transition-colors",
+                                                        "text-muted-foreground/40 hover:text-destructive hover:bg-destructive/10"
+                                                    )}
+                                                >
+                                                    <X className="w-5 h-5" />
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
-
-                                {/* Save as Service Toggle */}
-                                <button
-                                    type="button"
-                                    onClick={() => updateItem(item.id, 'saveAsService', !item.saveAsService)}
-                                    className={clsx(
-                                        "p-2 rounded-full transition-colors",
-                                        item.saveAsService ? "text-primary bg-primary/10" : "text-muted-foreground/30 hover:text-muted-foreground"
-                                    )}
-                                    title="Save as Service"
-                                >
-                                    <Briefcase className="w-5 h-5" />
-                                </button>
-
-                                {/* Delete Action */}
-                                {items.length > 1 && (
-                                    <button
-                                        type="button"
-                                        onClick={() => removeItem(item.id)}
-                                        className="p-2 text-muted-foreground/30 hover:text-destructive transition-colors"
-                                    >
-                                        <X className="w-5 h-5" />
-                                    </button>
-                                )}
                             </div>
                         ))}
 
@@ -309,37 +333,67 @@ export default function CreateInvoicePage() {
                     </div>
 
                     {/* Payment Terms Toggle */}
-                    <div className="flex justify-center">
-                        <div className="bg-muted/30 p-1 rounded-full inline-flex">
+                    <div className="space-y-3">
+                        <label className="text-sm font-bold text-muted-foreground uppercase tracking-wider block text-center">Payment Terms</label>
+                        <div className="grid grid-cols-2 gap-3">
                             <button
                                 type="button"
                                 onClick={() => setPaymentType('full')}
                                 className={clsx(
-                                    "px-4 py-2 rounded-full text-sm font-bold transition-all",
-                                    paymentType === 'full' ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
+                                    "relative p-4 rounded-2xl border-2 text-left transition-all duration-200 flex flex-col gap-2",
+                                    paymentType === 'full'
+                                        ? "bg-primary/5 border-primary shadow-sm"
+                                        : "bg-card border-border hover:border-primary/30 hover:bg-muted/30"
                                 )}
                             >
-                                Full Payment
+                                <div className={clsx(
+                                    "w-8 h-8 rounded-full flex items-center justify-center transition-colors",
+                                    paymentType === 'full' ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+                                )}>
+                                    <DollarSign className="w-4 h-4" />
+                                </div>
+                                <div>
+                                    <div className={clsx("font-bold text-sm", paymentType === 'full' ? "text-primary" : "text-foreground")}>Full Payment</div>
+                                    <div className="text-xs text-muted-foreground font-medium mt-0.5">Get paid 100% upfront</div>
+                                </div>
+                                {paymentType === 'full' && (
+                                    <div className="absolute top-3 right-3 w-2 h-2 rounded-full bg-primary" />
+                                )}
                             </button>
+
                             <button
                                 type="button"
                                 onClick={() => setPaymentType('50-50')}
                                 className={clsx(
-                                    "px-4 py-2 rounded-full text-sm font-bold transition-all",
-                                    paymentType === '50-50' ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
+                                    "relative p-4 rounded-2xl border-2 text-left transition-all duration-200 flex flex-col gap-2",
+                                    paymentType === '50-50'
+                                        ? "bg-primary/5 border-primary shadow-sm"
+                                        : "bg-card border-border hover:border-primary/30 hover:bg-muted/30"
                                 )}
                             >
-                                50/50 Split
+                                <div className={clsx(
+                                    "w-8 h-8 rounded-full flex items-center justify-center transition-colors",
+                                    paymentType === '50-50' ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+                                )}>
+                                    <span className="text-xs font-black">50%</span>
+                                </div>
+                                <div>
+                                    <div className={clsx("font-bold text-sm", paymentType === '50-50' ? "text-primary" : "text-foreground")}>50/50 Split</div>
+                                    <div className="text-xs text-muted-foreground font-medium mt-0.5">Deposit now, rest later</div>
+                                </div>
+                                {paymentType === '50-50' && (
+                                    <div className="absolute top-3 right-3 w-2 h-2 rounded-full bg-primary" />
+                                )}
                             </button>
                         </div>
                     </div>
 
                     {/* Create Button */}
-                    <div className="fixed bottom-8 left-0 right-0 px-6 flex justify-center z-20">
+                    <div className="fixed bottom-0 left-0 right-0 p-4 md:bottom-8 md:px-6 flex justify-center z-40 bg-background/80 backdrop-blur-xl md:bg-transparent border-t md:border-none border-border">
                         <button
                             type="submit"
                             disabled={loading || !title || calculateTotal() <= 0}
-                            className="w-full max-w-md py-4 bg-primary text-primary-foreground rounded-full font-black text-lg shadow-xl shadow-primary/30 hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                            className="w-full md:max-w-md py-4 bg-primary text-primary-foreground rounded-2xl md:rounded-full font-black text-lg shadow-xl shadow-primary/30 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                         >
                             {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : (
                                 <>
@@ -355,8 +409,16 @@ export default function CreateInvoicePage() {
 
             {/* Minimal Service Picker Modal */}
             {isServicePickerOpen && (
-                <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="bg-card border border-border w-full max-w-md max-h-[70vh] rounded-3xl shadow-2xl flex flex-col animate-in slide-in-from-bottom-10 duration-300">
+                <div className="fixed inset-0 z-[110] flex items-end md:items-center justify-center md:p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div
+                        className="bg-background/95 backdrop-blur-xl border-t md:border border-border w-full md:max-w-md h-[80vh] md:h-auto md:max-h-[70vh] rounded-t-3xl md:rounded-3xl shadow-2xl flex flex-col animate-in slide-in-from-bottom-full duration-300"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        {/* Mobile Drag Handle */}
+                        <div className="md:hidden w-full flex justify-center pt-3 pb-1" onClick={() => setIsServicePickerOpen(false)}>
+                            <div className="w-12 h-1.5 bg-muted rounded-full" />
+                        </div>
+
                         <div className="p-4 flex items-center gap-3 border-b border-border/50">
                             <Search className="w-5 h-5 text-muted-foreground" />
                             <input
@@ -374,25 +436,34 @@ export default function CreateInvoicePage() {
 
                         <div className="flex-1 overflow-y-auto p-2 custom-scrollbar">
                             {filteredServices.length > 0 ? (
-                                <div className="space-y-1">
+                                <div className="space-y-2">
                                     {filteredServices.map(service => (
                                         <button
                                             key={service.id}
                                             onClick={() => addServiceItem(service)}
-                                            className="w-full flex items-center gap-3 p-3 rounded-2xl hover:bg-muted/50 transition-colors text-left group"
+                                            className="w-full flex items-center gap-4 p-4 rounded-3xl bg-muted/30 hover:bg-muted/60 border border-transparent hover:border-border transition-all text-left group active:scale-[0.98]"
                                         >
-                                            <div className="w-10 h-10 rounded-lg bg-muted overflow-hidden shrink-0">
+                                            <div className="relative w-16 h-16 rounded-2xl bg-muted overflow-hidden shrink-0 shadow-sm">
                                                 {service.thumbnail_url ? (
                                                     <Image src={service.thumbnail_url} alt="" fill className="object-cover" />
                                                 ) : (
-                                                    <div className="w-full h-full bg-primary/10" />
+                                                    <div className="w-full h-full bg-primary/10 flex items-center justify-center">
+                                                        <Briefcase className="w-6 h-6 text-primary/40" />
+                                                    </div>
                                                 )}
                                             </div>
-                                            <div className="flex-1 min-w-0">
-                                                <div className="font-bold text-sm truncate">{service.title}</div>
-                                                <div className="text-xs text-muted-foreground">${service.price}</div>
+                                            <div className="flex-1 min-w-0 py-1">
+                                                <div className="font-bold text-base md:text-lg text-foreground truncate mb-1">{service.title}</div>
+                                                <div className="flex items-center gap-2">
+                                                    <div className="bg-background/80 backdrop-blur-sm px-2 py-1 rounded-lg border border-border/50 text-sm font-bold text-primary">
+                                                        ${service.price}
+                                                    </div>
+                                                    <span className="text-xs text-muted-foreground font-medium">Service</span>
+                                                </div>
                                             </div>
-                                            <Plus className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                                            <div className="w-8 h-8 rounded-full bg-background border border-border flex items-center justify-center group-hover:border-primary group-hover:text-primary transition-colors shadow-sm">
+                                                <Plus className="w-5 h-5" />
+                                            </div>
                                         </button>
                                     ))}
                                 </div>
@@ -403,6 +474,92 @@ export default function CreateInvoicePage() {
                             )}
                         </div>
                     </div>
+                    {/* Backdrop click to close */}
+                    <div className="absolute inset-0 -z-10" onClick={() => setIsServicePickerOpen(false)} />
+                </div>
+            )}
+
+            {/* Date Picker Modal */}
+            {isDatePickerOpen && (
+                <div className="fixed inset-0 z-[110] flex items-end md:items-center justify-center md:p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div
+                        className="bg-background/95 backdrop-blur-xl border-t md:border border-border w-full md:max-w-md rounded-t-3xl md:rounded-3xl shadow-2xl flex flex-col animate-in slide-in-from-bottom-full duration-300"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        {/* Mobile Drag Handle */}
+                        <div className="md:hidden w-full flex justify-center pt-3 pb-1" onClick={() => setIsDatePickerOpen(false)}>
+                            <div className="w-12 h-1.5 bg-muted rounded-full" />
+                        </div>
+
+                        <div className="p-6 space-y-6">
+                            <div className="flex items-center justify-between">
+                                <h3 className="text-lg font-black">Select Due Date</h3>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
+                                        className="p-2 hover:bg-muted rounded-full transition-colors"
+                                    >
+                                        <ChevronLeft className="w-5 h-5" />
+                                    </button>
+                                    <span className="font-bold text-sm w-32 text-center">
+                                        {format(currentMonth, 'MMMM yyyy')}
+                                    </span>
+                                    <button
+                                        onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
+                                        className="p-2 hover:bg-muted rounded-full transition-colors"
+                                    >
+                                        <ChevronRight className="w-5 h-5" />
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-7 gap-1 text-center mb-2">
+                                {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(day => (
+                                    <div key={day} className="text-xs font-bold text-muted-foreground uppercase py-2">
+                                        {day}
+                                    </div>
+                                ))}
+                                {daysInMonth.map((date, i) => {
+                                    const isSelected = dueDate && isSameDay(new Date(dueDate), date);
+                                    const isCurrentMonth = isSameDay(date, startOfMonth(currentMonth)) || (date >= startOfMonth(currentMonth) && date <= endOfMonth(currentMonth));
+
+                                    return (
+                                        <button
+                                            key={i}
+                                            onClick={() => handleDateSelect(date)}
+                                            className={clsx(
+                                                "aspect-square rounded-full flex items-center justify-center text-sm font-bold transition-all",
+                                                !isCurrentMonth && "opacity-30",
+                                                isSelected
+                                                    ? "bg-primary text-primary-foreground shadow-lg shadow-primary/30 scale-110"
+                                                    : "hover:bg-muted text-foreground",
+                                                isToday(date) && !isSelected && "text-primary ring-1 ring-primary ring-inset"
+                                            )}
+                                        >
+                                            {format(date, 'd')}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3 pt-2">
+                                <button
+                                    onClick={() => handleDateSelect(addDays(new Date(), 7))}
+                                    className="py-3 rounded-xl bg-muted/50 hover:bg-muted text-sm font-bold transition-colors"
+                                >
+                                    In 1 Week
+                                </button>
+                                <button
+                                    onClick={() => handleDateSelect(addMonths(new Date(), 1))}
+                                    className="py-3 rounded-xl bg-muted/50 hover:bg-muted text-sm font-bold transition-colors"
+                                >
+                                    In 1 Month
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    {/* Backdrop click to close */}
+                    <div className="absolute inset-0 -z-10" onClick={() => setIsDatePickerOpen(false)} />
                 </div>
             )}
         </div>

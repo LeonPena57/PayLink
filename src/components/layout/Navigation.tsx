@@ -1,14 +1,15 @@
 "use client";
 
-import { Home, Receipt, QrCode, User, Plus, Menu, LogOut, Settings, Sun, Moon, FolderOpen, MessageCircle, ShoppingBag, Globe, X, Zap, DollarSign } from "lucide-react";
+import { Home, Receipt, QrCode, User, Plus, Menu, LogOut, Settings, Sun, Moon, FolderOpen, MessageCircle, ShoppingBag, Globe, X, Zap, DollarSign, ArrowLeftRight } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import clsx from "clsx";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "next-themes";
 import { useUser } from "@/context/UserContext";
 import Image from "next/image";
+import { QRModal } from "@/components/features/QRModal";
 
 export function Navigation() {
     const pathname = usePathname();
@@ -16,9 +17,29 @@ export function Navigation() {
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [activeHash, setActiveHash] = useState("");
+    const [isQROpen, setIsQROpen] = useState(false);
+    const [isHeaderVisible, setIsHeaderVisible] = useState(true);
+    const lastScrollY = useRef(0);
+
+    useEffect(() => {
+        const controlNavbar = () => {
+            if (typeof window !== 'undefined') {
+                const currentScrollY = window.scrollY;
+                if (currentScrollY > lastScrollY.current && currentScrollY > 50) {
+                    setIsHeaderVisible(false);
+                } else {
+                    setIsHeaderVisible(true);
+                }
+                lastScrollY.current = currentScrollY;
+            }
+        };
+
+        window.addEventListener('scroll', controlNavbar);
+        return () => window.removeEventListener('scroll', controlNavbar);
+    }, []);
 
     const { theme, setTheme } = useTheme();
-    const { user, profile } = useUser();
+    const { user, profile, userMode, toggleUserMode } = useUser();
     const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
@@ -105,9 +126,26 @@ export function Navigation() {
                     </nav>
                 </div>
                 <div className="flex items-center gap-4">
-                    <Link href="/qr" className="p-2 text-gray-400 hover:text-black dark:hover:text-white transition-colors">
+                    {user && (
+                        <button
+                            onClick={toggleUserMode}
+                            className={clsx(
+                                "hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full transition-all text-xs font-bold border",
+                                userMode === "SELLER"
+                                    ? "bg-primary text-primary-foreground border-primary hover:bg-primary/90 shadow-sm shadow-primary/20"
+                                    : "bg-green-500 text-white border-green-500 hover:bg-green-600 shadow-sm shadow-green-500/20"
+                            )}
+                        >
+                            <ArrowLeftRight className="w-3.5 h-3.5" />
+                            {userMode === "SELLER" ? "Seller Mode" : "Buyer Mode"}
+                        </button>
+                    )}
+                    <button
+                        onClick={() => setIsQROpen(true)}
+                        className="p-2 text-gray-400 hover:text-black dark:hover:text-white transition-colors"
+                    >
                         <QrCode className="w-5 h-5" />
-                    </Link>
+                    </button>
                     {user ? (
                         <Link href="/settings" className="relative w-8 h-8 rounded-full overflow-hidden border border-gray-200 dark:border-[#333] hover:ring-2 ring-primary transition-all">
                             {profile?.avatar_url ? (
@@ -126,56 +164,97 @@ export function Navigation() {
                 </div>
             </header>
 
-            {/* Mobile Bottom Navigation */}
-            <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-md bg-primary rounded-full px-2 py-3 grid grid-cols-5 items-center shadow-2xl z-[100] shadow-primary/40">
-                {navItems.map((item) => {
-                    const active = isActive(item.href);
-                    return (
-                        <Link
-                            key={item.name}
-                            href={item.href}
-                            onClick={() => {
-                                if (item.href.startsWith("/#")) {
-                                    setActiveHash(item.href.substring(1));
-                                } else {
-                                    setActiveHash("");
-                                }
-                            }}
+            {/* Mobile Header */}
+            <motion.header
+                initial={{ y: 0 }}
+                animate={{ y: isHeaderVisible ? 0 : -100 }}
+                transition={{ duration: 0.3, ease: "easeInOut" }}
+                className="md:hidden flex items-center justify-between px-4 py-2 bg-background/80 backdrop-blur-md sticky top-0 z-50 w-full"
+            >
+                <Link href={user ? "/home" : "/"} className="flex items-center gap-2">
+                    <div className="relative w-8 h-8 flex items-center justify-center">
+                        <Image src="/logo.png" alt="PayLink" fill className="object-contain brightness-0 dark:brightness-100 dark:invert-0" sizes="32px" />
+                    </div>
+                    <span className="font-black text-lg tracking-tighter italic text-foreground">PAYLINK</span>
+                </Link>
+                <div className="flex items-center gap-2">
+                    {user && (
+                        <button
+                            onClick={toggleUserMode}
                             className={clsx(
-                                "flex flex-col items-center gap-1 transition-colors",
-                                active ? "text-white" : "text-white/60 hover:text-white"
+                                "flex items-center gap-2 px-3 py-1.5 rounded-full transition-all text-[10px] font-black uppercase tracking-wider border active:scale-95 touch-manipulation shadow-sm",
+                                userMode === "SELLER"
+                                    ? "bg-primary text-primary-foreground border-primary hover:bg-primary/90 shadow-primary/20"
+                                    : "bg-green-500 text-white border-green-500 hover:bg-green-600 shadow-green-500/20"
                             )}
                         >
-                            {item.variant === "special" ? (
-                                <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-lg shadow-black/10 shrink-0">
-                                    <item.icon className="w-5 h-5 text-primary" strokeWidth={4} />
-                                </div>
-                            ) : (
-                                <div className="h-8 flex items-center justify-center">
-                                    {item.name === "ACCOUNT" || item.name === "LOGIN" ? (
-                                        <div className={clsx("relative w-6 h-6 rounded-full overflow-hidden border border-current shrink-0", active ? "ring-2 ring-white" : "")}>
-                                            {user && profile?.avatar_url ? (
-                                                <Image src={profile.avatar_url} alt="User" fill className="object-cover" sizes="24px" />
-                                            ) : (
-                                                <div className="w-full h-full bg-white/20 flex items-center justify-center">
-                                                    <item.icon className="w-4 h-4 text-white" fill={active ? "currentColor" : "none"} />
-                                                </div>
-                                            )}
-                                        </div>
-                                    ) : (
-                                        <item.icon
-                                            className="w-6 h-6 shrink-0"
-                                            fill={active ? (item.name === "ORDERS" ? "white" : "currentColor") : "none"}
-                                            stroke={active && item.name === "ORDERS" ? "currentColor" : "currentColor"}
-                                        />
-                                    )}
-                                </div>
-                            )}
-                            <span className="text-[10px] font-bold">{item.name}</span>
-                        </Link>
-                    );
-                })}
-            </div>
+                            <ArrowLeftRight className="w-3 h-3" />
+                            {userMode}
+                        </button>
+                    )}
+                    <button
+                        onClick={() => setIsQROpen(true)}
+                        className="p-2 text-muted-foreground hover:text-foreground transition-colors active:scale-95"
+                    >
+                        <QrCode className="w-5 h-5" />
+                    </button>
+                </div>
+            </motion.header>
+
+            {/* Mobile Bottom Navigation */}
+            {!pathname?.startsWith("/create/") && (
+                <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-md bg-primary rounded-full px-2 py-3 grid grid-cols-5 items-center shadow-2xl z-[100] shadow-primary/40">
+                    {navItems.map((item) => {
+                        const active = isActive(item.href);
+                        return (
+                            <Link
+                                key={item.name}
+                                href={item.href}
+                                onClick={() => {
+                                    if (item.href.startsWith("/#")) {
+                                        setActiveHash(item.href.substring(1));
+                                    } else {
+                                        setActiveHash("");
+                                    }
+                                }}
+                                className={clsx(
+                                    "flex flex-col items-center gap-1 transition-colors",
+                                    active ? "text-white" : "text-white/60 hover:text-white"
+                                )}
+                            >
+                                {item.variant === "special" ? (
+                                    <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-lg shadow-black/10 shrink-0">
+                                        <item.icon className="w-5 h-5 text-primary" strokeWidth={4} />
+                                    </div>
+                                ) : (
+                                    <div className="h-8 flex items-center justify-center">
+                                        {item.name === "ACCOUNT" || item.name === "LOGIN" ? (
+                                            <div className={clsx("relative w-6 h-6 rounded-full overflow-hidden border border-current shrink-0", active ? "ring-2 ring-white" : "")}>
+                                                {user && profile?.avatar_url ? (
+                                                    <Image src={profile.avatar_url} alt="User" fill className="object-cover" sizes="24px" />
+                                                ) : (
+                                                    <div className="w-full h-full bg-white/20 flex items-center justify-center">
+                                                        <item.icon className="w-4 h-4 text-white" fill={active ? "currentColor" : "none"} />
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ) : (
+                                            <item.icon
+                                                className="w-6 h-6 shrink-0"
+                                                fill={active ? (item.name === "ORDERS" ? "white" : "currentColor") : "none"}
+                                                stroke={active && item.name === "ORDERS" ? "currentColor" : "currentColor"}
+                                            />
+                                        )}
+                                    </div>
+                                )}
+                                <span className="text-[10px] font-bold">{item.name}</span>
+                            </Link>
+                        );
+                    })}
+                </div>
+            )}
+
+            <QRModal isOpen={isQROpen} onClose={() => setIsQROpen(false)} />
         </>
     );
 }

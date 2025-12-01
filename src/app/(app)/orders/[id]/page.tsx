@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, use } from "react";
+import { v4 as uuidv4 } from 'uuid';
 
 import {
     CheckCircle2,
@@ -21,6 +22,8 @@ import clsx from "clsx";
 import { DisputeModal } from "@/components/features/DisputeModal";
 import { ReviewModal } from "@/components/features/ReviewModal";
 import Image from "next/image";
+import { motion, AnimatePresence } from "framer-motion";
+import { Confetti } from "@/components/ui/Confetti";
 
 export default function OrderPage({ params }: { params: Promise<{ id: string }> }) {
     const { id: orderId } = use(params);
@@ -75,19 +78,18 @@ export default function OrderPage({ params }: { params: Promise<{ id: string }> 
     };
 
     const fetchMessages = async () => {
-        // Assuming a messages table exists with order_id
-        // If not, we might need to create it or use the existing chat system linked to orders
-        // For now, I'll assume a simple query
-        /* 
         const { data } = await supabase
             .from('messages')
             .select('*')
             .eq('order_id', orderId)
             .order('created_at', { ascending: true });
-        if (data) setMessages(data);
-        */
-        // Mocking messages for now as the table structure isn't fully clear
-        setMessages([]);
+
+        if (data) {
+            setMessages(data);
+            setTimeout(() => {
+                messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+            }, 100);
+        }
     };
 
     useEffect(() => {
@@ -102,8 +104,11 @@ export default function OrderPage({ params }: { params: Promise<{ id: string }> 
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'orders', filter: `id=eq.${orderId}` }, () => {
                     fetchOrder();
                 })
-                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `order_id=eq.${orderId}` }, () => {
-                    fetchMessages();
+                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `order_id=eq.${orderId}` }, (payload) => {
+                    setMessages(prev => [...prev, payload.new]);
+                    setTimeout(() => {
+                        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+                    }, 100);
                 })
                 .subscribe();
 
@@ -116,18 +121,20 @@ export default function OrderPage({ params }: { params: Promise<{ id: string }> 
 
     const handleSendMessage = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!newMessage.trim()) return;
+        if (!newMessage.trim() || !user) return;
 
-        // Insert message logic here
-        // await supabase.from('messages').insert(...)
+        const { error } = await supabase.from('messages').insert({
+            order_id: orderId,
+            sender_id: user.id,
+            content: newMessage.trim()
+        });
 
-        setMessages([...messages, {
-            id: Date.now(),
-            sender_id: user?.id,
-            content: newMessage,
-            created_at: new Date().toISOString()
-        }]);
-        setNewMessage("");
+        if (error) {
+            toast("Failed to send message", "error");
+            console.error(error);
+        } else {
+            setNewMessage("");
+        }
     };
 
     const submitRequirements = async () => {
@@ -156,12 +163,44 @@ export default function OrderPage({ params }: { params: Promise<{ id: string }> 
             return;
         }
 
-        // In a real app, upload file to storage here
-        // const { data, error } = await supabase.storage.from('deliveries').upload(...)
+        setLoading(true); // Re-use loading state or create a specific one
+        const fileExt = deliveryFile.name.split('.').pop();
+        const fileName = `${uuidv4()}.${fileExt}`;
+        const filePath = `${orderId}/${fileName}`;
 
-        // For now, we just simulate it
+        // 1. Upload to Storage
+        const { error: uploadError } = await supabase.storage
+            .from('deliveries')
+            .upload(filePath, deliveryFile);
 
-        const { error } = await supabase
+        if (uploadError) {
+            console.error("Upload error:", uploadError);
+            toast("Error uploading file", "error");
+            setLoading(false);
+            return;
+        }
+
+        // 2. Record in order_files
+        const { error: dbError } = await supabase
+            .from('order_files')
+            .insert({
+                order_id: orderId,
+                uploader_id: user?.id,
+                file_name: deliveryFile.name,
+                file_path: filePath,
+                file_size: deliveryFile.size,
+                file_type: deliveryFile.type
+            });
+
+        if (dbError) {
+            console.error("DB error:", dbError);
+            toast("Error saving file info", "error");
+            setLoading(false);
+            return;
+        }
+
+        // 3. Update Order Status
+        const { error: updateError } = await supabase
             .from('orders')
             .update({
                 status: 'delivered',
@@ -169,10 +208,13 @@ export default function OrderPage({ params }: { params: Promise<{ id: string }> 
             })
             .eq('id', orderId);
 
-        if (error) {
-            toast("Error delivering work", "error");
+        setLoading(false);
+
+        if (updateError) {
+            toast("Error updating order status", "error");
         } else {
-            toast("Work delivered!", "success");
+            toast("Work delivered successfully!", "success");
+            setDeliveryFile(null);
             fetchOrder();
         }
     };
@@ -230,6 +272,7 @@ export default function OrderPage({ params }: { params: Promise<{ id: string }> 
 
     return (
         <div className="min-h-screen bg-background pb-32">
+            {order.status === 'completed' && <Confetti />}
             <DisputeModal isOpen={isDisputeOpen} onClose={() => setIsDisputeOpen(false)} orderId={orderId} />
 
             {/* Header */}
@@ -249,15 +292,20 @@ export default function OrderPage({ params }: { params: Promise<{ id: string }> 
                         </div>
                     </div>
                     <div className="flex items-center gap-3">
-                        <div className={clsx(
-                            "px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-2",
-                            order.status === 'completed' ? "bg-green-500/10 text-green-500" :
-                                order.status === 'in_progress' ? "bg-blue-500/10 text-blue-500" :
-                                    "bg-orange-500/10 text-orange-500"
-                        )}>
+                        <motion.div
+                            key={order.status}
+                            initial={{ scale: 0.8, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                            className={clsx(
+                                "px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-2",
+                                order.status === 'completed' ? "bg-green-500/10 text-green-500" :
+                                    order.status === 'in_progress' ? "bg-blue-500/10 text-blue-500" :
+                                        "bg-orange-500/10 text-orange-500"
+                            )}>
                             {order.status === 'completed' ? <CheckCircle2 className="w-3 h-3" /> : <Clock className="w-3 h-3" />}
                             {order.status.replace('_', ' ')}
-                        </div>
+                        </motion.div>
                         <button
                             onClick={() => setIsDisputeOpen(true)}
                             className="text-xs font-bold text-muted-foreground hover:text-destructive transition-colors"

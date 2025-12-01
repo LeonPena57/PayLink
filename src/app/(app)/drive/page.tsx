@@ -8,76 +8,125 @@ import { motion, AnimatePresence } from "framer-motion";
 import clsx from "clsx";
 import { useSearchParams } from "next/navigation";
 
-// Mock Data Structure
+import { supabase } from "@/lib/supabase/client";
+import { useUser } from "@/context/UserContext";
+
+// Data Structure
 interface CommissionFolder {
   id: string;
   sellerName: string;
-  sellerAvatar: string; // Initials or URL
+  sellerAvatar: string;
   projectTitle: string;
   pricePaid: number;
   hasNewItems: boolean;
-  files: FileItem[];
+  files: any[]; // We'll map DB files to this
   lastUpdated: string;
 }
 
-const MOCK_FOLDERS: CommissionFolder[] = [
-  {
-    id: "ORD-2025-001",
-    sellerName: "FateCreates",
-    sellerAvatar: "FC",
-    projectTitle: "Stream Overlay Package",
-    pricePaid: 150.00,
-    hasNewItems: true,
-    lastUpdated: "2 mins ago",
-    files: [
-      { id: "1", name: "Overlay_Source.psd", isLocked: false, price: 0, thumbnailUrl: "/pokemon-overlay.jpg" },
-      { id: "2", name: "Alerts_Pack.zip", isLocked: false, price: 0 },
-      { id: "3", name: "Preview_Watermarked.png", isLocked: false, price: 0 },
-    ]
-  },
-  {
-    id: "ORD-2025-004",
-    sellerName: "TechStart Inc",
-    sellerAvatar: "TS",
-    projectTitle: "App UI Redesign",
-    pricePaid: 450.00,
-    hasNewItems: false,
-    lastUpdated: "2 days ago",
-    files: [
-      { id: "4", name: "UI_Kit_v1.fig", isLocked: true, price: 50 },
-      { id: "5", name: "Wireframes.pdf", isLocked: false, price: 0 },
-    ]
-  }
-];
-
 function DriveContent() {
+  const { user } = useUser();
   const searchParams = useSearchParams();
   const [activeFolderId, setActiveFolderId] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<FileItem | null>(null);
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [searchQuery, setSearchQuery] = useState("");
+  const [folders, setFolders] = useState<CommissionFolder[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch Folders (Orders)
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchData = async () => {
+      // 1. Fetch Orders where user is buyer OR seller
+      const { data: orders, error } = await supabase
+        .from('orders')
+        .select(`
+            *,
+            seller:seller_id(full_name, username, avatar_url),
+            buyer:buyer_id(full_name, username, avatar_url),
+            service:services(title),
+            order_files(*)
+        `)
+        .or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`)
+        .order('created_at', { ascending: false });
+
+      if (orders) {
+        const formattedFolders = orders.map(order => {
+          const isBuyer = user.id === order.buyer_id;
+          const otherParty = isBuyer ? order.seller : order.buyer;
+
+          return {
+            id: order.id,
+            sellerName: otherParty?.full_name || "Unknown",
+            sellerAvatar: otherParty?.full_name?.[0] || "?",
+            projectTitle: order.service?.title || order.description || "Custom Order",
+            pricePaid: order.amount,
+            hasNewItems: false, // Logic for this can be added later
+            lastUpdated: new Date(order.created_at).toLocaleDateString(),
+            files: order.order_files.map((f: any) => ({
+              id: f.id,
+              name: f.file_name,
+              isLocked: f.is_locked,
+              price: 0, // Logic for paid files
+              path: f.file_path, // Store path for download
+              size: f.file_size,
+              type: f.file_type
+            }))
+          };
+        });
+        setFolders(formattedFolders);
+      }
+      setLoading(false);
+    };
+
+    fetchData();
+  }, [user]);
 
   // Auto-open folder from URL
   useEffect(() => {
     const orderId = searchParams.get("orderId");
     if (orderId && orderId !== activeFolderId) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setActiveFolderId(orderId);
     }
   }, [searchParams, activeFolderId]);
 
-  const activeFolder = MOCK_FOLDERS.find(f => f.id === activeFolderId);
+  const activeFolder = folders.find(f => f.id === activeFolderId);
 
   // Filter folders or files based on search
-  const filteredFolders = MOCK_FOLDERS.filter(f =>
+  const filteredFolders = folders.filter(f =>
     f.projectTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
     f.sellerName.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const filteredFiles = activeFolder?.files.filter(f =>
+  const filteredFiles = activeFolder?.files.filter((f: any) =>
     f.name.toLowerCase().includes(searchQuery.toLowerCase())
   ) || [];
+
+  const handleDownload = async (file: any) => {
+    if (!file.path) return;
+
+    const { data, error } = await supabase.storage
+      .from('deliveries')
+      .download(file.path);
+
+    if (error) {
+      alert("Error downloading file");
+      console.error(error);
+      return;
+    }
+
+    // Create blob link to download
+    const url = URL.createObjectURL(data);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = file.name;
+    document.body.appendChild(a);
+    a.click();
+    URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+  };
 
   const handleUnlockClick = (file: FileItem) => {
     setSelectedFile(file);
@@ -239,7 +288,7 @@ function DriveContent() {
                         </div>
                       </div>
                       <button
-                        onClick={() => file.isLocked ? handleUnlockClick(file) : alert("Downloading...")}
+                        onClick={() => file.isLocked ? handleUnlockClick(file) : handleDownload(file)}
                         className={clsx(
                           "px-5 py-2.5 rounded-xl text-sm font-bold transition-all shadow-sm active:scale-95",
                           file.isLocked
