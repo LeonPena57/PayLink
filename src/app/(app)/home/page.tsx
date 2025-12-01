@@ -5,7 +5,6 @@ import {
     Grid as GridIcon,
     ShoppingBag,
     MoreHorizontal,
-    MapPin,
     Check,
     TrendingUp,
     RefreshCw,
@@ -15,7 +14,6 @@ import {
     Search,
     UserPlus,
     Heart,
-    Share2,
     Camera,
     DollarSign,
     Twitter,
@@ -25,9 +23,12 @@ import {
     User,
     Maximize2,
     Send,
-    X
+    X,
+    Briefcase,
+    Flag
 } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import clsx from "clsx";
 import { useUserMode, useUser } from "@/context/UserContext";
 import { supabase } from "@/lib/supabase/client";
@@ -37,50 +38,67 @@ const PROFILE_TABS = ["HOME", "SERVICES", "PORTFOLIO", "SHOP"];
 const TAGS = ["All", "Digital Art", "Graphic Design", "Photography", "3D Modeling", "Animation"];
 
 import { EditProfileModal } from "@/components/features/dashboard/EditProfileModal";
+import { EditServiceModal } from "@/components/features/dashboard/EditServiceModal";
 import { PostModal } from "@/components/features/PostModal";
+import { ReportModal } from "@/components/features/ReportModal";
 
 export default function HomePage() {
     const { userMode } = useUserMode();
-    const { user, profile, uploadAvatar, uploadBanner, isConfigured, loading } = useUser();
+    const { user, profile, uploadAvatar, uploadBanner, loading } = useUser();
     const { toast } = useToast();
     const [activeProfileTab, setActiveProfileTab] = useState("HOME");
-    const [isFollowing, setIsFollowing] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
     const [activeTag, setActiveTag] = useState("All");
     const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
-    const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
     const [stats, setStats] = useState({ followers: 0, following: 0, is_following: false });
 
     // Feed State
     const [feedTab, setFeedTab] = useState<'foryou' | 'following'>('foryou');
-    const [isFollowListOpen, setIsFollowListOpen] = useState(false);
-    const [followListType, setFollowListType] = useState<'followers' | 'following'>('followers');
 
     // Scroll Direction State for Mobile Header
     const [isHeaderVisible, setIsHeaderVisible] = useState(true);
-    const [lastScrollY, setLastScrollY] = useState(0);
+    const lastScrollY = useRef(0);
 
     useEffect(() => {
         const controlNavbar = () => {
             if (typeof window !== 'undefined') {
+                const currentScrollY = window.scrollY;
                 // Hide on scroll down (if > 100px), show on scroll up
-                if (window.scrollY > lastScrollY && window.scrollY > 100) {
+                if (currentScrollY > lastScrollY.current && currentScrollY > 100) {
                     setIsHeaderVisible(false);
                 } else {
                     setIsHeaderVisible(true);
                 }
-                setLastScrollY(window.scrollY);
+                lastScrollY.current = currentScrollY;
             }
         };
 
         window.addEventListener('scroll', controlNavbar);
         return () => window.removeEventListener('scroll', controlNavbar);
-    }, [lastScrollY]);
+    }, []);
 
     // Post Modal State
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [selectedPost, setSelectedPost] = useState<any>(null);
     const [isPostModalOpen, setIsPostModalOpen] = useState(false);
+
+    // Edit Service State
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [selectedService, setSelectedService] = useState<any>(null);
+    const [isEditServiceOpen, setIsEditServiceOpen] = useState(false);
+    const [activeServiceDropdown, setActiveServiceDropdown] = useState<string | null>(null);
+
+    // Report Modal State
+    const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+    const [reportTarget, setReportTarget] = useState<{ id: string, type: 'user' | 'service' | 'product' | 'post' | 'order' } | null>(null);
+    const [activeFeedMenuId, setActiveFeedMenuId] = useState<string | null>(null);
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const handleReport = (item: any) => {
+        setReportTarget({ id: item.id, type: item.type });
+        setIsReportModalOpen(true);
+        setActiveFeedMenuId(null);
+    };
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handlePostClick = (post: any) => {
@@ -88,15 +106,9 @@ export default function HomePage() {
         setIsPostModalOpen(true);
     };
 
-    useEffect(() => {
-        if (profile) {
-            fetchStats();
-        }
-    }, [profile]);
-
     const fetchStats = async () => {
         if (!profile) return;
-        const { data, error } = await supabase
+        const { data } = await supabase
             .rpc('get_profile_stats', { target_user_id: profile.id });
 
         if (data) {
@@ -104,24 +116,27 @@ export default function HomePage() {
         }
     };
 
-    // Upload States
-    const [isUploadingBanner, setIsUploadingBanner] = useState(false);
-    const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
-    const bannerInputRef = useRef<HTMLInputElement>(null);
-    const avatarInputRef = useRef<HTMLInputElement>(null);
+    useEffect(() => {
+        if (profile) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
+            fetchStats();
+        }
+    }, [profile]); // eslint-disable-line react-hooks/exhaustive-deps
 
-    const handleBannerClick = () => bannerInputRef.current?.click();
+    // Upload States
+    const avatarInputRef = useRef<HTMLInputElement>(null);
+    const bannerInputRef = useRef<HTMLInputElement>(null);
+
     const handleAvatarClick = () => avatarInputRef.current?.click();
 
     const handleBannerChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
-            setIsUploadingBanner(true);
             await uploadBanner(file);
-            setIsUploadingBanner(false);
         }
     };
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [searchedUsers, setSearchedUsers] = useState<any[]>([]);
 
     useEffect(() => {
@@ -131,7 +146,7 @@ export default function HomePage() {
                 return;
             }
 
-            const { data, error } = await supabase
+            const { data } = await supabase
                 .from('profiles')
                 .select('id, username, full_name, avatar_url, verification_status')
                 .or(`username.ilike.%${searchQuery}%,full_name.ilike.%${searchQuery}%`)
@@ -149,45 +164,63 @@ export default function HomePage() {
     const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
-            setIsUploadingAvatar(true);
             await uploadAvatar(file);
-            setIsUploadingAvatar(false);
         }
     };
 
     // Fetch Feed Items (All Portfolio Items for now, simulating a public feed)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [feedItems, setFeedItems] = useState<any[]>([]);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [loadingFeed, setLoadingFeed] = useState(false);
-    const [suggestedUsers, setSuggestedUsers] = useState<any[]>([]);
+
 
 
 
     const fetchFeed = async () => {
         setLoadingFeed(true);
-        // Fetch all portfolio items, ordering by newest first
-        const { data, error } = await supabase
+
+        // 1. Fetch Portfolio Items (Posts)
+        const { data: posts } = await supabase
             .from('portfolio_items')
             .select(`
                 *,
-                profiles (
-                    id,
-                    username,
-                    full_name,
-                    avatar_url,
-                    verification_status
-                ),
+                profiles (id, username, full_name, avatar_url, verification_status),
                 comments (count),
                 likes (count)
             `)
             .order('created_at', { ascending: false })
-            .limit(50);
+            .limit(20);
 
-        if (data) {
-            // Transform data to match the feed UI structure
+        // 2. Fetch Services
+        const { data: servicesData } = await supabase
+            .from('services')
+            .select(`
+                *,
+                profiles (id, username, full_name, avatar_url, verification_status)
+            `)
+            .order('created_at', { ascending: false })
+            .limit(20);
+
+        // 3. Fetch Products
+        const { data: productsData } = await supabase
+            .from('products')
+            .select(`
+                *,
+                profiles (id, username, full_name, avatar_url, verification_status),
+                product_images (image_url)
+            `)
+            .order('created_at', { ascending: false })
+            .limit(20);
+
+        const combinedFeed = [];
+
+        // Process Posts
+        if (posts) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const formattedFeed = data.map((item: any) => ({
-                ...item,
+            combinedFeed.push(...posts.map((item: any) => ({
+                type: 'post',
+                id: item.id,
                 user: {
                     name: item.profiles?.full_name || "Unknown User",
                     handle: `@${item.profiles?.username || "unknown"}`,
@@ -196,39 +229,73 @@ export default function HomePage() {
                     verification_status: item.profiles?.verification_status
                 },
                 image: item.image_url,
+                title: item.title,
                 caption: item.description || item.title,
                 likes: item.likes?.[0]?.count || 0,
                 comments: item.comments?.[0]?.count || 0,
-                tags: item.section ? [item.section] : ["Creative"] // Use section as tag
-            }));
-            setFeedItems(formattedFeed);
+                tags: item.section ? [item.section] : ["Creative"],
+                created_at: item.created_at
+            })));
         }
+
+        // Process Services
+        if (servicesData) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            combinedFeed.push(...servicesData.map((item: any) => ({
+                type: 'service',
+                id: item.id,
+                user: {
+                    name: item.profiles?.full_name || "Unknown User",
+                    handle: `@${item.profiles?.username || "unknown"}`,
+                    avatar: item.profiles?.avatar_url,
+                    username: item.profiles?.username,
+                    verification_status: item.profiles?.verification_status
+                },
+                image: item.thumbnail_url,
+                title: item.title,
+                caption: item.description,
+                price: item.price,
+                tags: ["Service"],
+                created_at: item.created_at
+            })));
+        }
+
+        // Process Products
+        if (productsData) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            combinedFeed.push(...productsData.map((item: any) => ({
+                type: 'product',
+                id: item.id,
+                user: {
+                    name: item.profiles?.full_name || "Unknown User",
+                    handle: `@${item.profiles?.username || "unknown"}`,
+                    avatar: item.profiles?.avatar_url,
+                    username: item.profiles?.username,
+                    verification_status: item.profiles?.verification_status
+                },
+                image: item.product_images?.[0]?.image_url,
+                title: item.title,
+                caption: item.description,
+                price: item.price,
+                tags: ["Product"],
+                created_at: item.created_at
+            })));
+        }
+
+        // Sort by Date
+        combinedFeed.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+        setFeedItems(combinedFeed);
         setLoadingFeed(false);
     };
 
-    const fetchSuggestedUsers = async () => {
-        const { data, error } = await supabase
-            .from('profiles')
-            .select('id, username, full_name, avatar_url')
-            .limit(5);
 
-        if (data) {
-            const formattedUsers = data.map(user => ({
-                id: user.id,
-                name: user.full_name || "Unknown",
-                handle: `@${user.username || "unknown"}`,
-                avatar: user.avatar_url,
-                username: user.username
-            }));
-            setSuggestedUsers(formattedUsers);
-        }
-    };
 
     useEffect(() => {
         // Fetch feed if in BUYER mode OR if user is not logged in (public view)
         if (userMode === "BUYER" || !user) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             fetchFeed();
-            fetchSuggestedUsers();
         }
     }, [userMode, user]);
 
@@ -312,6 +379,29 @@ export default function HomePage() {
             toast("Product deleted", "success");
             setProducts(prev => prev.filter(p => p.id !== productId));
         }
+    };
+
+    const deleteService = async (serviceId: string) => {
+        if (!confirm("Are you sure you want to delete this service?")) return;
+
+        const { error } = await supabase
+            .from('services')
+            .delete()
+            .eq('id', serviceId);
+
+        if (error) {
+            toast("Error deleting service", "error");
+        } else {
+            toast("Service deleted", "success");
+            setServices(prev => prev.filter(s => s.id !== serviceId));
+        }
+    };
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const handleEditService = (service: any) => {
+        setSelectedService(service);
+        setIsEditServiceOpen(true);
+        setActiveServiceDropdown(null);
     };
 
     // Inline Comment State
@@ -411,9 +501,10 @@ export default function HomePage() {
 
     useEffect(() => {
         if (userMode === "SELLER" && profile) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             fetchSellerData();
         }
-    }, [userMode, profile]);
+    }, [userMode, profile]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const filteredFeed = feedItems.filter(item => {
         const matchesTag = activeTag === "All" || item.tags.includes(activeTag);
@@ -425,7 +516,7 @@ export default function HomePage() {
         return matchesTag && matchesSearch;
     });
 
-    const accentColor = profile?.accent_color || "#5975fa";
+
 
     if (loading) {
         return (
@@ -442,6 +533,22 @@ export default function HomePage() {
         )}>
 
             <EditProfileModal isOpen={isEditProfileOpen} onClose={() => setIsEditProfileOpen(false)} />
+            <EditServiceModal
+                isOpen={isEditServiceOpen}
+                onClose={() => setIsEditServiceOpen(false)}
+                service={selectedService}
+                onUpdate={(updatedService) => {
+                    setServices(prev => prev.map(s => s.id === updatedService.id ? { ...s, ...updatedService, previews: updatedService.thumbnail_url ? [updatedService.thumbnail_url] : [] } : s));
+                }}
+            />
+            {reportTarget && (
+                <ReportModal
+                    isOpen={isReportModalOpen}
+                    onClose={() => setIsReportModalOpen(false)}
+                    targetId={reportTarget.id}
+                    targetType={reportTarget.type}
+                />
+            )}
             <PostModal
                 isOpen={isPostModalOpen}
                 onClose={() => setIsPostModalOpen(false)}
@@ -462,7 +569,7 @@ export default function HomePage() {
                         {/* Immersive Banner */}
                         <div className="h-48 md:h-80 w-full relative overflow-hidden group/banner">
                             {profile?.banner_url ? (
-                                <img src={profile.banner_url} alt="Banner" className="w-full h-full object-cover" />
+                                <Image src={profile.banner_url} alt="Banner" fill className="object-cover" sizes="100vw" priority />
                             ) : (
                                 <div className="w-full h-full bg-gradient-to-b from-gray-100 to-gray-200 dark:from-[#2a2a2a] dark:to-[#1a1a1a]" />
                             )}
@@ -503,7 +610,7 @@ export default function HomePage() {
                                     <div className="w-32 h-32 md:w-48 md:h-48 rounded-3xl p-1 bg-white dark:bg-[#1a1a1a] shadow-2xl">
                                         <div className="w-full h-full rounded-2xl overflow-hidden relative border-2 border-gray-200 dark:border-[#333]">
                                             {profile?.avatar_url ? (
-                                                <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+                                                <Image src={profile.avatar_url} alt="Avatar" fill className="object-cover" sizes="(max-width: 768px) 128px, 192px" />
                                             ) : (
                                                 <div className="w-full h-full bg-gray-200 dark:bg-[#333] flex items-center justify-center">
                                                     <User className="w-16 h-16 text-gray-400" />
@@ -550,8 +657,8 @@ export default function HomePage() {
                         </div>
                     </div>
 
-                    {/* Sticky Tabs */}
-                    <div className="sticky top-16 z-30 bg-background/95 backdrop-blur-md w-full mt-6 py-4">
+                    {/* Tabs */}
+                    <div className="w-full mt-6 py-4">
                         <div className="flex gap-2 overflow-x-auto w-full px-4 md:px-0 no-scrollbar justify-start md:justify-center">
                             {PROFILE_TABS.map((tab) => (
                                 <button
@@ -676,14 +783,37 @@ export default function HomePage() {
                                                                 <p className="text-sm text-primary font-bold">Starting at ${service.price}</p>
                                                             </div>
                                                         </div>
-                                                        <button className="p-2 hover:bg-muted rounded-full transition-colors text-muted-foreground hover:text-foreground">
-                                                            <MoreHorizontal className="w-5 h-5" />
-                                                        </button>
+                                                        <div className="relative">
+                                                            <button
+                                                                onClick={() => setActiveServiceDropdown(activeServiceDropdown === service.id ? null : service.id)}
+                                                                className="p-2 hover:bg-muted rounded-full transition-colors text-muted-foreground hover:text-foreground"
+                                                            >
+                                                                <MoreHorizontal className="w-5 h-5" />
+                                                            </button>
+                                                            {activeServiceDropdown === service.id && (
+                                                                <div className="absolute right-0 top-full mt-2 w-32 bg-card border border-border rounded-xl shadow-xl z-10 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                                                                    <button
+                                                                        onClick={() => handleEditService(service)}
+                                                                        className="w-full text-left px-4 py-2 text-sm font-bold hover:bg-muted transition-colors flex items-center gap-2"
+                                                                    >
+                                                                        <Edit3 className="w-4 h-4" />
+                                                                        Edit
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={() => deleteService(service.id)}
+                                                                        className="w-full text-left px-4 py-2 text-sm font-bold hover:bg-red-500/10 text-red-500 transition-colors flex items-center gap-2"
+                                                                    >
+                                                                        <X className="w-4 h-4" />
+                                                                        Delete
+                                                                    </button>
+                                                                </div>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                     <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
                                                         {service.previews.map((preview: string, idx: number) => (
-                                                            <div key={idx} className="w-40 h-24 flex-shrink-0 rounded-2xl overflow-hidden border border-border/50 bg-muted/30">
-                                                                <img src={preview} alt="Preview" className="w-full h-full object-cover" />
+                                                            <div key={idx} className="w-40 h-24 flex-shrink-0 rounded-2xl overflow-hidden border border-border/50 bg-muted/30 relative">
+                                                                <Image src={preview} alt="Preview" fill className="object-cover" />
                                                             </div>
                                                         ))}
                                                     </div>
@@ -702,34 +832,41 @@ export default function HomePage() {
                                 </div>
                             </div>
                         )}
-
                         {activeProfileTab === "PORTFOLIO" && (
                             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                                     {portfolioItems.length > 0 ? (
                                         portfolioItems.map((item) => (
-                                            <div
-                                                key={item.id}
-                                                onClick={() => handlePostClick(item)}
-                                                className="aspect-square relative group cursor-pointer bg-muted/30 rounded-[2rem] overflow-hidden border border-border/50 hover:shadow-lg transition-all"
-                                            >
-                                                <img
+                                            <div key={item.id} onClick={() => handlePostClick(item)} className="group relative aspect-square rounded-2xl overflow-hidden cursor-pointer bg-muted border border-border shadow-sm hover:shadow-md transition-all">
+                                                <Image
                                                     src={item.image_url}
                                                     alt={item.title}
-                                                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                                                    fill
+                                                    className="object-cover transition-transform duration-500 group-hover:scale-110"
                                                 />
-                                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
-                                                    <Heart className="w-8 h-8 text-white fill-white animate-in zoom-in duration-300" />
+                                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4">
+                                                    <h4 className="text-white font-bold text-sm truncate">{item.title}</h4>
+                                                    {item.description && <p className="text-white/70 text-xs truncate">{item.description}</p>}
                                                 </div>
                                             </div>
                                         ))
                                     ) : (
-                                        <div className="col-span-full text-center py-16 bg-muted/30 rounded-[2.5rem] border-2 border-dashed border-border/50">
-                                            <div className="w-16 h-16 bg-background rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
-                                                <GridIcon className="w-8 h-8 text-muted-foreground" />
+                                        <div className="col-span-full flex flex-col items-center justify-center py-20 text-center space-y-4 border-2 border-dashed border-border/50 rounded-[2.5rem] bg-muted/10">
+                                            <div className="w-20 h-20 bg-muted/30 rounded-full flex items-center justify-center">
+                                                <GridIcon className="w-10 h-10 text-muted-foreground" />
                                             </div>
-                                            <h3 className="text-lg font-bold text-foreground">Portfolio is empty</h3>
-                                            <p className="text-muted-foreground font-medium mt-1">Upload your best work to showcase here.</p>
+                                            <div>
+                                                <h3 className="text-xl font-black text-foreground">No Portfolio Items</h3>
+                                                <p className="text-muted-foreground font-medium max-w-sm mx-auto mt-2">
+                                                    Showcase your best work to attract more clients.
+                                                </p>
+                                            </div>
+                                            <Link
+                                                href="/create/post"
+                                                className="px-6 py-2 bg-primary text-primary-foreground rounded-full font-bold shadow-lg hover:scale-105 transition-all"
+                                            >
+                                                Add Project
+                                            </Link>
                                         </div>
                                     )}
                                 </div>
@@ -738,23 +875,24 @@ export default function HomePage() {
 
                         {activeProfileTab === "SHOP" && (
                             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                                {products.length > 0 ? (
-                                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                                        {products.map((product) => (
-                                            <div key={product.id} className="bg-card border border-border/50 rounded-[2rem] overflow-hidden group hover:shadow-xl hover:shadow-primary/5 transition-all duration-300 flex flex-col">
-                                                <div className="aspect-square bg-muted/30 relative overflow-hidden">
-                                                    {product.product_images && product.product_images.length > 0 ? (
-                                                        <img
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    {products.length > 0 ? (
+                                        products.map((product) => (
+                                            <div key={product.id} className="group bg-card rounded-[2rem] border border-border/50 overflow-hidden hover:shadow-xl transition-all flex flex-col">
+                                                <div className="aspect-[4/3] relative bg-muted overflow-hidden">
+                                                    {product.product_images?.[0]?.image_url ? (
+                                                        <Image
                                                             src={product.product_images[0].image_url}
                                                             alt={product.title}
-                                                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                                            fill
+                                                            className="object-cover transition-transform duration-500 group-hover:scale-110"
                                                         />
                                                     ) : (
-                                                        <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                                                            <ShoppingBag className="w-10 h-10 opacity-20" />
+                                                        <div className="w-full h-full flex items-center justify-center bg-muted">
+                                                            <ShoppingBag className="w-10 h-10 text-muted-foreground/50" />
                                                         </div>
                                                     )}
-                                                    <div className="absolute top-3 right-3 flex gap-2">
+                                                    <div className="absolute top-3 right-3">
                                                         <div className="bg-background/80 backdrop-blur-md text-foreground text-xs font-black px-3 py-1.5 rounded-full shadow-sm">
                                                             ${product.price}
                                                         </div>
@@ -778,35 +916,35 @@ export default function HomePage() {
                                                     </button>
                                                 </div>
                                             </div>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <div className="flex flex-col items-center justify-center py-20 text-center space-y-4 border-2 border-dashed border-border/50 rounded-[2.5rem] bg-muted/10">
-                                        <div className="w-20 h-20 bg-muted/30 rounded-full flex items-center justify-center">
-                                            <ShoppingBag className="w-10 h-10 text-muted-foreground" />
+                                        ))
+                                    ) : (
+                                        <div className="col-span-full flex flex-col items-center justify-center py-20 text-center space-y-4 border-2 border-dashed border-border/50 rounded-[2.5rem] bg-muted/10">
+                                            <div className="w-20 h-20 bg-muted/30 rounded-full flex items-center justify-center">
+                                                <ShoppingBag className="w-10 h-10 text-muted-foreground" />
+                                            </div>
+                                            <div>
+                                                <h3 className="text-xl font-black text-foreground">Shop is Empty</h3>
+                                                <p className="text-muted-foreground font-medium max-w-sm mx-auto mt-2">
+                                                    You haven&apos;t listed any products yet.
+                                                </p>
+                                            </div>
+                                            <Link
+                                                href="/create/product"
+                                                className="px-6 py-2 bg-primary text-primary-foreground rounded-full font-bold shadow-lg hover:scale-105 transition-all"
+                                            >
+                                                Create Product
+                                            </Link>
                                         </div>
-                                        <div>
-                                            <h3 className="text-xl font-black text-foreground">Shop is Empty</h3>
-                                            <p className="text-muted-foreground font-medium max-w-sm mx-auto mt-2">
-                                                You haven't listed any products yet.
-                                            </p>
-                                        </div>
-                                    </div>
-                                )}
+                                    )}
+                                </div>
                             </div>
                         )}
                     </div>
                 </div>
             ) : (
-                /* BUYER FEED */
-                /* BUYER FEED */
                 <div className="w-full max-w-6xl mx-auto pb-24 md:pt-8 md:px-6">
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                        {/* Middle Column - Feed */}
                         <div className="lg:col-span-2">
-                            {/* Mobile Search Header & Tabs */}
-                            {/* Mobile Search Header & Tabs */}
-                            {/* Mobile Search Header & Tabs */}
                             <div className={clsx(
                                 "fixed top-0 left-0 right-0 z-20 bg-white/95 dark:bg-[#222]/95 backdrop-blur-md border-b border-gray-200 dark:border-[#333] transition-transform duration-300 md:hidden",
                                 isHeaderVisible ? "translate-y-0" : "-translate-y-full"
@@ -832,9 +970,9 @@ export default function HomePage() {
                                                     href={`/${user.username}`}
                                                     className="flex items-center gap-3 p-3 hover:bg-gray-50 dark:hover:bg-[#333] transition-colors"
                                                 >
-                                                    <div className="w-10 h-10 rounded-full overflow-hidden ring-1 ring-gray-100 dark:ring-[#333] bg-gray-100 dark:bg-[#333] flex items-center justify-center">
+                                                    <div className="w-10 h-10 rounded-full overflow-hidden ring-1 ring-gray-100 dark:ring-[#333] bg-gray-100 dark:bg-[#333] flex items-center justify-center relative">
                                                         {user.avatar_url ? (
-                                                            <img src={user.avatar_url} alt={user.full_name} className="w-full h-full object-cover" />
+                                                            <Image src={user.avatar_url} alt={user.full_name} fill className="object-cover" />
                                                         ) : (
                                                             <User className="w-5 h-5 text-gray-400" />
                                                         )}
@@ -913,7 +1051,7 @@ export default function HomePage() {
                                 </button>
                             </div>
 
-                            <div className="pt-[110px] md:pt-0 px-0 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                            <div className="pt-[100px] md:pt-0 px-0 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
                                 {/* Tag Filter (Hidden on Desktop, moved to sidebar) */}
                                 {feedTab === 'foryou' && (
                                     <div className="md:hidden flex items-center gap-2 mb-4 overflow-x-auto pb-2 no-scrollbar px-4">
@@ -941,9 +1079,9 @@ export default function HomePage() {
                                             <div className="p-3 flex items-center justify-between">
                                                 <div className="flex items-center gap-3">
                                                     <Link href={`/${item.user.username}`} className="block">
-                                                        <div className="w-9 h-9 rounded-full overflow-hidden ring-1 ring-gray-100 dark:ring-[#333] bg-gray-100 dark:bg-[#333] flex items-center justify-center">
+                                                        <div className="w-9 h-9 rounded-full overflow-hidden ring-1 ring-gray-100 dark:ring-[#333] bg-gray-100 dark:bg-[#333] flex items-center justify-center relative">
                                                             {item.user.avatar ? (
-                                                                <img src={item.user.avatar} alt={item.user.name} className="w-full h-full object-cover" />
+                                                                <Image src={item.user.avatar} alt={item.user.name} fill className="object-cover" />
                                                             ) : (
                                                                 <User className="w-4 h-4 text-gray-400" />
                                                             )}
@@ -963,15 +1101,63 @@ export default function HomePage() {
                                                         </Link>
                                                     </div>
                                                 </div>
-                                                <button className="text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
-                                                    <MoreHorizontal className="w-5 h-5" />
-                                                </button>
+                                                <div className="relative">
+                                                    <button
+                                                        onClick={() => setActiveFeedMenuId(activeFeedMenuId === item.id ? null : item.id)}
+                                                        className="text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors p-1"
+                                                    >
+                                                        <MoreHorizontal className="w-5 h-5" />
+                                                    </button>
+                                                    {activeFeedMenuId === item.id && (
+                                                        <div className="absolute right-0 top-full mt-2 w-40 bg-card border border-border rounded-xl shadow-xl z-20 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                                                            <button
+                                                                onClick={() => handleReport(item)}
+                                                                className="w-full text-left px-4 py-2.5 text-sm font-bold hover:bg-red-500/10 text-red-500 transition-colors flex items-center gap-2"
+                                                            >
+                                                                <Flag className="w-4 h-4" />
+                                                                Report
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
 
                                             <div
                                                 className="aspect-square w-full bg-gray-100 dark:bg-[#1a1a1a] relative group"
                                             >
-                                                <img src={item.image} alt="Post" className="w-full h-full object-cover" />
+                                                {item.image ? (
+                                                    <Image src={item.image} alt="Post" fill className="object-cover" />
+                                                ) : (
+                                                    <div className="w-full h-full flex items-center justify-center bg-muted">
+                                                        {item.type === 'service' ? <Briefcase className="w-12 h-12 text-muted-foreground/50" /> : <ShoppingBag className="w-12 h-12 text-muted-foreground/50" />}
+                                                    </div>
+                                                )}
+
+                                                {/* Type Badge */}
+                                                <div className="absolute top-3 right-3">
+                                                    {item.type === 'service' && (
+                                                        <div className="bg-blue-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1">
+                                                            <Briefcase className="w-3 h-3" />
+                                                            Service
+                                                        </div>
+                                                    )}
+                                                    {item.type === 'product' && (
+                                                        <div className="bg-green-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1">
+                                                            <ShoppingBag className="w-3 h-3" />
+                                                            Shop
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                {/* Price Tag for Services/Products */}
+                                                {(item.type === 'service' || item.type === 'product') && (
+                                                    <div className="absolute bottom-3 left-3">
+                                                        <div className="bg-black/60 backdrop-blur-md text-white text-sm font-black px-4 py-2 rounded-xl shadow-lg border border-white/10">
+                                                            ${item.price}
+                                                        </div>
+                                                    </div>
+                                                )}
+
                                                 <button
                                                     onClick={() => handlePostClick(item)}
                                                     className="absolute bottom-3 right-3 p-2 bg-black/50 hover:bg-black/70 rounded-full text-white opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
@@ -1002,8 +1188,14 @@ export default function HomePage() {
                                                             <Send className="w-7 h-7 -rotate-45 mt-2" />
                                                         </button>
                                                     </div>
-                                                    <div className="font-bold text-sm mb-1 text-gray-900 dark:text-white">
-                                                        {item.likes} likes
+                                                    <div className="font-bold text-sm mb-1 text-gray-900 dark:text-white flex items-center gap-2">
+                                                        {item.type === 'post' ? (
+                                                            <span>{item.likes} likes</span>
+                                                        ) : (
+                                                            <button className="bg-primary text-primary-foreground px-4 py-1.5 rounded-full text-xs font-bold hover:bg-primary/90 transition-colors">
+                                                                {item.type === 'service' ? 'Book Now' : 'Buy Now'}
+                                                            </button>
+                                                        )}
                                                     </div>
                                                 </div>
 
@@ -1069,12 +1261,12 @@ export default function HomePage() {
                                     </div>
                                 )}
                             </div>
-                        </div>
+                        </div >
 
                         {/* Right Sidebar - Desktop Only */}
-                        <div className="hidden lg:block space-y-6 sticky top-24 h-fit">
+                        < div className="hidden lg:block space-y-6 sticky top-24 h-fit" >
                             {/* Search Widget */}
-                            <div className="bg-white dark:bg-[#222] rounded-2xl p-4 border border-gray-200 dark:border-[#333] shadow-sm">
+                            < div className="bg-white dark:bg-[#222] rounded-2xl p-4 border border-gray-200 dark:border-[#333] shadow-sm" >
                                 <div className="relative">
                                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                                     <input
@@ -1087,40 +1279,42 @@ export default function HomePage() {
                                 </div>
 
                                 {/* Search Results Dropdown */}
-                                {searchQuery && searchedUsers.length > 0 && (
-                                    <div className="mt-4 space-y-2">
-                                        {searchedUsers.map(user => (
-                                            <Link
-                                                key={user.id}
-                                                href={`/${user.username}`}
-                                                className="flex items-center gap-3 p-2 hover:bg-gray-50 dark:hover:bg-[#333] rounded-xl transition-colors"
-                                            >
-                                                <div className="w-8 h-8 rounded-full overflow-hidden ring-1 ring-gray-100 dark:ring-[#333] bg-gray-100 dark:bg-[#333] flex items-center justify-center">
-                                                    {user.avatar_url ? (
-                                                        <img src={user.avatar_url} alt={user.full_name} className="w-full h-full object-cover" />
-                                                    ) : (
-                                                        <User className="w-4 h-4 text-gray-400" />
-                                                    )}
-                                                </div>
-                                                <div className="min-w-0">
-                                                    <div className="font-bold text-gray-900 dark:text-white text-sm flex items-center gap-1 truncate">
-                                                        {user.full_name}
-                                                        {user.verification_status === 'verified' && (
-                                                            <div className="bg-primary text-white p-0.5 rounded-full shrink-0">
-                                                                <Check className="w-2 h-2 stroke-[4]" />
-                                                            </div>
+                                {
+                                    searchQuery && searchedUsers.length > 0 && (
+                                        <div className="mt-4 space-y-2">
+                                            {searchedUsers.map(user => (
+                                                <Link
+                                                    key={user.id}
+                                                    href={`/${user.username}`}
+                                                    className="flex items-center gap-3 p-2 hover:bg-gray-50 dark:hover:bg-[#333] rounded-xl transition-colors"
+                                                >
+                                                    <div className="w-8 h-8 rounded-full overflow-hidden ring-1 ring-gray-100 dark:ring-[#333] bg-gray-100 dark:bg-[#333] flex items-center justify-center relative">
+                                                        {user.avatar_url ? (
+                                                            <Image src={user.avatar_url} alt={user.full_name} fill className="object-cover" />
+                                                        ) : (
+                                                            <User className="w-4 h-4 text-gray-400" />
                                                         )}
                                                     </div>
-                                                    <div className="text-xs text-gray-500 truncate">@{user.username}</div>
-                                                </div>
-                                            </Link>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
+                                                    <div className="min-w-0">
+                                                        <div className="font-bold text-gray-900 dark:text-white text-sm flex items-center gap-1 truncate">
+                                                            {user.full_name}
+                                                            {user.verification_status === 'verified' && (
+                                                                <div className="bg-primary text-white p-0.5 rounded-full shrink-0">
+                                                                    <Check className="w-2 h-2 stroke-[4]" />
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        <div className="text-xs text-gray-500 truncate">@{user.username}</div>
+                                                    </div>
+                                                </Link>
+                                            ))}
+                                        </div>
+                                    )
+                                }
+                            </div >
 
                             {/* Tags Widget */}
-                            <div className="bg-white dark:bg-[#222] rounded-2xl p-6 border border-gray-200 dark:border-[#333] shadow-sm">
+                            < div className="bg-white dark:bg-[#222] rounded-2xl p-6 border border-gray-200 dark:border-[#333] shadow-sm" >
                                 <h3 className="font-bold text-gray-900 dark:text-white mb-4">Trending Topics</h3>
                                 <div className="flex flex-wrap gap-2">
                                     {TAGS.map((tag) => (
@@ -1138,21 +1332,22 @@ export default function HomePage() {
                                         </button>
                                     ))}
                                 </div>
-                            </div>
+                            </div >
 
                             {/* Footer Links */}
-                            <div className="flex flex-wrap gap-x-4 gap-y-2 px-2">
+                            < div className="flex flex-wrap gap-x-4 gap-y-2 px-2" >
                                 <Link href="#" className="text-xs text-gray-400 hover:underline">Terms of Service</Link>
                                 <Link href="#" className="text-xs text-gray-400 hover:underline">Privacy Policy</Link>
                                 <Link href="#" className="text-xs text-gray-400 hover:underline">Cookie Policy</Link>
                                 <Link href="#" className="text-xs text-gray-400 hover:underline">Accessibility</Link>
                                 <Link href="#" className="text-xs text-gray-400 hover:underline">Ads Info</Link>
                                 <div className="text-xs text-gray-400 mt-2 w-full">© 2024 PayLink, Inc.</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
-        </div>
+                            </div >
+                        </div >
+                    </div >
+                </div >
+            )
+            }
+        </div >
     );
 }

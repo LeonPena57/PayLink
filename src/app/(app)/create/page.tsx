@@ -1,12 +1,10 @@
 "use client";
 
-import { FileText, ShoppingBag, Briefcase, ArrowRight, Image as ImageIcon, LayoutTemplate, Clock, Sparkles, Plus } from "lucide-react";
+import { FileText, ShoppingBag, Briefcase, ArrowRight, Image as ImageIcon, LayoutTemplate, Clock, Plus } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { clsx } from "clsx";
 
 export default function CreatePage() {
-    const router = useRouter();
 
     const secondaryOptions = [
         {

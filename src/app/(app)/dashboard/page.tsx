@@ -5,15 +5,14 @@ import { ServicesWidget } from "@/components/features/dashboard/ServicesWidget";
 import { EditProfileModal } from "@/components/features/dashboard/EditProfileModal";
 import { CreateInvoiceModal } from "@/components/features/dashboard/CreateInvoiceModal";
 import { SettingsModal } from "@/components/features/dashboard/SettingsModal";
-import { TipWidget } from "@/components/features/dashboard/TipWidget";
 import { CartModal } from "@/components/features/dashboard/CartModal";
 import { SubscriptionModal } from "@/components/features/dashboard/SubscriptionModal";
 import { AddPortfolioItemModal } from "@/components/features/dashboard/AddPortfolioItemModal";
 import { CreateProductModal } from "@/components/features/dashboard/CreateProductModal";
-import { Mail, Twitter, Instagram, Twitch, Camera, Edit3, MapPin, Link as LinkIcon, Plus, Share2, FileText, TrendingUp, Sun, Moon, Monitor, Check, MessageCircle, User, Palette, Settings, MoreHorizontal, ShoppingBag, Grid as GridIcon, Crown, Package, Heart } from "lucide-react";
+import { Twitter, Instagram, Twitch, Camera, Edit3, MapPin, Plus, Check, User, Settings, ShoppingBag, Grid as GridIcon, Package, Heart, MoreHorizontal, Eye, MousePointerClick, Percent, TrendingUp } from "lucide-react";
 import clsx from "clsx";
-import { useTheme } from "next-themes";
 import Link from "next/link";
+import Image from "next/image";
 import { useUser } from "@/context/UserContext";
 import { supabase } from "@/lib/supabase/client";
 import { useSearchParams } from "next/navigation";
@@ -22,7 +21,7 @@ const SELLER_TABS = ["SERVICES", "PORTFOLIO", "SHOP"];
 const BUYER_TABS = ["ORDERS", "SAVED", "FOLLOWING"];
 
 function DashboardContent() {
-    const { userMode, toggleUserMode, profile, uploadAvatar, uploadBanner, loading } = useUser();
+    const { userMode, profile, uploadAvatar, uploadBanner, loading } = useUser();
     const { user } = useUser(); // Need user object for ID
     const searchParams = useSearchParams();
     const tabParam = searchParams.get("tab");
@@ -32,8 +31,7 @@ function DashboardContent() {
             ? tabParam
             : (userMode === "SELLER" ? "SERVICES" : "ORDERS")
     );
-    const { theme, setTheme } = useTheme();
-    const [mounted, setMounted] = useState(false);
+
 
     // Modal States
     const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
@@ -43,36 +41,23 @@ function DashboardContent() {
     const [isSubscriptionOpen, setIsSubscriptionOpen] = useState(false);
     const [isAddProjectOpen, setIsAddProjectOpen] = useState(false);
     const [isCreateProductOpen, setIsCreateProductOpen] = useState(false);
-    const [isCopied, setIsCopied] = useState(false);
 
     // Upload States
     const [isUploadingBanner, setIsUploadingBanner] = useState(false);
     const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [portfolioItems, setPortfolioItems] = useState<any[]>([]);
     const [loadingPortfolio, setLoadingPortfolio] = useState(false);
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [followingList, setFollowingList] = useState<any[]>([]);
     const [loadingFollowing, setLoadingFollowing] = useState(false);
-
-    useEffect(() => {
-        setMounted(true);
-        setActiveTab(userMode === "SELLER" ? "SERVICES" : "ORDERS");
-        if (userMode === "SELLER") {
-            fetchPortfolio();
-        }
-    }, [userMode]);
-
-    useEffect(() => {
-        if (activeTab === "FOLLOWING" && userMode === "BUYER") {
-            fetchFollowing();
-        }
-    }, [activeTab, userMode]);
 
     const fetchPortfolio = async () => {
         if (!user) return;
         setLoadingPortfolio(true);
-        const { data, error } = await supabase
+        const { data } = await supabase
             .from('portfolio_items')
             .select('*')
             .eq('user_id', user.id)
@@ -87,7 +72,7 @@ function DashboardContent() {
         setLoadingFollowing(true);
 
         // 1. Get IDs of people I follow
-        const { data: follows, error: followsError } = await supabase
+        const { data: follows } = await supabase
             .from('follows')
             .select('following_id')
             .eq('follower_id', user.id);
@@ -96,7 +81,7 @@ function DashboardContent() {
             const followingIds = follows.map(f => f.following_id);
 
             // 2. Get their profiles
-            const { data: profiles, error: profilesError } = await supabase
+            const { data: profiles } = await supabase
                 .from('profiles')
                 .select('*')
                 .in('id', followingIds);
@@ -108,7 +93,23 @@ function DashboardContent() {
         setLoadingFollowing(false);
     };
 
+    useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setActiveTab(userMode === "SELLER" ? "SERVICES" : "ORDERS");
+        if (userMode === "SELLER") {
+            fetchPortfolio();
+        }
+    }, [userMode]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    useEffect(() => {
+        if (activeTab === "FOLLOWING" && userMode === "BUYER") {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
+            fetchFollowing();
+        }
+    }, [activeTab, userMode]); // eslint-disable-line react-hooks/exhaustive-deps
+
     // Group portfolio items by section
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const portfolioSections = portfolioItems.reduce((acc: any, item: any) => {
         const section = item.section || 'General';
         if (!acc[section]) acc[section] = [];
@@ -116,11 +117,7 @@ function DashboardContent() {
         return acc;
     }, {});
 
-    const handleShareProfile = () => {
-        navigator.clipboard.writeText(`https://paylink.com/${profile?.username || "user"}`);
-        setIsCopied(true);
-        setTimeout(() => setIsCopied(false), 2000);
-    };
+
 
     const bannerInputRef = useRef<HTMLInputElement>(null);
     const avatarInputRef = useRef<HTMLInputElement>(null);
@@ -201,7 +198,7 @@ function DashboardContent() {
                 <div className="h-64 md:h-96 w-full relative overflow-hidden group/banner">
                     {profile?.banner_url ? (
                         <div className="absolute inset-0 animate-in fade-in duration-700">
-                            <img src={profile.banner_url} alt="Profile Banner" className="w-full h-full object-cover" />
+                            <Image src={profile.banner_url} alt="Profile Banner" fill className="object-cover" sizes="100vw" priority />
                             <div className="absolute inset-0 bg-black/20" />
                         </div>
                     ) : (
@@ -257,7 +254,7 @@ function DashboardContent() {
                             <div className="w-40 h-40 md:w-56 md:h-56 rounded-[2.5rem] p-1.5 bg-background shadow-2xl shadow-black/20 rotate-3 hover:rotate-0 transition-all duration-500 ease-out">
                                 <div className="w-full h-full rounded-[2rem] bg-muted overflow-hidden relative border border-border">
                                     {profile?.avatar_url ? (
-                                        <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+                                        <Image src={profile.avatar_url} alt="Avatar" fill className="object-cover" sizes="(max-width: 768px) 160px, 224px" priority />
                                     ) : (
                                         <div className="w-full h-full bg-muted flex items-center justify-center">
                                             <User className="w-20 h-20 text-muted-foreground" />
@@ -342,35 +339,36 @@ function DashboardContent() {
                         </div>
                     </div>
 
-                    {/* Navigation Tabs */}
-                    <div className="mt-12 border-b border-border">
-                        <div className="flex gap-8 overflow-x-auto max-w-full pb-px no-scrollbar justify-center md:justify-start">
-                            {tabs.map((tab) => (
-                                <button
-                                    key={tab}
-                                    onClick={() => setActiveTab(tab)}
-                                    className={clsx(
-                                        "py-3 md:py-4 px-4 md:px-6 text-xs md:text-sm font-black tracking-widest border-b-[3px] transition-all flex items-center gap-2 uppercase",
-                                        activeTab === tab
-                                            ? "text-foreground"
-                                            : "border-transparent text-muted-foreground hover:text-foreground"
-                                    )}
-                                    style={{
-                                        borderColor: activeTab === tab ? accentColor : "transparent",
-                                        color: activeTab === tab ? accentColor : undefined
-                                    }}
-                                >
-                                    {tab === "SERVICES" && <MoreHorizontal className="w-4 h-4" />}
-                                    {tab === "PORTFOLIO" && <GridIcon className="w-4 h-4" />}
-                                    {tab === "SHOP" && <ShoppingBag className="w-4 h-4" />}
-                                    {tab === "ORDERS" && <Package className="w-4 h-4" />}
-                                    {tab === "SAVED" && <Heart className="w-4 h-4" />}
-                                    {tab === "FOLLOWING" && <User className="w-4 h-4" />}
-                                    {tab}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
+                </div>
+            </div>
+
+            {/* Navigation Tabs */}
+            <div className="border-b border-border">
+                <div className="flex gap-8 overflow-x-auto max-w-full pb-px no-scrollbar justify-center md:justify-start max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    {tabs.map((tab) => (
+                        <button
+                            key={tab}
+                            onClick={() => setActiveTab(tab)}
+                            className={clsx(
+                                "py-3 md:py-4 px-4 md:px-6 text-xs md:text-sm font-black tracking-widest border-b-[3px] transition-all flex items-center gap-2 uppercase shrink-0",
+                                activeTab === tab
+                                    ? "text-foreground"
+                                    : "border-transparent text-muted-foreground hover:text-foreground"
+                            )}
+                            style={{
+                                borderColor: activeTab === tab ? accentColor : "transparent",
+                                color: activeTab === tab ? accentColor : undefined
+                            }}
+                        >
+                            {tab === "SERVICES" && <MoreHorizontal className="w-4 h-4" />}
+                            {tab === "PORTFOLIO" && <GridIcon className="w-4 h-4" />}
+                            {tab === "SHOP" && <ShoppingBag className="w-4 h-4" />}
+                            {tab === "ORDERS" && <Package className="w-4 h-4" />}
+                            {tab === "SAVED" && <Heart className="w-4 h-4" />}
+                            {tab === "FOLLOWING" && <User className="w-4 h-4" />}
+                            {tab}
+                        </button>
+                    ))}
                 </div>
             </div>
 
@@ -414,6 +412,7 @@ function DashboardContent() {
                                     </div>
                                 ) : (
                                     <>
+                                        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                                         {Object.entries(portfolioSections).map(([sectionName, items]: [string, any]) => (
                                             <div key={sectionName} className="space-y-4">
                                                 <h3 className="text-xl font-bold text-foreground px-1 flex items-center gap-2">
@@ -421,12 +420,14 @@ function DashboardContent() {
                                                     {sectionName}
                                                 </h3>
                                                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
+                                                    {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                                                     {items.map((item: any) => (
                                                         <div key={item.id} className="group relative aspect-square rounded-2xl overflow-hidden cursor-pointer bg-muted border border-border shadow-sm hover:shadow-md transition-all">
-                                                            <img
+                                                            <Image
                                                                 src={item.image_url}
                                                                 alt={item.title}
-                                                                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                                                                fill
+                                                                className="object-cover transition-transform duration-500 group-hover:scale-110"
                                                             />
                                                             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4">
                                                                 <h4 className="text-white font-bold text-sm truncate">{item.title}</h4>
@@ -537,27 +538,21 @@ function DashboardContent() {
                                     </div>
                                 ) : (
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                        {followingList.map((followedUser) => (
-                                            <Link key={followedUser.id} href={`/${followedUser.username}`} className="block">
-                                                <div className="bg-card border border-border rounded-2xl p-4 flex items-center gap-4 hover:bg-muted/50 transition-colors group">
-                                                    <div className="w-12 h-12 rounded-full bg-muted overflow-hidden border border-border shrink-0">
-                                                        {followedUser.avatar_url ? (
-                                                            <img src={followedUser.avatar_url} alt={followedUser.username} className="w-full h-full object-cover" />
-                                                        ) : (
-                                                            <div className="w-full h-full flex items-center justify-center bg-primary/10 text-primary font-bold">
-                                                                {followedUser.full_name?.substring(0, 2).toUpperCase() || "??"}
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                    <div className="flex-1 min-w-0">
-                                                        <h4 className="font-bold text-foreground truncate group-hover:text-primary transition-colors">
-                                                            {followedUser.full_name}
-                                                        </h4>
-                                                        <p className="text-sm text-muted-foreground truncate">@{followedUser.username}</p>
-                                                    </div>
-                                                    <div className="px-3 py-1 bg-primary/10 text-primary text-xs font-bold rounded-full">
-                                                        View
-                                                    </div>
+                                        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                                        {followingList.map((profile: any) => (
+                                            <Link key={profile.id} href={`/${profile.username}`} className="flex items-center gap-4 p-4 bg-muted/30 rounded-2xl hover:bg-muted/50 transition-colors border border-border">
+                                                <div className="relative w-12 h-12 rounded-full overflow-hidden bg-muted shrink-0">
+                                                    {profile.avatar_url ? (
+                                                        <Image src={profile.avatar_url} alt={profile.username} fill className="object-cover" />
+                                                    ) : (
+                                                        <div className="w-full h-full flex items-center justify-center bg-muted">
+                                                            <User className="w-6 h-6 text-muted-foreground" />
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <h4 className="font-bold text-foreground truncate">{profile.full_name || profile.username}</h4>
+                                                    <p className="text-sm text-muted-foreground truncate">@{profile.username}</p>
                                                 </div>
                                             </Link>
                                         ))}

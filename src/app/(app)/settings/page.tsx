@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
 import { useUserMode, useUser } from "@/context/UserContext";
-import { Moon, Sun, Monitor, User, Shield, LogOut, ChevronRight, CreditCard, HelpCircle, Crown, Mail, LayoutGrid, ArrowLeft, ShoppingBag } from "lucide-react";
+import { Moon, Sun, Monitor, User, Shield, LogOut, ChevronRight, CreditCard, HelpCircle, Crown, Mail, LayoutGrid, ArrowLeft, ShoppingBag, Lock, FileText, ExternalLink } from "lucide-react";
 import { motion } from "framer-motion";
 import clsx from "clsx";
 import { EditProfileModal } from "@/components/features/dashboard/EditProfileModal";
@@ -97,6 +97,18 @@ export default function SettingsPage() {
             alert("Error connecting stripe.");
         } finally {
             setLoadingStripe(false);
+        }
+    };
+
+    const handlePasswordReset = async () => {
+        if (!user?.email) return;
+        const { error } = await supabase.auth.resetPasswordForEmail(user.email, {
+            redirectTo: `${window.location.origin}/auth/callback?next=/settings`,
+        });
+        if (error) {
+            alert("Error sending password reset email.");
+        } else {
+            alert("Password reset email sent!");
         }
     };
 
@@ -261,22 +273,174 @@ export default function SettingsPage() {
 
                         <div className="grid md:grid-cols-2 gap-6">
                             {/* Free Plan */}
-                            <div className="p-6 rounded-[2rem] bg-muted/30 relative overflow-hidden group hover:bg-muted/40 transition-colors">
-                                <div className="absolute top-0 right-0 p-4 opacity-10">
-                                    <User className="w-24 h-24" />
-                                    <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
-                                        <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                            <div className="p-6 rounded-[2rem] bg-card border-2 border-border flex flex-col relative overflow-hidden">
+                                <div className="mb-4">
+                                    <div className="w-12 h-12 bg-muted rounded-2xl flex items-center justify-center mb-4">
+                                        <User className="w-6 h-6 text-muted-foreground" />
                                     </div>
-                                    <span>10GB File Uploads</span>
+                                    <h3 className="text-xl font-black text-foreground">Free</h3>
+                                    <div className="flex items-baseline gap-1 mt-1">
+                                        <span className="text-3xl font-black text-foreground">$0</span>
+                                        <span className="text-muted-foreground font-medium">/month</span>
+                                    </div>
+                                    <p className="text-sm text-muted-foreground mt-2 font-medium">Perfect for getting started.</p>
                                 </div>
+                                <div className="space-y-3 mb-8 flex-1">
+                                    <div className="flex items-center gap-3 text-sm font-medium text-foreground">
+                                        <div className="w-5 h-5 rounded-full bg-green-500/10 flex items-center justify-center shrink-0">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                                        </div>
+                                        5% Transaction Fee
+                                    </div>
+                                    <div className="flex items-center gap-3 text-sm font-medium text-foreground">
+                                        <div className="w-5 h-5 rounded-full bg-green-500/10 flex items-center justify-center shrink-0">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                                        </div>
+                                        Up to 10 Products
+                                    </div>
+                                    <div className="flex items-center gap-3 text-sm font-medium text-foreground">
+                                        <div className="w-5 h-5 rounded-full bg-green-500/10 flex items-center justify-center shrink-0">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                                        </div>
+                                        Basic Analytics
+                                    </div>
+                                </div>
+                                <button className="w-full py-3 rounded-xl bg-muted text-foreground font-bold text-sm hover:bg-muted/80 transition-colors">
+                                    Current Plan
+                                </button>
                             </div>
 
-                            <button className="w-full mt-8 py-3 rounded-xl bg-primary text-primary-foreground font-bold text-sm hover:scale-105 active:scale-95 transition-all shadow-lg shadow-primary/30">
-                                Upgrade to Pro
-                            </button>
+                            {/* Pro Plan */}
+                            <div className="p-6 rounded-[2rem] bg-primary/5 border-2 border-primary flex flex-col relative overflow-hidden">
+                                <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-xs font-black px-3 py-1.5 rounded-bl-2xl">
+                                    POPULAR
+                                </div>
+                                <div className="mb-4">
+                                    <div className="w-12 h-12 bg-primary/20 rounded-2xl flex items-center justify-center mb-4">
+                                        <Crown className="w-6 h-6 text-primary" />
+                                    </div>
+                                    <h3 className="text-xl font-black text-foreground">Pro</h3>
+                                    <div className="flex items-baseline gap-1 mt-1">
+                                        <span className="text-3xl font-black text-foreground">$29</span>
+                                        <span className="text-muted-foreground font-medium">/month</span>
+                                    </div>
+                                    <p className="text-sm text-primary/80 mt-2 font-medium">For serious sellers.</p>
+                                </div>
+                                <div className="space-y-3 mb-8 flex-1">
+                                    <div className="flex items-center gap-3 text-sm font-medium text-foreground">
+                                        <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                                        </div>
+                                        0% Transaction Fee
+                                    </div>
+                                    <div className="flex items-center gap-3 text-sm font-medium text-foreground">
+                                        <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                                        </div>
+                                        Unlimited Products
+                                    </div>
+                                    <div className="flex items-center gap-3 text-sm font-medium text-foreground">
+                                        <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                                        </div>
+                                        Advanced Analytics
+                                    </div>
+                                    <div className="flex items-center gap-3 text-sm font-medium text-foreground">
+                                        <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                                        </div>
+                                        Custom Domain
+                                    </div>
+                                </div>
+                                <button className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-bold text-sm hover:scale-105 active:scale-95 transition-all shadow-lg shadow-primary/20">
+                                    Upgrade Now
+                                </button>
+                            </div>
                         </div>
                     </div>
+                );
+            case "security":
+                return (
+                    <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+                        <div>
+                            <h2 className="text-2xl font-black mb-1">Security</h2>
+                            <p className="text-muted-foreground font-medium">Keep your account safe and secure.</p>
+                        </div>
 
+                        <div className="space-y-4">
+                            <div className="p-5 bg-muted/30 rounded-[2rem] flex items-center justify-between">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-12 h-12 bg-background rounded-full flex items-center justify-center shadow-sm">
+                                        <Lock className="w-6 h-6 text-muted-foreground" />
+                                    </div>
+                                    <div>
+                                        <div className="font-bold text-lg">Password</div>
+                                        <div className="text-sm text-muted-foreground font-medium">Change your password via email.</div>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={handlePasswordReset}
+                                    className="px-5 py-2.5 bg-background hover:bg-muted rounded-xl font-bold text-sm transition-colors shadow-sm"
+                                >
+                                    Reset
+                                </button>
+                            </div>
+
+                            <div className="p-5 bg-muted/30 rounded-[2rem] flex items-center justify-between opacity-50 cursor-not-allowed">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-12 h-12 bg-background rounded-full flex items-center justify-center shadow-sm">
+                                        <Shield className="w-6 h-6 text-muted-foreground" />
+                                    </div>
+                                    <div>
+                                        <div className="font-bold text-lg">Two-Factor Auth</div>
+                                        <div className="text-sm text-muted-foreground font-medium">Add an extra layer of security.</div>
+                                    </div>
+                                </div>
+                                <div className="px-3 py-1 bg-background rounded-lg text-xs font-bold text-muted-foreground">
+                                    Coming Soon
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                );
+            case "support":
+                return (
+                    <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+                        <div>
+                            <h2 className="text-2xl font-black mb-1">Support</h2>
+                            <p className="text-muted-foreground font-medium">Need help? We&apos;re here for you.</p>
+                        </div>
+
+                        <div className="grid md:grid-cols-2 gap-6">
+                            <a
+                                href="mailto:support@paylink.com"
+                                className="p-6 rounded-[2rem] bg-muted/30 hover:bg-muted/50 transition-colors group flex flex-col"
+                            >
+                                <div className="w-12 h-12 bg-background rounded-2xl flex items-center justify-center mb-4 shadow-sm group-hover:scale-110 transition-transform">
+                                    <Mail className="w-6 h-6 text-primary" />
+                                </div>
+                                <h3 className="text-xl font-black text-foreground mb-1">Email Support</h3>
+                                <p className="text-sm text-muted-foreground font-medium mb-4">Get in touch with our team.</p>
+                                <div className="mt-auto flex items-center gap-2 text-sm font-bold text-primary">
+                                    Send Email <ArrowLeft className="w-4 h-4 rotate-180" />
+                                </div>
+                            </a>
+
+                            <a
+                                href="#"
+                                className="p-6 rounded-[2rem] bg-muted/30 hover:bg-muted/50 transition-colors group flex flex-col"
+                            >
+                                <div className="w-12 h-12 bg-background rounded-2xl flex items-center justify-center mb-4 shadow-sm group-hover:scale-110 transition-transform">
+                                    <FileText className="w-6 h-6 text-primary" />
+                                </div>
+                                <h3 className="text-xl font-black text-foreground mb-1">Documentation</h3>
+                                <p className="text-sm text-muted-foreground font-medium mb-4">Read our guides and FAQs.</p>
+                                <div className="mt-auto flex items-center gap-2 text-sm font-bold text-primary">
+                                    View Docs <ExternalLink className="w-4 h-4" />
+                                </div>
+                            </a>
+                        </div>
+                    </div>
                 );
             default:
                 return (
@@ -359,7 +523,7 @@ export default function SettingsPage() {
                         ))}
                     </div>
 
-                    <div className="pt-6 mt-6 md:border-t border-border/50">
+                    <div className="pt-6 mt-6 md:border-t border-border">
                         <button
                             onClick={handleSignOut}
                             className="w-full flex items-center gap-3 px-5 py-4 rounded-[2rem] font-bold text-red-500 hover:bg-red-500/10 transition-colors"

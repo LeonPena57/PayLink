@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 
 export async function GET(request: Request) {
     const requestUrl = new URL(request.url);
-    const code = requestUrl.searchParams.get('code');
+
 
     // Create the redirect URL pointing to dashboard
     const redirectUrl = new URL('/dashboard', request.url);

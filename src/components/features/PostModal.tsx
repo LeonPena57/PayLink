@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { X, Heart, MessageCircle, Send, Check, User } from "lucide-react";
+import Image from "next/image";
 import { supabase } from "@/lib/supabase/client";
 import { useUser } from "@/context/UserContext";
 import { useToast } from "@/context/ToastContext";
@@ -34,68 +35,54 @@ export function PostModal({ isOpen, onClose, post, onUpdate }: PostModalProps) {
     const commentsEndRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
+        const fetchComments = async () => {
+            if (!post) return;
+            setLoadingComments(true);
+            const { data: commentsData } = await supabase
+                .from('comments')
+                .select(`
+                    *,
+                    profiles:user_id (
+                        id,
+                        username,
+                        full_name,
+                        avatar_url
+                    )
+                `)
+                .eq('portfolio_item_id', post.id)
+                .order('created_at', { ascending: true });
+
+            if (commentsData) {
+                const commentIds = commentsData.map(c => c.id);
+
+                // Fetch likes for these comments
+                const { data: likesData } = await supabase
+                    .from('comment_likes')
+                    .select('comment_id, user_id')
+                    .in('comment_id', commentIds);
+
+                const commentsWithLikes = commentsData.map(comment => {
+                    const likes = likesData?.filter(l => l.comment_id === comment.id) || [];
+                    return {
+                        ...comment,
+                        likes_count: likes.length,
+                        user_has_liked: user ? likes.some(l => l.user_id === user.id) : false
+                    };
+                });
+
+                setComments(commentsWithLikes);
+                setTimeout(scrollToBottom, 100);
+            }
+            setLoadingComments(false);
+        };
+
         if (isOpen && post) {
             // Initialize from props
             setLikesCount(post.likes || 0);
             setIsLiked(post.user_has_liked || false);
             fetchComments();
         }
-    }, [isOpen, post]);
-
-    // Removed redundant fetchPostDetails to prevent race conditions/flickering
-    /*
-    const fetchPostDetails = async () => {
-        if (!post) return;
-        const { data } = await supabase
-            .rpc('get_post_stats', { post_id: post.id });
-
-        if (data) {
-            setLikesCount(data.likes_count);
-            setIsLiked(data.user_has_liked);
-        }
-    };
-    */
-
-    const fetchComments = async () => {
-        if (!post) return;
-        setLoadingComments(true);
-        const { data: commentsData } = await supabase
-            .from('comments')
-            .select(`
-                *,
-                profiles:user_id (
-                    id,
-                    username,
-                    full_name,
-                    avatar_url
-                )
-            `)
-            .eq('portfolio_item_id', post.id)
-            .order('created_at', { ascending: true });
-
-        if (commentsData) {
-            const commentIds = commentsData.map(c => c.id);
-
-            // Fetch likes for these comments
-            const { data: likesData } = await supabase
-                .from('comment_likes')
-                .select('comment_id, user_id')
-                .in('comment_id', commentIds);
-
-            const commentsWithLikes = commentsData.map(comment => {
-                const likes = likesData?.filter(l => l.comment_id === comment.id) || [];
-                return {
-                    ...comment,
-                    likes_count: likes.length,
-                    user_has_liked: user ? likes.some(l => l.user_id === user.id) : false
-                };
-            });
-
-            setComments(commentsWithLikes);
-            setTimeout(scrollToBottom, 100);
-        }
-        setLoadingComments(false);
-    };
+    }, [isOpen, post, user]);
 
     const scrollToBottom = () => {
         commentsEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -277,10 +264,11 @@ export function PostModal({ isOpen, onClose, post, onUpdate }: PostModalProps) {
                     {/* Image Section */}
                     <div className="flex-1 bg-black flex items-center justify-center relative group overflow-hidden">
                         <div className="relative w-full h-full flex items-center justify-center">
-                            <img
+                            <Image
                                 src={post.image_url}
                                 alt={post.title}
-                                className="max-w-full max-h-full object-contain"
+                                fill
+                                className="object-contain"
                             />
                         </div>
                     </div>
@@ -293,10 +281,11 @@ export function PostModal({ isOpen, onClose, post, onUpdate }: PostModalProps) {
                                 <Link href={`/${post.user?.username || post.profiles?.username}`} className="block">
                                     <div className="w-8 h-8 rounded-full bg-muted overflow-hidden border border-border flex items-center justify-center">
                                         {(post.user?.avatar || post.profiles?.avatar_url) ? (
-                                            <img
+                                            <Image
                                                 src={post.user?.avatar || post.profiles?.avatar_url}
                                                 alt="Avatar"
-                                                className="w-full h-full object-cover"
+                                                fill
+                                                className="object-cover"
                                             />
                                         ) : (
                                             <div className="w-4 h-4 text-muted-foreground">
@@ -418,10 +407,11 @@ export function PostModal({ isOpen, onClose, post, onUpdate }: PostModalProps) {
                     <div className="flex-1 overflow-y-auto">
                         {/* Image */}
                         <div className="w-full bg-black min-h-[40vh] flex items-center justify-center">
-                            <img
+                            <Image
                                 src={post.image_url}
                                 alt={post.title}
-                                className="w-full h-auto max-h-[70vh] object-contain"
+                                fill
+                                className="object-contain"
                             />
                         </div>
 
@@ -446,10 +436,11 @@ export function PostModal({ isOpen, onClose, post, onUpdate }: PostModalProps) {
                             <div className="flex gap-3">
                                 <Link href={`/${post.user?.username || post.profiles?.username}`} className="w-10 h-10 rounded-full bg-muted overflow-hidden border border-border shrink-0 flex items-center justify-center">
                                     {(post.user?.avatar || post.profiles?.avatar_url) ? (
-                                        <img
+                                        <Image
                                             src={post.user?.avatar || post.profiles?.avatar_url}
                                             alt="Avatar"
-                                            className="w-full h-full object-cover"
+                                            fill
+                                            className="object-cover"
                                         />
                                     ) : (
                                         <div className="w-5 h-5 text-muted-foreground">
@@ -571,10 +562,11 @@ function CommentItem({ comment, comments, user, post, onDelete, onReply, onLike 
             <div className="flex gap-3">
                 <Link href={`/${comment.profiles?.username}`} className="w-8 h-8 rounded-full bg-muted overflow-hidden border border-border shrink-0 flex items-center justify-center">
                     {comment.profiles?.avatar_url ? (
-                        <img
+                        <Image
                             src={comment.profiles?.avatar_url}
                             alt="Avatar"
-                            className="w-full h-full object-cover"
+                            fill
+                            className="object-cover"
                         />
                     ) : (
                         <div className="w-4 h-4 text-muted-foreground">

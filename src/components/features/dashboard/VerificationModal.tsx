@@ -5,7 +5,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Check, AlertCircle, Link as LinkIcon, Twitter, Instagram, Globe } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 import { useUser } from "@/context/UserContext";
-import clsx from "clsx";
 
 interface VerificationModalProps {
     isOpen: boolean;

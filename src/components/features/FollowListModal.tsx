@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, User, UserPlus, UserCheck } from "lucide-react";
+import { X, User } from "lucide-react";
+import Image from "next/image";
 import { supabase } from "@/lib/supabase/client";
 import { useUser } from "@/context/UserContext";
 import Link from "next/link";
@@ -20,78 +21,78 @@ export function FollowListModal({ isOpen, onClose, type, userId }: FollowListMod
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        const fetchUsers = async () => {
+            setLoading(true);
+            let data: any[] = [];
+            let error: any = null;
+
+            if (type === 'followers') {
+                const result = await supabase
+                    .from('follows')
+                    .select(`
+                        follower_id,
+                        profiles:follower_id (
+                            id,
+                            username,
+                            full_name,
+                            avatar_url,
+                            verification_status
+                        )
+                    `)
+                    .eq('following_id', userId);
+
+                if (result.data) {
+                    data = result.data.map((item: any) => item.profiles);
+                }
+                error = result.error;
+            } else {
+                const result = await supabase
+                    .from('follows')
+                    .select(`
+                        following_id,
+                        profiles:following_id (
+                            id,
+                            username,
+                            full_name,
+                            avatar_url,
+                            verification_status
+                        )
+                    `)
+                    .eq('follower_id', userId);
+
+                if (result.data) {
+                    data = result.data.map((item: any) => item.profiles);
+                }
+                error = result.error;
+            }
+
+            if (error) {
+                console.error("Error fetching users:", error);
+            } else {
+                // Check if current user follows them
+                if (currentUser) {
+                    const { data: myFollows } = await supabase
+                        .from('follows')
+                        .select('following_id')
+                        .eq('follower_id', currentUser.id)
+                        .in('following_id', data.map(u => u.id));
+
+                    const myFollowIds = new Set(myFollows?.map((f: any) => f.following_id));
+
+                    data = data.map(u => ({
+                        ...u,
+                        is_following: myFollowIds.has(u.id)
+                    }));
+                }
+                setUsers(data);
+            }
+            setLoading(false);
+        };
+
         if (isOpen && userId) {
             fetchUsers();
         }
-    }, [isOpen, type, userId]);
-
-    const fetchUsers = async () => {
-        setLoading(true);
-        let data: any[] = [];
-        let error: any = null;
-
-        if (type === 'followers') {
-            const result = await supabase
-                .from('follows')
-                .select(`
-                    follower_id,
-                    profiles:follower_id (
-                        id,
-                        username,
-                        full_name,
-                        avatar_url,
-                        verification_status
-                    )
-                `)
-                .eq('following_id', userId);
-
-            if (result.data) {
-                data = result.data.map((item: any) => item.profiles);
-            }
-            error = result.error;
-        } else {
-            const result = await supabase
-                .from('follows')
-                .select(`
-                    following_id,
-                    profiles:following_id (
-                        id,
-                        username,
-                        full_name,
-                        avatar_url,
-                        verification_status
-                    )
-                `)
-                .eq('follower_id', userId);
-
-            if (result.data) {
-                data = result.data.map((item: any) => item.profiles);
-            }
-            error = result.error;
-        }
-
-        if (error) {
-            console.error("Error fetching users:", error);
-        } else {
-            // Check if current user follows them
-            if (currentUser) {
-                const { data: myFollows } = await supabase
-                    .from('follows')
-                    .select('following_id')
-                    .eq('follower_id', currentUser.id)
-                    .in('following_id', data.map(u => u.id));
-
-                const myFollowIds = new Set(myFollows?.map((f: any) => f.following_id));
-
-                data = data.map(u => ({
-                    ...u,
-                    is_following: myFollowIds.has(u.id)
-                }));
-            }
-            setUsers(data);
-        }
-        setLoading(false);
-    };
+    }, [isOpen, type, userId, currentUser]);
 
     const handleFollowToggle = async (targetUserId: string, isFollowing: boolean) => {
         if (!currentUser) return;
@@ -142,7 +143,7 @@ export function FollowListModal({ isOpen, onClose, type, userId }: FollowListMod
                                     <Link href={`/${user.username}`} className="flex items-center gap-3 flex-1 min-w-0" onClick={onClose}>
                                         <div className="w-10 h-10 rounded-full bg-muted overflow-hidden border border-border shrink-0 flex items-center justify-center">
                                             {user.avatar_url ? (
-                                                <img src={user.avatar_url} alt={user.username} className="w-full h-full object-cover" />
+                                                <Image src={user.avatar_url} alt={user.username} fill className="object-cover" />
                                             ) : (
                                                 <User className="w-5 h-5 text-muted-foreground" />
                                             )}

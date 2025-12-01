@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { X, CreditCard } from "lucide-react";
+import { X } from "lucide-react";
 import { FileItem } from "./FileCard";
 import clsx from "clsx";
 

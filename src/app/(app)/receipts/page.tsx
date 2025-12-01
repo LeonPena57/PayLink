@@ -4,6 +4,7 @@ import { Search, Package, Clock, CheckCircle2, AlertCircle, DollarSign, Copy, Pl
 import clsx from "clsx";
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/lib/supabase/client";
 import { useUser } from "@/context/UserContext";
@@ -158,12 +159,12 @@ export default function OrdersPage() {
                     >
                         {filteredActive.length > 0 ? (
                             filteredActive.map((invoice) => (
-                                <div key={invoice.id} className="bg-muted/30 rounded-[2rem] p-5 animate-in slide-in-from-bottom-2">
+                                <Link href={`/pay/${invoice.id}`} key={invoice.id} className="block bg-muted/30 rounded-[2rem] p-5 animate-in slide-in-from-bottom-2 hover:bg-muted/50 transition-colors">
                                     <div className="flex gap-4">
                                         {/* Image Bubble */}
-                                        <div className="w-16 h-16 bg-background rounded-2xl overflow-hidden shrink-0 shadow-sm flex items-center justify-center">
+                                        <div className="relative w-16 h-16 bg-background rounded-2xl overflow-hidden shrink-0 shadow-sm flex items-center justify-center">
                                             {invoice.items && invoice.items[0]?.image ? (
-                                                <img src={invoice.items[0].image} alt="" className="w-full h-full object-cover" />
+                                                <Image src={invoice.items[0].image} alt="" fill className="object-cover" />
                                             ) : (
                                                 <Package className="w-6 h-6 text-muted-foreground/50" />
                                             )}
@@ -183,20 +184,28 @@ export default function OrdersPage() {
 
                                     <div className="mt-4 flex gap-2">
                                         <button
-                                            onClick={() => copyLink(invoice.id)}
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                copyLink(invoice.id);
+                                            }}
                                             className="flex-1 py-3 bg-background rounded-xl font-bold text-sm hover:bg-muted transition-colors flex items-center justify-center gap-2 shadow-sm"
                                         >
                                             <Copy className="w-4 h-4" />
                                             Copy Link
                                         </button>
                                         <button
-                                            onClick={() => deleteInvoice(invoice.id)}
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                deleteInvoice(invoice.id);
+                                            }}
                                             className="p-3 bg-red-500/10 text-red-500 rounded-xl hover:bg-red-500/20 transition-colors"
                                         >
                                             <AlertCircle className="w-4 h-4" />
                                         </button>
                                     </div>
-                                </div>
+                                </Link>
                             ))
                         ) : (
                             <div className="text-center py-20 space-y-4 opacity-50">
@@ -228,7 +237,7 @@ export default function OrdersPage() {
 
                         {filteredHistory.length > 0 ? (
                             filteredHistory.map((tx) => (
-                                <div key={tx.id} className="bg-muted/30 rounded-3xl p-4 flex items-center gap-4 animate-in slide-in-from-bottom-2">
+                                <Link href={`/pay/${tx.id}`} key={tx.id} className="bg-muted/30 rounded-3xl p-4 flex items-center gap-4 animate-in slide-in-from-bottom-2 hover:bg-muted/50 transition-colors block">
                                     <div className={clsx(
                                         "w-12 h-12 rounded-2xl flex items-center justify-center shrink-0",
                                         tx.status === 'paid' ? "bg-green-500/10 text-green-500" : "bg-gray-500/10 text-gray-500"
@@ -248,7 +257,7 @@ export default function OrdersPage() {
                                             {tx.status}
                                         </div>
                                     </div>
-                                </div>
+                                </Link>
                             ))
                         ) : (
                             <div className="text-center py-20 space-y-4 opacity-50">

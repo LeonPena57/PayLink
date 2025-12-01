@@ -2,8 +2,9 @@
 
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Loader2, Image as ImageIcon, X, Hash, Smile, MapPin, Calendar, Globe, Send } from "lucide-react";
+import { ArrowLeft, Loader2, Image as ImageIcon, X, Hash, Smile, MapPin, Calendar, Send } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { supabase } from "@/lib/supabase/client";
 import { useUser } from "@/context/UserContext";
 import { clsx } from "clsx";
@@ -98,7 +99,7 @@ export default function CreatePostPage() {
                 <div className="flex items-center gap-3 animate-in fade-in slide-in-from-bottom-2">
                     <div className="w-10 h-10 rounded-full bg-muted overflow-hidden border border-border">
                         {profile?.avatar_url ? (
-                            <img src={profile.avatar_url} alt="User" className="w-full h-full object-cover" />
+                            <Image src={profile.avatar_url} alt="User" fill className="object-cover" />
                         ) : (
                             <div className="w-full h-full bg-primary/10" />
                         )}
@@ -133,6 +134,7 @@ export default function CreatePostPage() {
                 {/* Image Preview */}
                 {imagePreview && (
                     <div className="relative rounded-3xl overflow-hidden border border-border group shadow-sm bg-muted/10 animate-in zoom-in-95 duration-300">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={imagePreview} alt="Preview" className="w-full h-auto object-cover max-h-[500px]" />
                         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
                         <button

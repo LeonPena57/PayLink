@@ -2,12 +2,12 @@
 
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Loader2, ShoppingBag, X, FileText, Upload, DollarSign, Image as ImageIcon, Sparkles, Plus } from "lucide-react";
+import { ArrowLeft, Loader2, X, FileText, Upload, DollarSign, Sparkles, Plus } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { supabase } from "@/lib/supabase/client";
 import { useUser } from "@/context/UserContext";
 import { generateWatermarkedPreview } from "@/lib/watermark";
-import { clsx } from "clsx";
 
 export default function CreateProductPage() {
     const router = useRouter();
@@ -213,7 +213,7 @@ export default function CreateProductPage() {
                         <div className="flex gap-3 overflow-x-auto pb-2 custom-scrollbar snap-x">
                             {images.map((img, index) => (
                                 <div key={index} className="relative w-32 h-32 shrink-0 rounded-2xl overflow-hidden border border-border snap-start group">
-                                    <img src={img.preview} alt="" className="w-full h-full object-cover" />
+                                    <Image src={img.preview} alt="" fill className="object-cover" />
                                     <button
                                         type="button"
                                         onClick={() => removeImage(index)}

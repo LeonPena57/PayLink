@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from "react";
 import { FileCard, FileItem } from "@/components/features/FileCard";
 import { PaymentModal } from "@/components/features/PaymentModal";
-import { Plus, UploadCloud, Search, SlidersHorizontal, LayoutGrid, List, File as FileIcon, MoreHorizontal, ArrowDown, Folder, ChevronRight, ArrowLeft } from "lucide-react";
+import { Search, LayoutGrid, List, File as FileIcon, Folder, ArrowLeft } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import clsx from "clsx";
 import { useSearchParams } from "next/navigation";
@@ -61,10 +61,11 @@ function DriveContent() {
   // Auto-open folder from URL
   useEffect(() => {
     const orderId = searchParams.get("orderId");
-    if (orderId) {
+    if (orderId && orderId !== activeFolderId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setActiveFolderId(orderId);
     }
-  }, [searchParams]);
+  }, [searchParams, activeFolderId]);
 
   const activeFolder = MOCK_FOLDERS.find(f => f.id === activeFolderId);
 

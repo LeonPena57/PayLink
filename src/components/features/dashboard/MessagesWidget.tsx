@@ -6,6 +6,7 @@ import { User, ChevronRight, Send, Plus, ArrowLeft, Search, MessageSquare } from
 import clsx from "clsx";
 import { supabase } from "@/lib/supabase/client";
 import { useUser } from "@/context/UserContext";
+import Image from "next/image";
 
 interface Profile {
     id: string;
@@ -212,14 +213,14 @@ export function MessagesWidget() {
         return (
             <div className="w-full max-w-2xl mx-auto h-[85vh] md:h-[800px] flex flex-col bg-background md:bg-card md:border md:border-border md:rounded-[2.5rem] overflow-hidden md:shadow-2xl">
                 {/* Chat Header */}
-                <div className="p-4 flex items-center gap-4 bg-background/80 backdrop-blur-md sticky top-0 z-10 border-b border-border/50">
+                <div className="p-4 flex items-center gap-4 bg-background/80 backdrop-blur-md sticky top-0 z-10 border-b border-border">
                     <button onClick={() => setActiveConversation(null)} className="p-2 -ml-2 hover:bg-muted rounded-full transition-colors">
                         <ArrowLeft className="w-6 h-6 text-foreground" />
                     </button>
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-muted overflow-hidden border border-border">
+                        <div className="relative w-10 h-10 rounded-full bg-muted overflow-hidden border border-border">
                             {activeConversation.other_user?.avatar_url ? (
-                                <img src={activeConversation.other_user.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+                                <Image src={activeConversation.other_user.avatar_url} alt="Avatar" fill className="object-cover" />
                             ) : (
                                 <div className="w-full h-full flex items-center justify-center">
                                     <User className="w-5 h-5 text-muted-foreground" />
@@ -254,7 +255,7 @@ export function MessagesWidget() {
                 </div>
 
                 {/* Input Area */}
-                <div className="p-4 bg-background border-t border-border/50">
+                <div className="p-4 bg-background border-t border-border">
                     <div className="flex gap-2 items-end bg-muted/30 p-2 rounded-3xl border border-transparent focus-within:border-primary/20 focus-within:bg-background transition-all">
                         <input
                             type="text"
@@ -319,9 +320,9 @@ export function MessagesWidget() {
                                     onClick={() => startConversation(profile.id)}
                                     className="w-full flex items-center gap-3 p-3 hover:bg-muted/50 rounded-2xl transition-colors text-left group"
                                 >
-                                    <div className="w-10 h-10 rounded-full bg-muted overflow-hidden border border-border">
+                                    <div className="relative w-10 h-10 rounded-full bg-muted overflow-hidden border border-border">
                                         {profile.avatar_url ? (
-                                            <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+                                            <Image src={profile.avatar_url} alt="Avatar" fill className="object-cover" />
                                         ) : (
                                             <div className="w-full h-full flex items-center justify-center">
                                                 <User className="w-5 h-5 text-muted-foreground" />
@@ -359,9 +360,9 @@ export function MessagesWidget() {
                         >
                             {/* Avatar */}
                             <div className="w-14 h-14 rounded-full bg-background p-0.5 shrink-0 shadow-sm group-hover:scale-105 transition-transform">
-                                <div className="w-full h-full rounded-full bg-muted flex items-center justify-center overflow-hidden">
+                                <div className="relative w-full h-full rounded-full bg-muted flex items-center justify-center overflow-hidden">
                                     {convo.other_user?.avatar_url ? (
-                                        <img src={convo.other_user.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+                                        <Image src={convo.other_user.avatar_url} alt="Avatar" fill className="object-cover" />
                                     ) : (
                                         <span className="font-bold text-muted-foreground text-lg">
                                             {convo.other_user?.full_name?.charAt(0) || "?"}

@@ -2,8 +2,9 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Loader2, Check, X, Image as ImageIcon, Plus, Sparkles, Search, Briefcase, DollarSign } from "lucide-react";
+import { ArrowLeft, Loader2, X, Image as ImageIcon, Plus, Sparkles, Search, Briefcase } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { supabase } from "@/lib/supabase/client";
 import { useUser } from "@/context/UserContext";
 import { clsx } from "clsx";
@@ -52,6 +53,7 @@ export default function CreateInvoicePage() {
         setItems([...items, { id: Date.now(), name: "", price: "", image: null, preview: null, saveAsService: false }]);
     };
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const addServiceItem = (service: any) => {
         setItems([...items, {
             id: Date.now(),
@@ -202,9 +204,22 @@ export default function CreateInvoicePage() {
                         <div className="h-1 w-20 bg-primary mx-auto rounded-full opacity-20" />
                     </div>
 
+                    {/* Due Date Input */}
+                    <div className="flex justify-center">
+                        <div className="inline-flex items-center gap-2 bg-muted/30 px-4 py-2 rounded-full hover:bg-muted/50 transition-colors cursor-pointer">
+                            <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Due</span>
+                            <input
+                                type="date"
+                                value={dueDate}
+                                onChange={(e) => setDueDate(e.target.value)}
+                                className="bg-transparent border-none p-0 text-sm font-bold text-foreground focus:ring-0 cursor-pointer"
+                            />
+                        </div>
+                    </div>
+
                     {/* Items List */}
                     <div className="space-y-4">
-                        {items.map((item, index) => (
+                        {items.map((item) => (
                             <div key={item.id} className="group flex items-center gap-3 bg-muted/30 hover:bg-muted/50 p-2 rounded-2xl transition-all animate-in slide-in-from-bottom-2">
                                 {/* Image Bubble */}
                                 <div
@@ -212,7 +227,7 @@ export default function CreateInvoicePage() {
                                     className="w-14 h-14 rounded-xl bg-background shadow-sm flex items-center justify-center cursor-pointer hover:scale-105 transition-transform overflow-hidden shrink-0"
                                 >
                                     {item.preview ? (
-                                        <img src={item.preview} alt="" className="w-full h-full object-cover" />
+                                        <Image src={item.preview} alt="" fill className="object-cover" />
                                     ) : (
                                         <ImageIcon className="w-5 h-5 text-muted-foreground/40" />
                                     )}
@@ -246,6 +261,19 @@ export default function CreateInvoicePage() {
                                         />
                                     </div>
                                 </div>
+
+                                {/* Save as Service Toggle */}
+                                <button
+                                    type="button"
+                                    onClick={() => updateItem(item.id, 'saveAsService', !item.saveAsService)}
+                                    className={clsx(
+                                        "p-2 rounded-full transition-colors",
+                                        item.saveAsService ? "text-primary bg-primary/10" : "text-muted-foreground/30 hover:text-muted-foreground"
+                                    )}
+                                    title="Save as Service"
+                                >
+                                    <Briefcase className="w-5 h-5" />
+                                </button>
 
                                 {/* Delete Action */}
                                 {items.length > 1 && (
@@ -355,7 +383,7 @@ export default function CreateInvoicePage() {
                                         >
                                             <div className="w-10 h-10 rounded-lg bg-muted overflow-hidden shrink-0">
                                                 {service.thumbnail_url ? (
-                                                    <img src={service.thumbnail_url} alt="" className="w-full h-full object-cover" />
+                                                    <Image src={service.thumbnail_url} alt="" fill className="object-cover" />
                                                 ) : (
                                                     <div className="w-full h-full bg-primary/10" />
                                                 )}

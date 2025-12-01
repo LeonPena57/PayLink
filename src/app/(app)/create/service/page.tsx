@@ -2,8 +2,9 @@
 
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Upload, Loader2, Check, Sparkles, DollarSign, Image as ImageIcon, Briefcase, Plus, X } from "lucide-react";
+import { ArrowLeft, Loader2, Sparkles, DollarSign, Image as ImageIcon, X } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { supabase } from "@/lib/supabase/client";
 import { useUser } from "@/context/UserContext";
 import { clsx } from "clsx";
@@ -179,7 +180,7 @@ export default function CreateServicePage() {
                         <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider ml-2">Thumbnail</label>
                         {thumbnailPreview ? (
                             <div className="relative aspect-video rounded-3xl overflow-hidden border border-border group shadow-sm">
-                                <img src={thumbnailPreview} alt="Preview" className="w-full h-full object-cover" />
+                                <Image src={thumbnailPreview} alt="Preview" fill className="object-cover" />
                                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
                                 <button
                                     type="button"

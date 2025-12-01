@@ -79,12 +79,17 @@
   --warning: #FF9F0A;
 }
 
+html,
+body {
+  overflow-x: clip;
+  /* Better than hidden for sticky */
+}
+
 body {
   background-color: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans);
   transition: background-color 0.3s ease, color 0.3s ease;
-  overflow-x: hidden;
 }
 
 /* Custom Scrollbar */

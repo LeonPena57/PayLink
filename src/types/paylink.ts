@@ -141,3 +141,13 @@ export type PortfolioItem = {
     likes?: { count: number }[];
     comments?: { count: number }[];
 };
+
+export type Review = {
+    id: string;
+    order_id: string;
+    reviewer_id: string;
+    reviewee_id: string;
+    rating: number;
+    comment: string | null;
+    created_at: string;
+};

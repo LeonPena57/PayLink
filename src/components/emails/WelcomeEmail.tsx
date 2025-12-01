@@ -7,7 +7,7 @@ interface WelcomeEmailProps {
 export const WelcomeEmail: React.FC<WelcomeEmailProps> = ({ username }) => (
     <div style={{ fontFamily: 'sans-serif', color: '#333' }}>
         <h1>Welcome to PayLink, {username}!</h1>
-        <p>We're excited to have you on board. PayLink is the best place to manage your creative business.</p>
+        <p>We&apos;re excited to have you on board. PayLink is the best place to manage your creative business.</p>
         <p>Here are a few things you can do to get started:</p>
         <ul>
             <li>Complete your profile</li>

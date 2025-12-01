@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useUser } from "@/context/UserContext";
 import { supabase } from "@/lib/supabase/client";
 import { Shield, Users, DollarSign, AlertTriangle, Search, User } from "lucide-react";
+import Image from "next/image";
 import clsx from "clsx";
 
 export default function AdminPage() {
@@ -13,6 +14,7 @@ export default function AdminPage() {
         totalRevenue: 12500, // Mocked
         activeDisputes: 3
     });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [users, setUsers] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -61,6 +63,7 @@ export default function AdminPage() {
         }
     }, [user]);
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if (!loading && (!user || (profile as any)?.is_admin === false)) {
         // We can do a better check here, but for now relying on the fetch logic or profile context if updated
         // Ideally profile context should have is_admin
@@ -146,7 +149,7 @@ export default function AdminPage() {
                                             <div className="flex items-center gap-3">
                                                 <div className="w-8 h-8 bg-muted rounded-full overflow-hidden">
                                                     {u.avatar_url ? (
-                                                        <img src={u.avatar_url} alt={u.username} className="w-full h-full object-cover" />
+                                                        <Image src={u.avatar_url} alt={u.username} fill className="object-cover" />
                                                     ) : (
                                                         <User className="w-4 h-4 m-2 text-muted-foreground" />
                                                     )}

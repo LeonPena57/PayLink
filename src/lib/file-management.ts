@@ -25,7 +25,7 @@ export async function uploadOrderFile(
 
     // Note: 'order-files' bucket needs to be created in Supabase if not exists, 
     // or we can use a generic 'files' bucket. Assuming 'order-files' for now based on plan.
-    const { data: uploadData, error: uploadError } = await supabase.storage
+    const { error: uploadError } = await supabase.storage
         .from('order-files')
         .upload(filePath, file);
 

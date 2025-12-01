@@ -4,11 +4,12 @@ import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import { useUser } from "@/context/UserContext";
-import { MapPin, Link as LinkIcon, Twitter, Instagram, Twitch, Grid as GridIcon, ShoppingBag, Package, Heart, UserPlus, UserCheck, MessageCircle } from "lucide-react";
+import { MapPin, Twitter, Instagram, Twitch, Grid as GridIcon, ShoppingBag, Heart, UserPlus, UserCheck, MessageCircle, DollarSign } from "lucide-react";
 import clsx from "clsx";
 import Link from "next/link";
 import Image from "next/image";
 import { PostModal } from "@/components/features/PostModal";
+import { TipModal } from "@/components/features/TipModal";
 import { useToast } from "@/context/ToastContext";
 
 export default function PublicProfilePage({ params }: { params: Promise<{ username: string }> }) {
@@ -16,7 +17,9 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
     const router = useRouter();
     const { user: currentUser } = useUser();
     const { toast } = useToast();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [profile, setProfile] = useState<any>(null);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [portfolioItems, setPortfolioItems] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [isFollowing, setIsFollowing] = useState(false);
@@ -25,9 +28,12 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
     const [stats, setStats] = useState({ followers: 0, following: 0, is_following: false });
 
     // Post Modal State
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [selectedPost, setSelectedPost] = useState<any>(null);
     const [isPostModalOpen, setIsPostModalOpen] = useState(false);
+    const [isTipModalOpen, setIsTipModalOpen] = useState(false);
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handlePostClick = (post: any) => {
         // Inject profile data since we know the post belongs to this profile
         const postWithUser = {
@@ -44,55 +50,60 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
         setIsPostModalOpen(true);
     };
 
+
+
+
+
+
+
     useEffect(() => {
+        const fetchProfile = async () => {
+            setLoading(true);
+            // 1. Fetch Profile
+            const { data: profileData, error: profileError } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('username', username)
+                .single();
+
+            if (profileError || !profileData) {
+                setLoading(false);
+                return;
+            }
+
+            setProfile(profileData);
+
+            // 2. Fetch Portfolio
+            const { data: portfolioData } = await supabase
+                .from('portfolio_items')
+                .select('*')
+                .eq('user_id', profileData.id)
+                .order('created_at', { ascending: false });
+
+            if (portfolioData) setPortfolioItems(portfolioData);
+            setLoading(false);
+        };
         fetchProfile();
     }, [username]);
 
     useEffect(() => {
+        const fetchStats = async () => {
+            if (!profile) return;
+
+            // Use the RPC function we created
+            const { data } = await supabase
+                .rpc('get_profile_stats', { target_user_id: profile.id });
+
+            if (data) {
+                setStats(data);
+                setIsFollowing(data.is_following);
+            }
+        };
+
         if (profile) {
             fetchStats();
         }
-    }, [profile, currentUser]); // Re-fetch if user changes (login/logout)
-
-    const fetchProfile = async () => {
-        setLoading(true);
-        // 1. Fetch Profile
-        const { data: profileData, error: profileError } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('username', username)
-            .single();
-
-        if (profileError || !profileData) {
-            setLoading(false);
-            return;
-        }
-
-        setProfile(profileData);
-
-        // 2. Fetch Portfolio
-        const { data: portfolioData } = await supabase
-            .from('portfolio_items')
-            .select('*')
-            .eq('user_id', profileData.id)
-            .order('created_at', { ascending: false });
-
-        if (portfolioData) setPortfolioItems(portfolioData);
-        setLoading(false);
-    };
-
-    const fetchStats = async () => {
-        if (!profile) return;
-
-        // Use the RPC function we created
-        const { data, error } = await supabase
-            .rpc('get_profile_stats', { target_user_id: profile.id });
-
-        if (data) {
-            setStats(data);
-            setIsFollowing(data.is_following);
-        }
-    };
+    }, [profile, currentUser]);
 
     const handleFollowToggle = async () => {
         if (!currentUser) {
@@ -171,13 +182,20 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
                     setPortfolioItems(prev => prev.map(item => item.id === updatedPost.id ? { ...item, ...updatedPost } : item));
                 }}
             />
+            <TipModal
+                isOpen={isTipModalOpen}
+                onClose={() => setIsTipModalOpen(false)}
+                receiverId={profile.id}
+                receiverName={profile.full_name}
+                receiverUsername={profile.username}
+            />
             {/* Profile Header */}
             <div className="relative group pb-4">
                 {/* Banner */}
                 <div className="h-64 md:h-96 w-full relative overflow-hidden">
                     {profile.banner_url ? (
                         <div className="absolute inset-0">
-                            <Image src={profile.banner_url} alt="Profile Banner" fill className="object-cover" priority />
+                            <Image src={profile.banner_url} alt="Profile Banner" fill className="object-cover" sizes="100vw" priority />
                             <div className="absolute inset-0 dark:bg-black/20" />
                             <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
                         </div>
@@ -198,7 +216,7 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
                             <div className="w-40 h-40 md:w-56 md:h-56 rounded-[2.5rem] p-1.5 bg-background shadow-2xl shadow-black/20">
                                 <div className="w-full h-full rounded-[2rem] bg-muted overflow-hidden relative border border-border">
                                     {profile.avatar_url ? (
-                                        <Image src={profile.avatar_url} alt="Avatar" fill className="object-cover" priority />
+                                        <Image src={profile.avatar_url} alt="Avatar" fill className="object-cover" sizes="(max-width: 768px) 160px, 224px" priority />
                                     ) : (
                                         <div
                                             className="w-full h-full flex items-center justify-center text-white text-6xl md:text-7xl font-black italic tracking-tighter"
@@ -254,51 +272,45 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
                                     {profile.bio || "No bio information provided."}
                                 </p>
 
-                                {/* Social Pills */}
-                                <div className="flex flex-col md:flex-row items-center gap-4 pt-2">
-                                    <div className="flex flex-wrap items-center justify-center md:justify-start gap-3">
-                                        {profile.social_links?.twitter && (
-                                            <a href={`https://twitter.com/${profile.social_links.twitter}`} target="_blank" className="px-4 py-2 bg-muted/40 border border-border/50 rounded-xl hover:border-blue-400/50 hover:bg-blue-400/10 hover:text-[#1DA1F2] text-muted-foreground hover:scale-105 transition-all flex items-center gap-2 font-bold text-sm">
-                                                <Twitter className="w-4 h-4" fill="currentColor" />
-                                                Twitter
-                                            </a>
-                                        )}
-                                        {profile.social_links?.instagram && (
-                                            <a href={`https://instagram.com/${profile.social_links.instagram}`} target="_blank" className="px-4 py-2 bg-muted/40 border border-border/50 rounded-xl hover:border-pink-500/50 hover:bg-pink-500/10 hover:text-[#E1306C] text-muted-foreground hover:scale-105 transition-all flex items-center gap-2 font-bold text-sm">
-                                                <Instagram className="w-4 h-4" />
-                                                Instagram
-                                            </a>
-                                        )}
-                                        {profile.social_links?.twitch && (
-                                            <a href={`https://twitch.tv/${profile.social_links.twitch}`} target="_blank" className="px-4 py-2 bg-muted/40 border border-border/50 rounded-xl hover:border-purple-500/50 hover:bg-purple-500/10 hover:text-[#9146FF] text-muted-foreground hover:scale-105 transition-all flex items-center gap-2 font-bold text-sm">
-                                                <Twitch className="w-4 h-4" fill="currentColor" />
-                                                Twitch
-                                            </a>
-                                        )}
-                                    </div>
+                                {/* Social Icons */}
+                                <div className="flex items-center justify-center md:justify-start gap-3 pt-2">
+                                    {profile.social_links?.twitter && (
+                                        <a href={`https://twitter.com/${profile.social_links.twitter}`} target="_blank" className="p-2 bg-muted/50 rounded-full hover:bg-[#1DA1F2]/10 hover:text-[#1DA1F2] text-muted-foreground transition-all hover:scale-110">
+                                            <Twitter className="w-5 h-5" fill="currentColor" />
+                                        </a>
+                                    )}
+                                    {profile.social_links?.instagram && (
+                                        <a href={`https://instagram.com/${profile.social_links.instagram}`} target="_blank" className="p-2 bg-muted/50 rounded-full hover:bg-[#E1306C]/10 hover:text-[#E1306C] text-muted-foreground transition-all hover:scale-110">
+                                            <Instagram className="w-5 h-5" />
+                                        </a>
+                                    )}
+                                    {profile.social_links?.twitch && (
+                                        <a href={`https://twitch.tv/${profile.social_links.twitch}`} target="_blank" className="p-2 bg-muted/50 rounded-full hover:bg-[#9146FF]/10 hover:text-[#9146FF] text-muted-foreground transition-all hover:scale-110">
+                                            <Twitch className="w-5 h-5" fill="currentColor" />
+                                        </a>
+                                    )}
                                 </div>
-
 
                                 {/* Actions */}
                                 {!isOwner && (
-                                    <div className="flex items-center justify-center md:justify-start gap-3 pt-2">
+                                    <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 pt-4 w-full md:w-auto">
                                         <button
                                             onClick={handleFollowToggle}
                                             className={clsx(
-                                                "px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-all shadow-lg active:scale-95",
+                                                "px-6 py-2.5 rounded-full font-bold flex items-center justify-center gap-2 transition-all shadow-sm active:scale-95 text-sm",
                                                 isFollowing
-                                                    ? "bg-card border border-border text-foreground hover:bg-muted"
-                                                    : "bg-primary text-primary-foreground hover:opacity-90"
+                                                    ? "bg-muted border border-border text-foreground hover:bg-muted/80"
+                                                    : "bg-foreground text-background hover:opacity-90"
                                             )}
                                         >
                                             {isFollowing ? (
                                                 <>
-                                                    <UserCheck className="w-5 h-5" />
+                                                    <UserCheck className="w-4 h-4" />
                                                     Following
                                                 </>
                                             ) : (
                                                 <>
-                                                    <UserPlus className="w-5 h-5" />
+                                                    <UserPlus className="w-4 h-4" />
                                                     Follow
                                                 </>
                                             )}
@@ -311,10 +323,17 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
                                                 }
                                                 router.push(`/messages?chat_with=${profile.id}`);
                                             }}
-                                            className="px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-all shadow-lg active:scale-95 bg-card border border-border text-foreground hover:bg-muted"
+                                            className="px-6 py-2.5 rounded-full font-bold flex items-center justify-center gap-2 transition-all shadow-sm active:scale-95 bg-muted border border-border text-foreground hover:bg-muted/80 text-sm"
                                         >
-                                            <MessageCircle className="w-5 h-5" />
+                                            <MessageCircle className="w-4 h-4" />
                                             Message
+                                        </button>
+                                        <button
+                                            onClick={() => setIsTipModalOpen(true)}
+                                            className="px-4 py-2.5 rounded-full font-bold flex items-center justify-center gap-2 transition-all shadow-sm active:scale-95 bg-green-500/10 text-green-600 hover:bg-green-500/20 border border-green-500/20 text-sm"
+                                        >
+                                            <DollarSign className="w-4 h-4" />
+                                            Tip
                                         </button>
                                     </div>
                                 )}
@@ -325,31 +344,32 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
                         </div>
                     </div>
 
-                    {/* Navigation Tabs */}
-                    <div className="mt-12 border-b border-border">
-                        <div className="flex gap-8 overflow-x-auto max-w-full pb-px no-scrollbar justify-start">
-                            {["POSTS", "SHOP"].map((tab) => (
-                                <button
-                                    key={tab}
-                                    onClick={() => setActiveTab(tab)}
-                                    className={clsx(
-                                        "py-3 md:py-4 px-4 md:px-6 text-xs md:text-sm font-black tracking-widest border-b-[3px] transition-all flex items-center gap-2 uppercase",
-                                        activeTab === tab
-                                            ? "text-foreground"
-                                            : "border-transparent text-muted-foreground hover:text-foreground"
-                                    )}
-                                    style={{
-                                        borderColor: activeTab === tab ? accentColor : "transparent",
-                                        color: activeTab === tab ? accentColor : undefined
-                                    }}
-                                >
-                                    {tab === "POSTS" && <GridIcon className="w-4 h-4" />}
-                                    {tab === "SHOP" && <ShoppingBag className="w-4 h-4" />}
-                                    {tab}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
+                </div>
+            </div>
+
+            {/* Navigation Tabs */}
+            <div className="border-b border-border">
+                <div className="flex gap-8 overflow-x-auto max-w-full pb-px no-scrollbar justify-start px-4 md:px-0 max-w-7xl mx-auto">
+                    {["POSTS", "SHOP"].map((tab) => (
+                        <button
+                            key={tab}
+                            onClick={() => setActiveTab(tab)}
+                            className={clsx(
+                                "py-3 md:py-4 px-4 md:px-6 text-xs md:text-sm font-black tracking-widest border-b-[3px] transition-all flex items-center gap-2 uppercase shrink-0",
+                                activeTab === tab
+                                    ? "text-foreground"
+                                    : "border-transparent text-muted-foreground hover:text-foreground"
+                            )}
+                            style={{
+                                borderColor: activeTab === tab ? accentColor : "transparent",
+                                color: activeTab === tab ? accentColor : undefined
+                            }}
+                        >
+                            {tab === "POSTS" && <GridIcon className="w-4 h-4" />}
+                            {tab === "SHOP" && <ShoppingBag className="w-4 h-4" />}
+                            {tab}
+                        </button>
+                    ))}
                 </div>
             </div>
 
@@ -365,7 +385,7 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
                                 <div>
                                     <h3 className="text-xl font-bold text-foreground">No Portfolio Items</h3>
                                     <p className="text-muted-foreground max-w-sm mx-auto mt-2">
-                                        This user hasn't added any projects yet.
+                                        This user hasn&apos;t added any projects yet.
                                     </p>
                                 </div>
                             </div>
@@ -423,7 +443,7 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
                             <div>
                                 <h3 className="text-xl font-bold text-foreground">Shop is Empty</h3>
                                 <p className="text-muted-foreground max-w-sm mx-auto mt-2">
-                                    This user hasn't listed any products yet.
+                                    This user hasn&apos;t listed any products yet.
                                 </p>
                             </div>
                         </div>

@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase/client';
-import { Order, OrderStatus, Service, ServiceTier, Transaction, SellerMetrics, ProfileStats } from '@/types/paylink';
+import { Order, OrderStatus, Service, ServiceTier, SellerMetrics, ProfileStats } from '@/types/paylink';
 
 // --- Services & Tiers ---
 

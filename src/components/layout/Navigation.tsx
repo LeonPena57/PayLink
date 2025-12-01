@@ -1,6 +1,6 @@
 "use client";
 
-import { Home, Receipt, QrCode, User, Plus, Menu, LogOut, Settings, Sun, Moon, FolderOpen, MessageCircle, ShoppingBag, Globe, X } from "lucide-react";
+import { Home, Receipt, QrCode, User, Plus, Menu, LogOut, Settings, Sun, Moon, FolderOpen, MessageCircle, ShoppingBag, Globe, X, Zap, DollarSign } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import clsx from "clsx";
@@ -8,12 +8,14 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "next-themes";
 import { useUser } from "@/context/UserContext";
+import Image from "next/image";
 
 export function Navigation() {
     const pathname = usePathname();
     const router = useRouter();
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [activeHash, setActiveHash] = useState("");
 
     const { theme, setTheme } = useTheme();
     const { user, profile } = useUser();
@@ -21,262 +23,158 @@ export function Navigation() {
 
     useEffect(() => {
         setMounted(true);
+        // Set initial hash
+        setActiveHash(window.location.hash);
+
+        // Listen for hash changes
+        const handleHashChange = () => {
+            setActiveHash(window.location.hash);
+        };
+
+        window.addEventListener("hashchange", handleHashChange);
+        return () => window.removeEventListener("hashchange", handleHashChange);
     }, []);
 
     if (!mounted) return null;
 
     // Hide navigation on auth pages
-    if (pathname === "/login" || pathname === "/signup") {
-        return null;
-    }
+    // if (pathname === "/login" || pathname === "/signup") {
+    //     return null;
+    // }
 
-    // ... (items arrays remain same)
+    // Hide navigation on PayLink pages as they have their own layout
+    // if (pathname?.startsWith("/pay/")) {
+    //     return null;
+    // }
 
-    const handleSettingsClick = (e: React.MouseEvent) => {
-        e.preventDefault();
-        if (pathname === "/settings") {
-            router.push("/dashboard");
-        } else {
-            router.push("/settings");
+    const navItems = user ? [
+        { name: "HOME", href: "/home", icon: Home },
+        { name: "ORDERS", href: "/receipts", icon: Receipt },
+        { name: "CREATE", href: "/create", icon: Plus, variant: "special" },
+        { name: "MESSAGES", href: "/messages", icon: MessageCircle },
+        { name: "ACCOUNT", href: "/settings", icon: User }
+    ] : [
+        { name: "HOME", href: "/", icon: Home },
+        { name: "EXPLORE", href: "/home", icon: Globe },
+        { name: "FEATURES", href: "/#features", icon: Zap },
+        { name: "PRICING", href: "/#pricing", icon: DollarSign },
+        { name: "LOGIN", href: "/login", icon: User }
+    ];
+
+    const isActive = (href: string) => {
+        if (href.startsWith("/#")) {
+            return pathname === "/" && activeHash === href.substring(1);
         }
+        if (href === "/") {
+            return pathname === "/" && !activeHash;
+        }
+        return pathname === href;
     };
-
-    // Items specifically for the Desktop Sidebar (Main)
-    const desktopSidebarItems = [
-        { name: "Home", href: "/home", icon: Home },
-        { name: "Messages", href: "/messages", icon: MessageCircle },
-        { name: "Shop", href: "/shop", icon: ShoppingBag },
-        { name: "Files", href: "/drive", icon: FolderOpen },
-        { name: "Orders", href: "/receipts", icon: Receipt },
-        { name: "Account", href: "/settings", icon: User },
-        { name: "Settings", href: "/settings", icon: Settings },
-        { name: "About", href: "/", icon: Globe },
-    ];
-
-    // Items for the Mobile Bottom Bar (Key Features - 5 items for centered Create)
-    const bottomNavItems = [
-        { name: "Home", href: "/home", icon: Home },
-        { name: "QR Code", href: "/qr", icon: QrCode },
-        { name: "Create", href: "/create", icon: Plus },
-        { name: "Orders", href: "/receipts", icon: Receipt },
-        { name: "Account", href: "/settings", icon: User },
-    ];
-
-    // Unauthenticated Navigation
-    if (!user) {
-        return (
-            <>
-                {/* Desktop Header (Unauthenticated) */}
-                <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 dark:bg-[#0a0a0a]/80 backdrop-blur-xl border-b border-gray-200 dark:border-white/5 h-20 flex items-center justify-between px-6 transition-colors duration-300">
-                    <div className="flex items-center gap-8">
-                        <Link href="/" className="flex items-center gap-3">
-                            <img src="/PayLinkLOGO.svg" alt="PayLink Logo" className="w-10 h-10 object-contain invert dark:invert-0" />
-                            <span className="font-black tracking-tighter text-2xl italic bg-clip-text text-transparent bg-gradient-to-r from-black to-gray-600 dark:from-white dark:to-gray-400">PAYLINK</span>
-                        </Link>
-                        <nav className="hidden md:flex items-center gap-8 text-sm font-bold text-gray-600 dark:text-gray-400">
-                            <Link href="/" className="hover:text-black dark:hover:text-white transition-colors">Home</Link>
-                            <Link href="/#features" className="hover:text-black dark:hover:text-white transition-colors">Features</Link>
-                            <Link href="/#how-it-works" className="hover:text-black dark:hover:text-white transition-colors">How it Works</Link>
-                            <Link href="/#pricing" className="hover:text-black dark:hover:text-white transition-colors">Pricing</Link>
-                            <Link href="/home" className={clsx("hover:text-black dark:hover:text-white transition-colors", pathname === "/home" ? "text-primary dark:text-primary" : "")}>Explore</Link>
-                        </nav>
-                    </div>
-                    <div className="hidden md:flex items-center gap-4">
-                        <button
-                            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                            className="p-2 text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors"
-                        >
-                            {theme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-                        </button>
-                        <Link href="/login" className="text-sm font-bold text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors px-4 py-2">
-                            Log in
-                        </Link>
-                        <Link
-                            href="/signup"
-                            className="px-6 py-2.5 bg-black dark:bg-white text-white dark:text-black text-sm font-bold rounded-full hover:bg-gray-800 dark:hover:bg-gray-200 transition-all hover:scale-105 shadow-lg"
-                        >
-                            Get Started
-                        </Link>
-                    </div>
-
-                    {/* Mobile Menu Button */}
-                    <div className="md:hidden flex items-center gap-4">
-                        <button
-                            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                            className="p-2 text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors"
-                        >
-                            {theme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-                        </button>
-                        <button className="text-black dark:text-white" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
-                            {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-                        </button>
-                    </div>
-                </header>
-
-                {/* Mobile Menu Overlay */}
-                <AnimatePresence>
-                    {isMobileMenuOpen && (
-                        <motion.div
-                            initial={{ opacity: 0, y: -20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -20 }}
-                            className="fixed top-20 left-0 right-0 bg-white dark:bg-[#0a0a0a] border-b border-gray-200 dark:border-white/10 p-6 flex flex-col gap-4 z-[60] md:hidden shadow-2xl"
-                        >
-                            <Link href="/" className="text-lg font-bold text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white" onClick={() => setIsMobileMenuOpen(false)}>Home</Link>
-                            <Link href="/#features" className="text-lg font-bold text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white" onClick={() => setIsMobileMenuOpen(false)}>Features</Link>
-                            <Link href="/#how-it-works" className="text-lg font-bold text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white" onClick={() => setIsMobileMenuOpen(false)}>How it Works</Link>
-                            <Link href="/#pricing" className="text-lg font-bold text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white" onClick={() => setIsMobileMenuOpen(false)}>Pricing</Link>
-                            <Link href="/home" className="text-lg font-bold text-primary dark:text-primary hover:text-primary/80 dark:hover:text-primary/80" onClick={() => setIsMobileMenuOpen(false)}>Explore</Link>
-                            <div className="h-px bg-gray-200 dark:bg-white/10 my-2" />
-                            <Link href="/login" className="text-lg font-bold text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white" onClick={() => setIsMobileMenuOpen(false)}>Log in</Link>
-                            <Link href="/signup" className="px-6 py-3 bg-black dark:bg-white text-white dark:text-black text-center font-bold rounded-full hover:opacity-90 transition-opacity" onClick={() => setIsMobileMenuOpen(false)}>Get Started</Link>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-            </>
-        );
-    }
 
     return (
         <>
             {/* Desktop Header */}
             <header className="hidden md:flex items-center justify-between px-8 py-4 bg-white/90 dark:bg-[#1a1a1a]/90 backdrop-blur-md border-b border-gray-200 dark:border-[#333] sticky top-0 z-50 w-full">
                 <div className="flex items-center gap-8">
-                    <Link href="/home" className="flex items-center gap-2">
-                        <div className="w-8 h-8 flex items-center justify-center">
-                            <img src="/PayLinkLOGO.svg" alt="PayLink" className="w-full h-full object-contain invert dark:invert-0" />
+                    <Link href={user ? "/home" : "/"} className="flex items-center gap-2">
+                        <div className="relative w-8 h-8 flex items-center justify-center">
+                            <Image src="/logo.png" alt="PayLink" fill className="object-contain brightness-0 dark:brightness-100 dark:invert-0" sizes="32px" />
                         </div>
                         <span className="font-black text-xl tracking-tighter italic text-black dark:text-white">PAYLINK</span>
                     </Link>
                     <nav className="flex items-center gap-6">
-                        <Link
-                            href="/home"
-                            className={clsx(
-                                "text-sm font-bold transition-colors hover:text-black dark:hover:text-white",
-                                pathname === "/home" ? "text-black dark:text-white" : "text-gray-500 dark:text-gray-400"
-                            )}
-                        >
-                            HOME
-                        </Link>
-                        <Link
-                            href="/receipts"
-                            className={clsx(
-                                "text-sm font-bold transition-colors hover:text-black dark:hover:text-white",
-                                pathname === "/receipts" ? "text-black dark:text-white" : "text-gray-500 dark:text-gray-400"
-                            )}
-                        >
-                            ORDERS
-                        </Link>
-                        <Link
-                            href="/create"
-                            className={clsx(
-                                "text-sm font-bold transition-colors hover:text-black dark:hover:text-white",
-                                pathname === "/create" ? "text-black dark:text-white" : "text-gray-500 dark:text-gray-400"
-                            )}
-                        >
-                            CREATE
-                        </Link>
-                        <Link
-                            href="/messages"
-                            className={clsx(
-                                "text-sm font-bold transition-colors hover:text-black dark:hover:text-white",
-                                pathname === "/messages" ? "text-black dark:text-white" : "text-gray-500 dark:text-gray-400"
-                            )}
-                        >
-                            MESSAGES
-                        </Link>
+                        {navItems.slice(0, 4).map((item) => (
+                            <Link
+                                key={item.name}
+                                href={item.href}
+                                onClick={() => {
+                                    if (item.href.startsWith("/#")) {
+                                        setActiveHash(item.href.substring(1));
+                                    } else {
+                                        setActiveHash("");
+                                    }
+                                }}
+                                className={clsx(
+                                    "text-sm font-bold transition-colors hover:text-black dark:hover:text-white",
+                                    isActive(item.href) ? "text-black dark:text-white" : "text-gray-500 dark:text-gray-400"
+                                )}
+                            >
+                                {item.name}
+                            </Link>
+                        ))}
                     </nav>
                 </div>
                 <div className="flex items-center gap-4">
                     <Link href="/qr" className="p-2 text-gray-400 hover:text-black dark:hover:text-white transition-colors">
                         <QrCode className="w-5 h-5" />
                     </Link>
-                    <Link href={user ? "/settings" : "/login"} className="w-8 h-8 rounded-full overflow-hidden border border-gray-200 dark:border-[#333] hover:ring-2 ring-primary transition-all">
-                        {profile?.avatar_url ? (
-                            <img src={profile.avatar_url} alt="User" className="w-full h-full object-cover" />
-                        ) : (
-                            <div className="w-full h-full bg-gray-200 dark:bg-gray-800 flex items-center justify-center">
-                                <User className="w-4 h-4 text-gray-500" />
-                            </div>
-                        )}
-                    </Link>
+                    {user ? (
+                        <Link href="/settings" className="relative w-8 h-8 rounded-full overflow-hidden border border-gray-200 dark:border-[#333] hover:ring-2 ring-primary transition-all">
+                            {profile?.avatar_url ? (
+                                <Image src={profile.avatar_url} alt="User" fill className="object-cover" sizes="32px" />
+                            ) : (
+                                <div className="w-full h-full bg-gray-200 dark:bg-gray-800 flex items-center justify-center">
+                                    <User className="w-4 h-4 text-gray-500" />
+                                </div>
+                            )}
+                        </Link>
+                    ) : (
+                        <Link href="/login" className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black text-xs font-bold rounded-full hover:scale-105 transition-transform">
+                            Login
+                        </Link>
+                    )}
                 </div>
             </header>
 
             {/* Mobile Bottom Navigation */}
-            <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-md bg-primary rounded-full px-2 py-3 grid grid-cols-5 items-center shadow-2xl z-50 shadow-primary/40">
-                <Link
-                    href="/home"
-                    className={clsx(
-                        "flex flex-col items-center gap-1 transition-colors",
-                        pathname === "/home" ? "text-white" : "text-white/60 hover:text-white"
-                    )}
-                >
-                    <div className="h-8 flex items-center justify-center">
-                        <Home className="w-6 h-6 shrink-0" fill={pathname === "/home" ? "currentColor" : "none"} />
-                    </div>
-                    <span className="text-[10px] font-bold">HOME</span>
-                </Link>
-                <Link
-                    href="/receipts"
-                    className={clsx(
-                        "flex flex-col items-center gap-1 transition-colors",
-                        pathname === "/receipts" ? "text-white" : "text-white/60 hover:text-white"
-                    )}
-                >
-                    <div className="h-8 flex items-center justify-center">
-                        <Receipt
-                            className="w-6 h-6 shrink-0"
-                            fill={pathname === "/receipts" ? "white" : "none"}
-                            stroke={pathname === "/receipts" ? "currentColor" : "currentColor"}
-                        />
-                    </div>
-                    <span className="text-[10px] font-bold">ORDERS</span>
-                </Link>
-                <Link
-                    href="/create"
-                    className={clsx(
-                        "flex flex-col items-center gap-1 transition-colors",
-                        pathname === "/create" ? "text-white" : "text-white/60 hover:text-white"
-                    )}
-                >
-                    <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-lg shadow-black/10 shrink-0">
-                        <Plus className="w-5 h-5 text-primary" strokeWidth={4} />
-                    </div>
-                    <span className="text-[10px] font-bold">CREATE</span>
-                </Link>
-                <Link
-                    href="/messages"
-                    className={clsx(
-                        "flex flex-col items-center gap-1 transition-colors",
-                        pathname === "/messages" ? "text-white" : "text-white/60 hover:text-white"
-                    )}
-                >
-                    <div className="h-8 flex items-center justify-center">
-                        <MessageCircle className="w-6 h-6 shrink-0" fill={pathname === "/messages" ? "currentColor" : "none"} />
-                    </div>
-                    <span className="text-[10px] font-bold">MESSAGES</span>
-                </Link>
-                <Link
-                    href={user ? "/settings" : "/login"}
-                    className={clsx(
-                        "flex flex-col items-center gap-1 transition-colors",
-                        pathname === "/settings" ? "text-white" : "text-white/60 hover:text-white"
-                    )}
-                >
-                    <div className="h-8 flex items-center justify-center">
-                        <div className={clsx("w-6 h-6 rounded-full overflow-hidden border border-current shrink-0", pathname === "/settings" ? "ring-2 ring-white" : "")}>
-                            {profile?.avatar_url ? (
-                                <img src={profile.avatar_url} alt="User" className="w-full h-full object-cover" />
+            <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-md bg-primary rounded-full px-2 py-3 grid grid-cols-5 items-center shadow-2xl z-[100] shadow-primary/40">
+                {navItems.map((item) => {
+                    const active = isActive(item.href);
+                    return (
+                        <Link
+                            key={item.name}
+                            href={item.href}
+                            onClick={() => {
+                                if (item.href.startsWith("/#")) {
+                                    setActiveHash(item.href.substring(1));
+                                } else {
+                                    setActiveHash("");
+                                }
+                            }}
+                            className={clsx(
+                                "flex flex-col items-center gap-1 transition-colors",
+                                active ? "text-white" : "text-white/60 hover:text-white"
+                            )}
+                        >
+                            {item.variant === "special" ? (
+                                <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-lg shadow-black/10 shrink-0">
+                                    <item.icon className="w-5 h-5 text-primary" strokeWidth={4} />
+                                </div>
                             ) : (
-                                <div className="w-full h-full bg-white/20 flex items-center justify-center">
-                                    <User className="w-4 h-4 text-white" fill={pathname === "/settings" ? "currentColor" : "none"} />
+                                <div className="h-8 flex items-center justify-center">
+                                    {item.name === "ACCOUNT" || item.name === "LOGIN" ? (
+                                        <div className={clsx("relative w-6 h-6 rounded-full overflow-hidden border border-current shrink-0", active ? "ring-2 ring-white" : "")}>
+                                            {user && profile?.avatar_url ? (
+                                                <Image src={profile.avatar_url} alt="User" fill className="object-cover" sizes="24px" />
+                                            ) : (
+                                                <div className="w-full h-full bg-white/20 flex items-center justify-center">
+                                                    <item.icon className="w-4 h-4 text-white" fill={active ? "currentColor" : "none"} />
+                                                </div>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <item.icon
+                                            className="w-6 h-6 shrink-0"
+                                            fill={active ? (item.name === "ORDERS" ? "white" : "currentColor") : "none"}
+                                            stroke={active && item.name === "ORDERS" ? "currentColor" : "currentColor"}
+                                        />
+                                    )}
                                 </div>
                             )}
-                        </div>
-                    </div>
-                    <span className="text-[10px] font-bold">{user ? "ACCOUNT" : "LOGIN"}</span>
-                </Link>
+                            <span className="text-[10px] font-bold">{item.name}</span>
+                        </Link>
+                    );
+                })}
             </div>
         </>
     );

@@ -1,9 +1,9 @@
 "use client";
 
-import { Wallet, ArrowRight, Zap, Building2, CheckCircle2 } from "lucide-react";
+import { ArrowRight, Zap, Building2, CheckCircle2 } from "lucide-react";
 import { useState } from "react";
 import clsx from "clsx";
-import { motion } from "framer-motion";
+
 
 interface WalletWithdrawalProps {
     balance: number;

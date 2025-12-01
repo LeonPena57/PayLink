@@ -2,14 +2,15 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase/client";
-import { Loader2, Sun, Moon, Check, Download, FileText, Image as ImageIcon, Bell, User } from "lucide-react";
+import { Loader2, Sun, Moon, Download, FileText, Bell, User } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import clsx from "clsx";
-import { format } from "date-fns";
+
 
 export default function PaylinkPage({ params }: { params: { id: string } }) {
     const [loading, setLoading] = useState(true);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
     const [order, setOrder] = useState<any>(null);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [seller, setSeller] = useState<any>(null);
@@ -46,48 +47,51 @@ export default function PaylinkPage({ params }: { params: { id: string } }) {
         status: "incomplete" // or 'completed'
     };
 
+
+
+
+
     useEffect(() => {
-        fetchOrderDetails();
-    }, [params.id]);
-
-    const fetchOrderDetails = async () => {
-        setLoading(true);
-        // Try to fetch real order
-        const { data: orderData, error } = await supabase
-            .from('orders')
-            .select('*')
-            .eq('id', params.id)
-            .single();
-
-        if (orderData) {
-            setOrder(orderData);
-            setIsPaid(orderData.status === 'completed' || orderData.status === 'delivered');
-
-            // Fetch Seller
-            const { data: sellerData } = await supabase
-                .from('profiles')
+        const fetchOrderDetails = async () => {
+            setLoading(true);
+            // Try to fetch real order
+            const { data: orderData } = await supabase
+                .from('orders')
                 .select('*')
-                .eq('id', orderData.seller_id)
+                .eq('id', params.id)
                 .single();
 
-            if (sellerData) setSeller(sellerData);
+            if (orderData) {
+                setOrder(orderData);
+                setIsPaid(orderData.status === 'completed' || orderData.status === 'delivered');
 
-            // Parse items from JSONB or use mock if empty
-            if (orderData.items && Array.isArray(orderData.items) && orderData.items.length > 0) {
-                setItems(orderData.items);
+                // Fetch Seller
+                const { data: sellerData } = await supabase
+                    .from('profiles')
+                    .select('*')
+                    .eq('id', orderData.seller_id)
+                    .single();
+
+                if (sellerData) setSeller(sellerData);
+
+                // Parse items from JSONB or use mock if empty
+                if (orderData.items && Array.isArray(orderData.items) && orderData.items.length > 0) {
+                    setItems(orderData.items);
+                } else {
+                    // Fallback to service details if no items
+                    // For now, let's use the mock items if real items are missing to show the UI
+                    setItems(MOCK_DATA.items);
+                }
             } else {
-                // Fallback to service details if no items
-                // For now, let's use the mock items if real items are missing to show the UI
+                // Use Mock Data if order not found (for demo purposes as requested)
+                setSeller(MOCK_DATA.seller);
                 setItems(MOCK_DATA.items);
+                setOrder({ status: 'incomplete', price: MOCK_DATA.total });
             }
-        } else {
-            // Use Mock Data if order not found (for demo purposes as requested)
-            setSeller(MOCK_DATA.seller);
-            setItems(MOCK_DATA.items);
-            setOrder({ status: 'incomplete', price: MOCK_DATA.total });
-        }
-        setLoading(false);
-    };
+            setLoading(false);
+        };
+        fetchOrderDetails();
+    }, [params.id]);
 
     const handlePayment = async () => {
         // Simulate payment
@@ -145,7 +149,7 @@ export default function PaylinkPage({ params }: { params: { id: string } }) {
                     <h1 className="text-2xl font-black italic tracking-wider uppercase">{seller?.username || "SELLER"}</h1>
                     <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white/20 flex items-center justify-center bg-gray-800">
                         {seller?.avatar_url ? (
-                            <img src={seller.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+                            <Image src={seller.avatar_url} alt="Avatar" fill className="object-cover" />
                         ) : (
                             <User className="w-6 h-6 text-gray-400" />
                         )}
@@ -160,7 +164,7 @@ export default function PaylinkPage({ params }: { params: { id: string } }) {
                             {items.map((item) => (
                                 <div key={item.id} className="flex gap-4">
                                     <div className="w-24 h-16 rounded-lg overflow-hidden bg-gray-800 shrink-0">
-                                        <img src={item.image} alt={item.title} className="w-full h-full object-cover" />
+                                        <Image src={item.image} alt={item.title} fill className="object-cover" />
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <h3 className="font-bold text-sm italic truncate">{item.title}</h3>
@@ -217,7 +221,7 @@ export default function PaylinkPage({ params }: { params: { id: string } }) {
                         {items.map((item) => (
                             <div key={item.id} className="bg-[#222] border border-blue-500/30 rounded-2xl p-3 flex flex-col gap-3">
                                 <div className="aspect-video rounded-xl overflow-hidden bg-gray-800 relative group cursor-pointer">
-                                    <img src={item.image} alt={item.title} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
+                                    <Image src={item.image} alt={item.title} fill className="object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
                                     {/* Overlay for file type/actions */}
                                     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40">
                                         <Download className="w-8 h-8 text-white" />
@@ -270,7 +274,7 @@ export default function PaylinkPage({ params }: { params: { id: string } }) {
                 <Link href="/account" className="flex flex-col items-center gap-1 opacity-70 hover:opacity-100">
                     <div className="w-6 h-6 rounded-full bg-black border border-white/20 overflow-hidden flex items-center justify-center">
                         {seller?.avatar_url ? (
-                            <img src={seller.avatar_url} className="w-full h-full object-cover" />
+                            <Image src={seller.avatar_url} alt="Seller Avatar" fill className="object-cover" />
                         ) : (
                             <User className="w-4 h-4 text-gray-400" />
                         )}
