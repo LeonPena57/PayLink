@@ -9,7 +9,9 @@ import { CartModal } from "@/components/features/dashboard/CartModal";
 import { SubscriptionModal } from "@/components/features/dashboard/SubscriptionModal";
 import { AddPortfolioItemModal } from "@/components/features/dashboard/AddPortfolioItemModal";
 import { CreateProductModal } from "@/components/features/dashboard/CreateProductModal";
-import { Twitter, Instagram, Twitch, Camera, Edit3, MapPin, Plus, Check, User, Settings, ShoppingBag, Grid as GridIcon, Package, Heart, MoreHorizontal, Eye, MousePointerClick, Percent, TrendingUp } from "lucide-react";
+import { ProfileCompletenessWidget } from "@/components/features/dashboard/ProfileCompletenessWidget";
+import { AnalyticsChart } from "@/components/features/dashboard/AnalyticsChart";
+import { Twitter, Instagram, Twitch, Camera, Edit3, MapPin, Plus, Check, User, Settings, ShoppingBag, Grid as GridIcon, Package, Heart, MoreHorizontal, Eye, MousePointerClick, Percent, TrendingUp, DollarSign, BarChart3 } from "lucide-react";
 import clsx from "clsx";
 import Link from "next/link";
 import Image from "next/image";
@@ -17,7 +19,7 @@ import { useUser } from "@/context/UserContext";
 import { supabase } from "@/lib/supabase/client";
 import { useSearchParams } from "next/navigation";
 
-const SELLER_TABS = ["SERVICES", "PORTFOLIO", "SHOP"];
+const SELLER_TABS = ["SERVICES", "ANALYTICS", "PORTFOLIO", "SHOP"];
 const BUYER_TABS = ["ORDERS", "SAVED", "FOLLOWING"];
 
 function DashboardContent() {
@@ -53,6 +55,18 @@ function DashboardContent() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [followingList, setFollowingList] = useState<any[]>([]);
     const [loadingFollowing, setLoadingFollowing] = useState(false);
+
+    // Analytics State
+    const [analytics, setAnalytics] = useState({
+        earnings: 0,
+        completedOrders: 0,
+        activeOrders: 0,
+        avgSellingPrice: 0,
+        impressions: 1245, // Mocked
+        clicks: 342, // Mocked
+        conversionRate: 2.4, // Mocked
+        dailyEarnings: [] as { date: string; amount: number }[]
+    });
 
     const fetchPortfolio = async () => {
         if (!user) return;
@@ -93,11 +107,55 @@ function DashboardContent() {
         setLoadingFollowing(false);
     };
 
+    const fetchAnalytics = async () => {
+        if (!user) return;
+
+        // Fetch Orders
+        const { data: orders } = await supabase
+            .from('orders')
+            .select('amount, status, created_at')
+            .eq('seller_id', user.id);
+
+        if (orders) {
+            const completed = orders.filter(o => o.status === 'completed');
+            const active = orders.filter(o => o.status !== 'completed' && o.status !== 'cancelled');
+            const earnings = completed.reduce((sum, o) => sum + (o.amount || 0), 0);
+
+            // Calculate Daily Earnings (Last 30 Days)
+            const last30Days = [...Array(30)].map((_, i) => {
+                const d = new Date();
+                d.setDate(d.getDate() - (29 - i));
+                return d.toISOString().split('T')[0];
+            });
+
+            const dailyEarningsMap = completed.reduce((acc, order) => {
+                const date = order.created_at.split('T')[0];
+                acc[date] = (acc[date] || 0) + (order.amount || 0);
+                return acc;
+            }, {} as Record<string, number>);
+
+            const dailyEarnings = last30Days.map(date => ({
+                date,
+                amount: dailyEarningsMap[date] || 0
+            }));
+
+            setAnalytics(prev => ({
+                ...prev,
+                earnings,
+                completedOrders: completed.length,
+                activeOrders: active.length,
+                avgSellingPrice: completed.length > 0 ? earnings / completed.length : 0,
+                dailyEarnings
+            }));
+        }
+    };
+
     useEffect(() => {
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setActiveTab(userMode === "SELLER" ? "SERVICES" : "ORDERS");
         if (userMode === "SELLER") {
             fetchPortfolio();
+            fetchAnalytics();
         }
     }, [userMode]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -105,6 +163,9 @@ function DashboardContent() {
         if (activeTab === "FOLLOWING" && userMode === "BUYER") {
             // eslint-disable-next-line react-hooks/set-state-in-effect
             fetchFollowing();
+        }
+        if (activeTab === "ANALYTICS" && userMode === "SELLER") {
+            fetchAnalytics();
         }
     }, [activeTab, userMode]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -342,6 +403,16 @@ function DashboardContent() {
                 </div>
             </div>
 
+            {/* Profile Completeness Widget (Seller Only) */}
+            {userMode === "SELLER" && (
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
+                    <ProfileCompletenessWidget
+                        profile={profile}
+                        onCompleteProfile={() => setIsEditProfileOpen(true)}
+                    />
+                </div>
+            )}
+
             {/* Navigation Tabs */}
             <div className="border-b border-border">
                 <div className="flex gap-8 overflow-x-auto max-w-full pb-px no-scrollbar justify-center md:justify-start max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -361,6 +432,7 @@ function DashboardContent() {
                             }}
                         >
                             {tab === "SERVICES" && <MoreHorizontal className="w-4 h-4" />}
+                            {tab === "ANALYTICS" && <BarChart3 className="w-4 h-4" />}
                             {tab === "PORTFOLIO" && <GridIcon className="w-4 h-4" />}
                             {tab === "SHOP" && <ShoppingBag className="w-4 h-4" />}
                             {tab === "ORDERS" && <Package className="w-4 h-4" />}
@@ -382,6 +454,87 @@ function DashboardContent() {
                                     <div className="lg:col-span-2">
                                         <ServicesWidget />
                                     </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {activeTab === "ANALYTICS" && (
+                            <div className="p-4 md:p-6 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                    {/* Earnings */}
+                                    <div className="bg-card p-6 rounded-3xl border border-border shadow-sm relative overflow-hidden">
+                                        <div className="flex items-center gap-3 text-muted-foreground mb-2">
+                                            <div className="p-2 bg-green-500/10 rounded-full text-green-500">
+                                                <DollarSign className="w-5 h-5" />
+                                            </div>
+                                            <span className="font-bold text-sm uppercase tracking-wider">Total Earnings</span>
+                                        </div>
+                                        <div className="text-3xl font-black text-foreground mb-4">${analytics.earnings.toFixed(2)}</div>
+
+                                        <button
+                                            onClick={() => {
+                                                if (analytics.earnings > 0) {
+                                                    // In a real app, this would trigger a Stripe Payout
+                                                    alert(`Initiating payout of $${analytics.earnings.toFixed(2)} to your connected account.`);
+                                                } else {
+                                                    alert("No funds available to withdraw.");
+                                                }
+                                            }}
+                                            className="w-full py-2 bg-foreground text-background rounded-xl font-bold text-sm hover:opacity-90 transition-opacity"
+                                        >
+                                            Withdraw Funds
+                                        </button>
+                                    </div>
+
+                                    {/* Orders */}
+                                    <div className="bg-card p-6 rounded-3xl border border-border shadow-sm">
+                                        <div className="flex items-center gap-3 text-muted-foreground mb-2">
+                                            <div className="p-2 bg-blue-500/10 rounded-full text-blue-500">
+                                                <Package className="w-5 h-5" />
+                                            </div>
+                                            <span className="font-bold text-sm uppercase tracking-wider">Orders Completed</span>
+                                        </div>
+                                        <div className="text-3xl font-black text-foreground">{analytics.completedOrders}</div>
+                                        <div className="text-xs text-muted-foreground mt-2 font-medium">
+                                            {analytics.activeOrders} Active Orders
+                                        </div>
+                                    </div>
+
+                                    {/* Impressions (Mocked) */}
+                                    <div className="bg-card p-6 rounded-3xl border border-border shadow-sm">
+                                        <div className="flex items-center gap-3 text-muted-foreground mb-2">
+                                            <div className="p-2 bg-purple-500/10 rounded-full text-purple-500">
+                                                <Eye className="w-5 h-5" />
+                                            </div>
+                                            <span className="font-bold text-sm uppercase tracking-wider">Impressions</span>
+                                        </div>
+                                        <div className="text-3xl font-black text-foreground">{analytics.impressions.toLocaleString()}</div>
+                                        <div className="text-xs text-green-500 mt-2 font-bold flex items-center gap-1">
+                                            <TrendingUp className="w-3 h-3" /> +12% vs last week
+                                        </div>
+                                    </div>
+
+                                    {/* Conversion (Mocked) */}
+                                    <div className="bg-card p-6 rounded-3xl border border-border shadow-sm">
+                                        <div className="flex items-center gap-3 text-muted-foreground mb-2">
+                                            <div className="p-2 bg-orange-500/10 rounded-full text-orange-500">
+                                                <Percent className="w-5 h-5" />
+                                            </div>
+                                            <span className="font-bold text-sm uppercase tracking-wider">Conversion Rate</span>
+                                        </div>
+                                        <div className="text-3xl font-black text-foreground">{analytics.conversionRate}%</div>
+                                        <div className="text-xs text-muted-foreground mt-2 font-medium">
+                                            Top 10% of sellers
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Chart */}
+                                <div className="h-[400px]">
+                                    <AnalyticsChart
+                                        data={analytics.dailyEarnings}
+                                        title="Earnings (Last 30 Days)"
+                                    />
                                 </div>
                             </div>
                         )}

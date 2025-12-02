@@ -226,7 +226,7 @@ export default function HomePage() {
             .from('services')
             .select(`
                 *,
-                profiles:seller_id (id, username, full_name, avatar_url, verification_status)
+                profiles:seller_id (id, username, full_name, avatar_url, verification_status, vacation_mode)
             `)
             .order('created_at', { ascending: false })
             .limit(20);
@@ -236,7 +236,7 @@ export default function HomePage() {
             .from('products')
             .select(`
                 *,
-                profiles:seller_id (id, username, full_name, avatar_url, verification_status),
+                profiles:seller_id (id, username, full_name, avatar_url, verification_status, vacation_mode),
                 product_images (image_url)
             `)
             .order('created_at', { ascending: false })
@@ -270,45 +270,49 @@ export default function HomePage() {
         // Process Services
         if (servicesData) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            combinedFeed.push(...servicesData.map((item: any) => ({
-                type: 'service',
-                id: item.id,
-                user: {
-                    name: item.profiles?.full_name || "Unknown User",
-                    handle: `@${item.profiles?.username || "unknown"}`,
-                    avatar: item.profiles?.avatar_url,
-                    username: item.profiles?.username,
-                    verification_status: item.profiles?.verification_status
-                },
-                image: item.thumbnail_url,
-                title: item.title,
-                caption: item.description,
-                price: item.price,
-                tags: ["Service"],
-                created_at: item.created_at
-            })));
+            combinedFeed.push(...servicesData
+                .filter((item: any) => !item.profiles?.vacation_mode)
+                .map((item: any) => ({
+                    type: 'service',
+                    id: item.id,
+                    user: {
+                        name: item.profiles?.full_name || "Unknown User",
+                        handle: `@${item.profiles?.username || "unknown"}`,
+                        avatar: item.profiles?.avatar_url,
+                        username: item.profiles?.username,
+                        verification_status: item.profiles?.verification_status
+                    },
+                    image: item.thumbnail_url,
+                    title: item.title,
+                    caption: item.description,
+                    price: item.price,
+                    tags: ["Service"],
+                    created_at: item.created_at
+                })));
         }
 
         // Process Products
         if (productsData) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            combinedFeed.push(...productsData.map((item: any) => ({
-                type: 'product',
-                id: item.id,
-                user: {
-                    name: item.profiles?.full_name || "Unknown User",
-                    handle: `@${item.profiles?.username || "unknown"}`,
-                    avatar: item.profiles?.avatar_url,
-                    username: item.profiles?.username,
-                    verification_status: item.profiles?.verification_status
-                },
-                image: item.product_images?.[0]?.image_url,
-                title: item.title,
-                caption: item.description,
-                price: item.price,
-                tags: ["Product"],
-                created_at: item.created_at
-            })));
+            combinedFeed.push(...productsData
+                .filter((item: any) => !item.profiles?.vacation_mode)
+                .map((item: any) => ({
+                    type: 'product',
+                    id: item.id,
+                    user: {
+                        name: item.profiles?.full_name || "Unknown User",
+                        handle: `@${item.profiles?.username || "unknown"}`,
+                        avatar: item.profiles?.avatar_url,
+                        username: item.profiles?.username,
+                        verification_status: item.profiles?.verification_status
+                    },
+                    image: item.product_images?.[0]?.image_url,
+                    title: item.title,
+                    caption: item.description,
+                    price: item.price,
+                    tags: ["Product"],
+                    created_at: item.created_at
+                })));
         }
 
         // Sort by Date

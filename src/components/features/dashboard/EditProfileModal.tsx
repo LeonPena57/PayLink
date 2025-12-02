@@ -20,6 +20,7 @@ export function EditProfileModal({ isOpen, onClose }: EditProfileModalProps) {
     const [username, setUsername] = useState("");
     const [bio, setBio] = useState("");
     const [location, setLocation] = useState("");
+    const [skills, setSkills] = useState("");
     const [twitter, setTwitter] = useState("");
     const [instagram, setInstagram] = useState("");
     const [twitch, setTwitch] = useState("");
@@ -30,6 +31,7 @@ export function EditProfileModal({ isOpen, onClose }: EditProfileModalProps) {
             setUsername(profile.username || "");
             setBio(profile.bio || "");
             setLocation(profile.location || "");
+            setSkills(profile.skills?.join(", ") || "");
             setTwitter(profile.social_links?.twitter || "");
             setInstagram(profile.social_links?.instagram || "");
             setTwitch(profile.social_links?.twitch || "");
@@ -47,6 +49,7 @@ export function EditProfileModal({ isOpen, onClose }: EditProfileModalProps) {
                 username: username,
                 bio: bio,
                 location: location,
+                skills: skills.split(',').map(s => s.trim()).filter(s => s.length > 0),
                 social_links: {
                     twitter,
                     instagram,
@@ -210,6 +213,17 @@ export function EditProfileModal({ isOpen, onClose }: EditProfileModalProps) {
                                                 placeholder="City, Country"
                                             />
                                         </div>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium text-foreground">Skills (comma separated)</label>
+                                        <input
+                                            type="text"
+                                            value={skills}
+                                            onChange={(e) => setSkills(e.target.value)}
+                                            className="w-full bg-muted/50 border border-border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-primary transition-colors"
+                                            placeholder="e.g. Graphic Design, React, SEO"
+                                        />
                                     </div>
                                 </div>
 

@@ -1,12 +1,13 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useSearchParams } from "next/navigation";
-import { User, ChevronRight, Send, Plus, ArrowLeft, Search, MessageSquare } from "lucide-react";
+import { useSearchParams, useRouter } from "next/navigation";
+import { User, ChevronRight, Send, Plus, ArrowLeft, Search, MessageSquare, DollarSign, Clock } from "lucide-react";
 import clsx from "clsx";
 import { supabase } from "@/lib/supabase/client";
 import { useUser } from "@/context/UserContext";
 import Image from "next/image";
+import { useToast } from "@/context/ToastContext";
 
 interface Profile {
     id: string;
@@ -20,6 +21,14 @@ interface Message {
     content: string;
     sender_id: string;
     created_at: string;
+    message_type?: 'text' | 'offer';
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    offer_details?: {
+        title: string;
+        price: number;
+        delivery_days: number;
+        status?: 'pending' | 'accepted';
+    };
 }
 
 interface Conversation {
@@ -30,6 +39,8 @@ interface Conversation {
 
 export function MessagesWidget() {
     const { user } = useUser();
+    const router = useRouter();
+    const { toast } = useToast();
     const searchParams = useSearchParams();
     const chatWithUserId = searchParams.get("chat_with");
 
@@ -41,6 +52,10 @@ export function MessagesWidget() {
     const [isNewChatOpen, setIsNewChatOpen] = useState(false);
     const [searchUsername, setSearchUsername] = useState("");
     const [searchResults, setSearchResults] = useState<Profile[]>([]);
+
+    // Offer State
+    const [isOfferModalOpen, setIsOfferModalOpen] = useState(false);
+    const [offerForm, setOfferForm] = useState({ title: "", price: "", days: "" });
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -201,7 +216,8 @@ export function MessagesWidget() {
             .insert({
                 conversation_id: activeConversation.id,
                 sender_id: user.id,
-                content: newMessage.trim()
+                content: newMessage.trim(),
+                message_type: 'text'
             });
 
         if (!error) {
@@ -209,9 +225,62 @@ export function MessagesWidget() {
         }
     };
 
+    const handleSendOffer = async () => {
+        if (!offerForm.title || !offerForm.price || !offerForm.days || !activeConversation || !user) return;
+
+        const { error } = await supabase
+            .from('messages')
+            .insert({
+                conversation_id: activeConversation.id,
+                sender_id: user.id,
+                content: "Custom Offer",
+                message_type: 'offer',
+                offer_details: {
+                    title: offerForm.title,
+                    price: parseFloat(offerForm.price),
+                    delivery_days: parseInt(offerForm.days),
+                    status: 'pending'
+                }
+            });
+
+        if (!error) {
+            setIsOfferModalOpen(false);
+            setOfferForm({ title: "", price: "", days: "" });
+        }
+    };
+
+    const handleAcceptOffer = async (message: Message) => {
+        if (!user || !activeConversation || !message.offer_details) return;
+
+        // 1. Create Order
+        const { data: order, error } = await supabase
+            .from('orders')
+            .insert({
+                buyer_id: user.id,
+                seller_id: message.sender_id,
+                amount: message.offer_details.price,
+                status: 'pending_requirements',
+                description: `Custom Offer: ${message.offer_details.title}`,
+                // We could link to a generic "Custom Service" if needed, but for now null service_id implies custom
+            })
+            .select()
+            .single();
+
+        if (error) {
+            toast("Failed to accept offer", "error");
+            return;
+        }
+
+        // 2. Update Message Status (Optional, if we want to lock it)
+        // await supabase.from('messages').update({ offer_details: { ...message.offer_details, status: 'accepted' } }).eq('id', message.id);
+
+        // 3. Redirect
+        router.push(`/orders/${order.id}`);
+    };
+
     if (activeConversation) {
         return (
-            <div className="w-full max-w-2xl mx-auto h-[85vh] md:h-[800px] flex flex-col bg-background md:bg-card md:border md:border-border md:rounded-[2.5rem] overflow-hidden md:shadow-2xl">
+            <div className="w-full max-w-2xl mx-auto h-[85vh] md:h-[800px] flex flex-col bg-background md:bg-card md:border md:border-border md:rounded-[2.5rem] overflow-hidden md:shadow-2xl relative">
                 {/* Chat Header */}
                 <div className="p-4 flex items-center gap-4 bg-background/80 backdrop-blur-md sticky top-0 z-10 border-b border-border">
                     <button onClick={() => setActiveConversation(null)} className="p-2 -ml-2 hover:bg-muted rounded-full transition-colors">
@@ -238,16 +307,57 @@ export function MessagesWidget() {
                 <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-muted/10">
                     {messages.map((msg) => {
                         const isMe = msg.sender_id === user?.id;
+                        const isOffer = msg.message_type === 'offer';
+
                         return (
                             <div key={msg.id} className={clsx("flex", isMe ? "justify-end" : "justify-start")}>
-                                <div className={clsx(
-                                    "max-w-[80%] px-5 py-3 rounded-2xl text-sm font-medium leading-relaxed shadow-sm",
-                                    isMe
-                                        ? "bg-primary text-primary-foreground rounded-br-sm"
-                                        : "bg-card border border-border text-foreground rounded-bl-sm"
-                                )}>
-                                    {msg.content}
-                                </div>
+                                {isOffer ? (
+                                    <div className={clsx(
+                                        "max-w-[85%] rounded-3xl overflow-hidden shadow-sm border",
+                                        isMe ? "bg-background border-primary/20" : "bg-background border-border"
+                                    )}>
+                                        <div className="p-4 bg-muted/30 border-b border-border/50">
+                                            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">
+                                                <DollarSign className="w-3 h-3" />
+                                                Custom Offer
+                                            </div>
+                                            <h4 className="font-bold text-lg leading-tight">{msg.offer_details?.title}</h4>
+                                        </div>
+                                        <div className="p-4 space-y-4">
+                                            <div className="flex items-center justify-between gap-4">
+                                                <div className="flex items-center gap-2 text-sm font-medium">
+                                                    <Clock className="w-4 h-4 text-muted-foreground" />
+                                                    {msg.offer_details?.delivery_days} Days Delivery
+                                                </div>
+                                                <div className="text-xl font-black text-primary">
+                                                    ${msg.offer_details?.price}
+                                                </div>
+                                            </div>
+                                            {!isMe && (
+                                                <button
+                                                    onClick={() => handleAcceptOffer(msg)}
+                                                    className="w-full py-2 bg-primary text-primary-foreground rounded-xl font-bold text-sm hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg shadow-primary/20"
+                                                >
+                                                    Accept Offer
+                                                </button>
+                                            )}
+                                            {isMe && (
+                                                <div className="text-center text-xs text-muted-foreground font-medium">
+                                                    Offer Sent
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className={clsx(
+                                        "max-w-[80%] px-5 py-3 rounded-2xl text-sm font-medium leading-relaxed shadow-sm",
+                                        isMe
+                                            ? "bg-primary text-primary-foreground rounded-br-sm"
+                                            : "bg-card border border-border text-foreground rounded-bl-sm"
+                                    )}>
+                                        {msg.content}
+                                    </div>
+                                )}
                             </div>
                         );
                     })}
@@ -257,13 +367,20 @@ export function MessagesWidget() {
                 {/* Input Area */}
                 <div className="p-4 bg-background border-t border-border">
                     <div className="flex gap-2 items-end bg-muted/30 p-2 rounded-3xl border border-transparent focus-within:border-primary/20 focus-within:bg-background transition-all">
+                        <button
+                            onClick={() => setIsOfferModalOpen(true)}
+                            className="p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-full transition-colors"
+                            title="Create Offer"
+                        >
+                            <DollarSign className="w-5 h-5" />
+                        </button>
                         <input
                             type="text"
                             value={newMessage}
                             onChange={(e) => setNewMessage(e.target.value)}
                             onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
                             placeholder="Type a message..."
-                            className="flex-1 bg-transparent border-none px-4 py-2 text-sm focus:ring-0 placeholder:text-muted-foreground/50 max-h-32"
+                            className="flex-1 bg-transparent border-none px-2 py-2 text-sm focus:ring-0 placeholder:text-muted-foreground/50 max-h-32"
                         />
                         <button
                             onClick={handleSendMessage}
@@ -274,6 +391,61 @@ export function MessagesWidget() {
                         </button>
                     </div>
                 </div>
+
+                {/* Create Offer Modal */}
+                {isOfferModalOpen && (
+                    <div className="absolute inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-end md:items-center justify-center p-4 animate-in fade-in duration-200">
+                        <div className="bg-card w-full max-w-sm rounded-[2rem] border border-border shadow-2xl p-6 animate-in slide-in-from-bottom-10 zoom-in-95 duration-300">
+                            <div className="flex items-center justify-between mb-6">
+                                <h3 className="font-black text-xl">Create Custom Offer</h3>
+                                <button onClick={() => setIsOfferModalOpen(false)} className="p-2 hover:bg-muted rounded-full">
+                                    <Plus className="w-6 h-6 rotate-45" />
+                                </button>
+                            </div>
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1 mb-1 block">I will...</label>
+                                    <input
+                                        type="text"
+                                        placeholder="e.g. build your website"
+                                        value={offerForm.title}
+                                        onChange={(e) => setOfferForm({ ...offerForm, title: e.target.value })}
+                                        className="w-full bg-muted/50 border-none rounded-xl px-4 py-3 font-medium focus:ring-2 focus:ring-primary/20"
+                                    />
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1 mb-1 block">Price ($)</label>
+                                        <input
+                                            type="number"
+                                            placeholder="0.00"
+                                            value={offerForm.price}
+                                            onChange={(e) => setOfferForm({ ...offerForm, price: e.target.value })}
+                                            className="w-full bg-muted/50 border-none rounded-xl px-4 py-3 font-medium focus:ring-2 focus:ring-primary/20"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1 mb-1 block">Delivery (Days)</label>
+                                        <input
+                                            type="number"
+                                            placeholder="3"
+                                            value={offerForm.days}
+                                            onChange={(e) => setOfferForm({ ...offerForm, days: e.target.value })}
+                                            className="w-full bg-muted/50 border-none rounded-xl px-4 py-3 font-medium focus:ring-2 focus:ring-primary/20"
+                                        />
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={handleSendOffer}
+                                    disabled={!offerForm.title || !offerForm.price || !offerForm.days}
+                                    className="w-full py-3 bg-primary text-primary-foreground rounded-xl font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed mt-2"
+                                >
+                                    Send Offer
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         );
     }

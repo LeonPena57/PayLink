@@ -15,13 +15,14 @@ export default function AdminPage() {
         activeDisputes: 3
     });
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [disputes, setDisputes] = useState<any[]>([]);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [users, setUsers] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const fetchData = async () => {
             try {
-                // Check if user is admin
                 if (!user) return;
 
                 const { data: profileData } = await supabase
@@ -31,7 +32,6 @@ export default function AdminPage() {
                     .single();
 
                 if (!profileData?.is_admin) {
-                    // Redirect or show access denied
                     setLoading(false);
                     return;
                 }
@@ -41,7 +41,17 @@ export default function AdminPage() {
                     .from("profiles")
                     .select("*", { count: "exact", head: true });
 
-                setStats(prev => ({ ...prev, totalUsers: count || 0 }));
+                // Fetch disputes count
+                const { count: disputesCount } = await supabase
+                    .from("disputes")
+                    .select("*", { count: "exact", head: true })
+                    .eq("status", "open");
+
+                setStats(prev => ({
+                    ...prev,
+                    totalUsers: count || 0,
+                    activeDisputes: disputesCount || 0
+                }));
 
                 // Fetch recent users
                 const { data: recentUsers } = await supabase
@@ -51,6 +61,20 @@ export default function AdminPage() {
                     .limit(10);
 
                 setUsers(recentUsers || []);
+
+                // Fetch active disputes
+                const { data: activeDisputes } = await supabase
+                    .from("disputes")
+                    .select(`
+                        *,
+                        order:orders(*),
+                        initiator:profiles(*)
+                    `)
+                    .eq("status", "open")
+                    .order("created_at", { ascending: false });
+
+                setDisputes(activeDisputes || []);
+
             } catch (error) {
                 console.error("Error fetching admin data:", error);
             } finally {
@@ -63,10 +87,52 @@ export default function AdminPage() {
         }
     }, [user]);
 
+    const handleResolveDispute = async (disputeId: string, resolution: 'refund' | 'release') => {
+        if (!confirm(`Are you sure you want to ${resolution} this order?`)) return;
+
+        try {
+            const dispute = disputes.find(d => d.id === disputeId);
+            if (!dispute) return;
+
+            // 1. Update Dispute Status
+            await supabase
+                .from('disputes')
+                .update({
+                    status: resolution === 'refund' ? 'resolved_refund' : 'resolved_release',
+                    resolved_at: new Date().toISOString()
+                })
+                .eq('id', disputeId);
+
+            // 2. Update Order Status
+            await supabase
+                .from('orders')
+                .update({
+                    status: resolution === 'refund' ? 'cancelled' : 'completed',
+                    completed_at: resolution === 'release' ? new Date().toISOString() : null
+                })
+                .eq('id', dispute.order_id);
+
+            // 3. Create Notification (Mocked for now, or use the table we just made)
+            await supabase.from('notifications').insert({
+                user_id: dispute.initiator_id,
+                type: 'dispute',
+                title: `Dispute Resolved: ${resolution === 'refund' ? 'Refunded' : 'Funds Released'}`,
+                message: `Your dispute for order #${dispute.order_id.slice(0, 8)} has been resolved.`,
+                link: `/orders/${dispute.order_id}`
+            });
+
+            // Refresh
+            setDisputes(prev => prev.filter(d => d.id !== disputeId));
+            setStats(prev => ({ ...prev, activeDisputes: prev.activeDisputes - 1 }));
+
+        } catch (error) {
+            console.error("Error resolving dispute:", error);
+            alert("Failed to resolve dispute");
+        }
+    };
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if (!loading && (!user || (profile as any)?.is_admin === false)) {
-        // We can do a better check here, but for now relying on the fetch logic or profile context if updated
-        // Ideally profile context should have is_admin
         return (
             <div className="min-h-screen flex items-center justify-center">
                 <div className="text-center">
@@ -116,6 +182,51 @@ export default function AdminPage() {
                         </div>
                     </div>
                 </div>
+
+                {/* Active Disputes Section */}
+                {disputes.length > 0 && (
+                    <div className="bg-card border border-border rounded-2xl overflow-hidden">
+                        <div className="p-6 border-b border-border flex items-center justify-between bg-red-500/5">
+                            <h3 className="font-bold text-lg text-red-600 flex items-center gap-2">
+                                <AlertTriangle className="w-5 h-5" />
+                                Active Disputes
+                            </h3>
+                        </div>
+                        <div className="divide-y divide-border">
+                            {disputes.map((dispute) => (
+                                <div key={dispute.id} className="p-6 flex flex-col md:flex-row gap-6 items-start md:items-center justify-between">
+                                    <div>
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <span className="font-bold text-foreground">Order #{dispute.order_id.slice(0, 8)}</span>
+                                            <span className="text-sm text-muted-foreground">reported by</span>
+                                            <span className="font-bold text-foreground">{dispute.initiator?.full_name}</span>
+                                        </div>
+                                        <p className="text-sm text-red-500 bg-red-500/10 px-3 py-2 rounded-lg inline-block font-medium">
+                                            "{dispute.reason}"
+                                        </p>
+                                        <div className="mt-2 text-xs text-muted-foreground">
+                                            Opened {new Date(dispute.created_at).toLocaleDateString()}
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-3 w-full md:w-auto">
+                                        <button
+                                            onClick={() => handleResolveDispute(dispute.id, 'refund')}
+                                            className="flex-1 md:flex-none px-4 py-2 bg-red-500 text-white rounded-lg font-bold text-sm hover:bg-red-600 transition-colors"
+                                        >
+                                            Refund Buyer
+                                        </button>
+                                        <button
+                                            onClick={() => handleResolveDispute(dispute.id, 'release')}
+                                            className="flex-1 md:flex-none px-4 py-2 bg-green-500 text-white rounded-lg font-bold text-sm hover:bg-green-600 transition-colors"
+                                        >
+                                            Release Funds
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
 
                 {/* Recent Users */}
                 <div className="bg-card border border-border rounded-2xl overflow-hidden">

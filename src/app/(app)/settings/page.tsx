@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
 import { useUserMode, useUser } from "@/context/UserContext";
-import { Moon, Sun, Monitor, User, Shield, LogOut, ChevronRight, CreditCard, HelpCircle, Crown, Mail, LayoutGrid, ArrowLeft, ShoppingBag, Lock, FileText, ExternalLink } from "lucide-react";
+import { Moon, Sun, Monitor, User, Shield, LogOut, ChevronRight, CreditCard, HelpCircle, Crown, Mail, LayoutGrid, ArrowLeft, ShoppingBag, Lock, FileText, ExternalLink, Plane } from "lucide-react";
 import { motion } from "framer-motion";
 import clsx from "clsx";
 import { EditProfileModal } from "@/components/features/dashboard/EditProfileModal";
@@ -11,6 +11,7 @@ import { supabase } from "@/lib/supabase/client";
 
 const tabs = [
     { id: "general", label: "General", icon: User },
+    { id: "seller", label: "Seller Settings", icon: Plane },
     { id: "subscription", label: "Subscription", icon: Crown },
     { id: "appearance", label: "Appearance", icon: Moon },
     { id: "security", label: "Security", icon: Shield },
@@ -27,12 +28,19 @@ const SettingsIcon = ({ tabId }: { tabId: string }) => {
 export default function SettingsPage() {
     const { theme, setTheme } = useTheme();
     const { userMode, toggleUserMode } = useUserMode();
-    const { user, signOut } = useUser();
+    const { user, signOut, profile, refreshProfile } = useUser();
     const [activeTab, setActiveTab] = useState("general");
     const [mobileView, setMobileView] = useState(false); // false = list, true = content
     const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
     const [stripeConnected, setStripeConnected] = useState(false);
     const [loadingStripe, setLoadingStripe] = useState(false);
+    const [vacationMode, setVacationMode] = useState(false);
+
+    useEffect(() => {
+        if (profile) {
+            setVacationMode(profile.vacation_mode || false);
+        }
+    }, [profile]);
 
     // Handle mobile navigation
     const handleTabClick = (tabId: string) => {
@@ -47,6 +55,25 @@ export default function SettingsPage() {
     const handleSignOut = async () => {
         await signOut();
         window.location.href = "/home"; // Hard redirect to ensure state clear and navigation to public home
+    };
+
+    const handleVacationToggle = async () => {
+        if (!user) return;
+
+        const newStatus = !vacationMode;
+        setVacationMode(newStatus); // Optimistic update
+
+        const { error } = await supabase
+            .from('profiles')
+            .update({ vacation_mode: newStatus })
+            .eq('id', user.id);
+
+        if (error) {
+            console.error("Error updating vacation mode:", error);
+            setVacationMode(!newStatus); // Revert on error
+        } else {
+            refreshProfile();
+        }
     };
 
     useEffect(() => {
@@ -153,6 +180,43 @@ export default function SettingsPage() {
                                 </div>
                                 <button className="px-5 py-2.5 bg-background hover:bg-muted rounded-xl font-bold text-sm transition-colors shadow-sm">
                                     Change
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                );
+            case "seller":
+                return (
+                    <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+                        <div>
+                            <h2 className="text-2xl font-black mb-1">Seller Settings</h2>
+                            <p className="text-muted-foreground font-medium">Manage your selling preferences.</p>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div className="p-5 bg-muted/30 rounded-[2rem] flex items-center justify-between">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-12 h-12 bg-background rounded-full flex items-center justify-center shadow-sm">
+                                        <Plane className="w-6 h-6 text-muted-foreground" />
+                                    </div>
+                                    <div>
+                                        <div className="font-bold text-lg">Vacation Mode</div>
+                                        <div className="text-sm text-muted-foreground font-medium">Pause your gigs and hide them from search.</div>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={handleVacationToggle}
+                                    className={clsx(
+                                        "relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
+                                        vacationMode ? "bg-primary" : "bg-muted"
+                                    )}
+                                >
+                                    <span
+                                        className={clsx(
+                                            "inline-block h-4 w-4 transform rounded-full bg-white transition-transform",
+                                            vacationMode ? "translate-x-6" : "translate-x-1"
+                                        )}
+                                    />
                                 </button>
                             </div>
                         </div>

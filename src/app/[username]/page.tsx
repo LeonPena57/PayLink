@@ -262,6 +262,17 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
                                                 <UserCheck className="w-5 h-5 text-white" />
                                             </div>
                                         )}
+                                        {/* Seller Level Badge */}
+                                        {profile.seller_level && profile.seller_level !== 'New Seller' && (
+                                            <div className={clsx(
+                                                "px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border",
+                                                profile.seller_level === 'Top Rated' ? "bg-yellow-500/10 text-yellow-500 border-yellow-500/20" :
+                                                    profile.seller_level === 'Level 2' ? "bg-purple-500/10 text-purple-500 border-purple-500/20" :
+                                                        "bg-blue-500/10 text-blue-500 border-blue-500/20"
+                                            )}>
+                                                {profile.seller_level}
+                                            </div>
+                                        )}
                                     </h1>
                                     <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 text-muted-foreground font-medium text-lg">
                                         <span className="text-foreground">@{profile.username}</span>

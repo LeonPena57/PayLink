@@ -10,6 +10,7 @@ import { useTheme } from "next-themes";
 import { useUser } from "@/context/UserContext";
 import Image from "next/image";
 import { QRModal } from "@/components/features/QRModal";
+import { NotificationBell } from "@/components/features/notifications/NotificationBell";
 
 export function Navigation() {
     const pathname = usePathname();
@@ -146,6 +147,7 @@ export function Navigation() {
                     >
                         <QrCode className="w-5 h-5" />
                     </button>
+                    {user && <NotificationBell />}
                     {user ? (
                         <Link href="/settings" className="relative w-8 h-8 rounded-full overflow-hidden border border-gray-200 dark:border-[#333] hover:ring-2 ring-primary transition-all">
                             {profile?.avatar_url ? (
@@ -198,6 +200,7 @@ export function Navigation() {
                     >
                         <QrCode className="w-5 h-5" />
                     </button>
+                    {user && <NotificationBell />}
                 </div>
             </motion.header>
 

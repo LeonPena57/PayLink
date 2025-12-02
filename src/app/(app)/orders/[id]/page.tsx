@@ -24,6 +24,7 @@ import { ReviewModal } from "@/components/features/ReviewModal";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { Confetti } from "@/components/ui/Confetti";
+import { checkAndPromoteUser } from "@/lib/gamification";
 
 export default function OrderPage({ params }: { params: Promise<{ id: string }> }) {
     const { id: orderId } = use(params);
@@ -234,6 +235,11 @@ export default function OrderPage({ params }: { params: Promise<{ id: string }> 
             toast("Order completed! Please leave a review.", "success");
             fetchOrder();
             setIsReviewModalOpen(true);
+
+            // Check for promotion
+            if (order.seller_id) {
+                checkAndPromoteUser(order.seller_id);
+            }
         }
     };
 
@@ -316,9 +322,9 @@ export default function OrderPage({ params }: { params: Promise<{ id: string }> 
                 </div>
             </div>
 
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-8 grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
                 {/* Left Column: Order Context */}
-                <div className="space-y-6">
+                <div className="space-y-4 md:space-y-6 order-2 lg:order-1">
                     <OrderTimeline
                         status={order.status}
                         createdAt={order.created_at}
@@ -476,7 +482,7 @@ export default function OrderPage({ params }: { params: Promise<{ id: string }> 
                 </div>
 
                 {/* Right Column: Chat/Activity */}
-                <div className="lg:col-span-2 bg-card rounded-3xl border border-border shadow-sm flex flex-col h-[600px] overflow-hidden">
+                <div className="lg:col-span-2 bg-card rounded-3xl border border-border shadow-sm flex flex-col h-[500px] md:h-[600px] overflow-hidden order-1 lg:order-2">
                     <div className="p-4 border-b border-border bg-muted/10 flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center overflow-hidden">
                             {otherParty?.avatar_url ? (

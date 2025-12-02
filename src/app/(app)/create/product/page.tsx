@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Loader2, X, FileText, Upload, DollarSign, Sparkles, Plus, Image as ImageIcon, AlignLeft, Package } from "lucide-react";
+import { ArrowLeft, Loader2, X, FileText, Upload, DollarSign, Sparkles, Plus, Image as ImageIcon, AlignLeft, Package, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { supabase } from "@/lib/supabase/client";
@@ -17,6 +17,10 @@ export default function CreateProductPage() {
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
     const [price, setPrice] = useState("");
+
+    // Mobile Wizard State
+    const [currentStep, setCurrentStep] = useState(1);
+    const totalSteps = 3;
 
     // Multiple Images
     const [images, setImages] = useState<{ file: File, preview: string, watermarkedBlob?: Blob }[]>([]);
@@ -63,6 +67,14 @@ export default function CreateProductPage() {
 
     const removeFile = (index: number) => {
         setFiles(files.filter((_, i) => i !== index));
+    };
+
+    const nextStep = () => {
+        if (currentStep < totalSteps) setCurrentStep(c => c + 1);
+    };
+
+    const prevStep = () => {
+        if (currentStep > 1) setCurrentStep(c => c - 1);
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -192,13 +204,31 @@ export default function CreateProductPage() {
                 </div>
             </div>
 
-            {/* Mobile Header */}
-            <div className="md:hidden sticky top-0 z-20 bg-background/80 backdrop-blur-md px-4 py-4 flex items-center justify-between border-b border-border">
-                <Link href="/create" className="p-2 -ml-2 rounded-full hover:bg-muted transition-colors">
-                    <ArrowLeft className="w-6 h-6 text-foreground" />
-                </Link>
-                <div className="font-bold text-lg">New Product</div>
-                <div className="w-10" />
+            {/* Mobile Header with Progress */}
+            <div className="md:hidden sticky top-0 z-20 bg-background/80 backdrop-blur-md px-4 py-4 border-b border-border">
+                <div className="flex items-center justify-between mb-4">
+                    <button onClick={currentStep === 1 ? () => router.back() : prevStep} className="p-2 -ml-2 rounded-full hover:bg-muted transition-colors">
+                        <ArrowLeft className="w-6 h-6 text-foreground" />
+                    </button>
+                    <div className="font-bold text-lg">
+                        {currentStep === 1 && "Product Details"}
+                        {currentStep === 2 && "Media & Files"}
+                        {currentStep === 3 && "Pricing"}
+                    </div>
+                    <div className="w-10" />
+                </div>
+                {/* Progress Bar */}
+                <div className="flex gap-2">
+                    {[1, 2, 3].map(step => (
+                        <div
+                            key={step}
+                            className={clsx(
+                                "h-1 flex-1 rounded-full transition-all duration-300",
+                                step <= currentStep ? "bg-primary" : "bg-muted"
+                            )}
+                        />
+                    ))}
+                </div>
             </div>
 
             <div className="max-w-6xl mx-auto p-4 md:p-8">
@@ -207,139 +237,145 @@ export default function CreateProductPage() {
                     {/* Left Column: Main Content */}
                     <div className="space-y-6">
 
-                        {/* Basic Info Card */}
-                        <div className="bg-background rounded-3xl border border-border p-6 space-y-6 shadow-sm">
-                            <div className="flex items-center gap-2 text-lg font-bold border-b border-border pb-4">
-                                <AlignLeft className="w-5 h-5 text-primary" />
-                                Product Details
-                            </div>
+                        {/* Step 1: Basic Info (Mobile: Step 1, Desktop: Always Visible) */}
+                        <div className={clsx("space-y-6", currentStep !== 1 ? "hidden md:block" : "block")}>
+                            <div className="bg-background rounded-3xl border border-border p-6 space-y-6 shadow-sm">
+                                <div className="flex items-center gap-2 text-lg font-bold border-b border-border pb-4">
+                                    <AlignLeft className="w-5 h-5 text-primary" />
+                                    Product Details
+                                </div>
 
-                            <div className="space-y-2">
-                                <label className="text-sm font-bold text-muted-foreground ml-1">Product Name</label>
-                                <input
-                                    type="text"
-                                    value={title}
-                                    onChange={(e) => setTitle(e.target.value)}
-                                    placeholder="e.g. 3D Model Pack Vol. 1"
-                                    className="w-full text-lg font-medium bg-muted/30 border-transparent focus:border-primary focus:ring-0 rounded-xl p-4 transition-all"
-                                    required
-                                />
-                            </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-bold text-muted-foreground ml-1">Product Name</label>
+                                    <input
+                                        type="text"
+                                        value={title}
+                                        onChange={(e) => setTitle(e.target.value)}
+                                        placeholder="e.g. 3D Model Pack Vol. 1"
+                                        className="w-full text-lg font-medium bg-muted/30 border-transparent focus:border-primary focus:ring-0 rounded-xl p-4 transition-all"
+                                        required
+                                    />
+                                </div>
 
-                            <div className="space-y-2">
-                                <label className="text-sm font-bold text-muted-foreground ml-1">Description</label>
-                                <textarea
-                                    value={description}
-                                    onChange={(e) => setDescription(e.target.value)}
-                                    placeholder="Describe your product..."
-                                    className="w-full min-h-[200px] bg-muted/30 border-transparent focus:border-primary focus:ring-0 rounded-xl p-4 transition-all resize-y text-base"
-                                    required
-                                />
+                                <div className="space-y-2">
+                                    <label className="text-sm font-bold text-muted-foreground ml-1">Description</label>
+                                    <textarea
+                                        value={description}
+                                        onChange={(e) => setDescription(e.target.value)}
+                                        placeholder="Describe your product..."
+                                        className="w-full min-h-[200px] bg-muted/30 border-transparent focus:border-primary focus:ring-0 rounded-xl p-4 transition-all resize-y text-base"
+                                        required
+                                    />
+                                </div>
                             </div>
                         </div>
 
-                        {/* Images Card */}
-                        <div className="bg-background rounded-3xl border border-border p-6 space-y-6 shadow-sm">
-                            <div className="flex items-center justify-between border-b border-border pb-4">
-                                <div className="flex items-center gap-2 text-lg font-bold">
-                                    <ImageIcon className="w-5 h-5 text-primary" />
-                                    Images
-                                </div>
-                                <span className="text-xs font-bold text-muted-foreground">{images.length}/5</span>
-                            </div>
+                        {/* Step 2: Media & Files (Mobile: Step 2, Desktop: Always Visible) */}
+                        <div className={clsx("space-y-6", currentStep !== 2 ? "hidden md:block" : "block")}>
 
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                {images.map((img, index) => (
-                                    <div key={index} className="relative aspect-square rounded-2xl overflow-hidden border border-border group shadow-sm bg-muted/10">
-                                        <Image src={img.preview} alt="" fill className="object-cover" />
-                                        <button
-                                            type="button"
-                                            onClick={() => removeImage(index)}
-                                            className="absolute top-2 right-2 p-1.5 bg-black/50 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all hover:bg-red-500 backdrop-blur-md"
+                            {/* Images Card */}
+                            <div className="bg-background rounded-3xl border border-border p-6 space-y-6 shadow-sm">
+                                <div className="flex items-center justify-between border-b border-border pb-4">
+                                    <div className="flex items-center gap-2 text-lg font-bold">
+                                        <ImageIcon className="w-5 h-5 text-primary" />
+                                        Images
+                                    </div>
+                                    <span className="text-xs font-bold text-muted-foreground">{images.length}/5</span>
+                                </div>
+
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                    {images.map((img, index) => (
+                                        <div key={index} className="relative aspect-square rounded-2xl overflow-hidden border border-border group shadow-sm bg-muted/10">
+                                            <Image src={img.preview} alt="" fill className="object-cover" />
+                                            <button
+                                                type="button"
+                                                onClick={() => removeImage(index)}
+                                                className="absolute top-2 right-2 p-1.5 bg-black/50 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all hover:bg-red-500 backdrop-blur-md"
+                                            >
+                                                <X className="w-3 h-3" />
+                                            </button>
+                                            {index === 0 && (
+                                                <div className="absolute bottom-2 left-2 px-2 py-0.5 bg-black/60 text-white text-[10px] font-bold rounded-full backdrop-blur-md">
+                                                    Cover
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+                                    {images.length < 5 && (
+                                        <div
+                                            onClick={() => imageInputRef.current?.click()}
+                                            className="aspect-square rounded-2xl bg-muted/30 border-2 border-dashed border-border hover:border-primary/50 hover:bg-primary/5 transition-all flex flex-col items-center justify-center cursor-pointer gap-2 group"
                                         >
-                                            <X className="w-3 h-3" />
-                                        </button>
-                                        {index === 0 && (
-                                            <div className="absolute bottom-2 left-2 px-2 py-0.5 bg-black/60 text-white text-[10px] font-bold rounded-full backdrop-blur-md">
-                                                Cover
+                                            <div className="w-10 h-10 rounded-full bg-background flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
+                                                <Plus className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
                                             </div>
-                                        )}
-                                    </div>
-                                ))}
-                                {images.length < 5 && (
-                                    <div
-                                        onClick={() => imageInputRef.current?.click()}
-                                        className="aspect-square rounded-2xl bg-muted/30 border-2 border-dashed border-border hover:border-primary/50 hover:bg-primary/5 transition-all flex flex-col items-center justify-center cursor-pointer gap-2 group"
-                                    >
-                                        <div className="w-10 h-10 rounded-full bg-background flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
-                                            <Plus className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                                            <span className="text-xs font-bold text-muted-foreground">Add Image</span>
+                                            <input
+                                                type="file"
+                                                ref={imageInputRef}
+                                                onChange={handleImageSelect}
+                                                className="hidden"
+                                                accept="image/*"
+                                                multiple
+                                            />
                                         </div>
-                                        <span className="text-xs font-bold text-muted-foreground">Add Image</span>
-                                        <input
-                                            type="file"
-                                            ref={imageInputRef}
-                                            onChange={handleImageSelect}
-                                            className="hidden"
-                                            accept="image/*"
-                                            multiple
-                                        />
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Files Card */}
-                        <div className="bg-background rounded-3xl border border-border p-6 space-y-6 shadow-sm">
-                            <div className="flex items-center justify-between border-b border-border pb-4">
-                                <div className="flex items-center gap-2 text-lg font-bold">
-                                    <Package className="w-5 h-5 text-primary" />
-                                    Digital Files
+                                    )}
                                 </div>
-                                <span className="text-xs font-bold text-muted-foreground">{files.length}/5</span>
                             </div>
 
-                            <div className="space-y-3">
-                                {files.map((file, index) => (
-                                    <div key={index} className="flex items-center gap-3 p-3 bg-muted/30 rounded-2xl group border border-transparent hover:border-primary/20 transition-all">
-                                        <div className="w-12 h-12 rounded-xl bg-background flex items-center justify-center shrink-0 shadow-sm">
-                                            <FileText className="w-6 h-6 text-primary" />
+                            {/* Files Card */}
+                            <div className="bg-background rounded-3xl border border-border p-6 space-y-6 shadow-sm">
+                                <div className="flex items-center justify-between border-b border-border pb-4">
+                                    <div className="flex items-center gap-2 text-lg font-bold">
+                                        <Package className="w-5 h-5 text-primary" />
+                                        Digital Files
+                                    </div>
+                                    <span className="text-xs font-bold text-muted-foreground">{files.length}/5</span>
+                                </div>
+
+                                <div className="space-y-3">
+                                    {files.map((file, index) => (
+                                        <div key={index} className="flex items-center gap-3 p-3 bg-muted/30 rounded-2xl group border border-transparent hover:border-primary/20 transition-all">
+                                            <div className="w-12 h-12 rounded-xl bg-background flex items-center justify-center shrink-0 shadow-sm">
+                                                <FileText className="w-6 h-6 text-primary" />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="font-bold text-sm truncate">{file.name}</div>
+                                                <div className="text-xs text-muted-foreground">{(file.size / 1024 / 1024).toFixed(2)} MB</div>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => removeFile(index)}
+                                                className="p-2 text-muted-foreground/50 hover:text-destructive transition-colors"
+                                            >
+                                                <X className="w-5 h-5" />
+                                            </button>
                                         </div>
-                                        <div className="flex-1 min-w-0">
-                                            <div className="font-bold text-sm truncate">{file.name}</div>
-                                            <div className="text-xs text-muted-foreground">{(file.size / 1024 / 1024).toFixed(2)} MB</div>
-                                        </div>
+                                    ))}
+                                    {files.length < 5 && (
                                         <button
                                             type="button"
-                                            onClick={() => removeFile(index)}
-                                            className="p-2 text-muted-foreground/50 hover:text-destructive transition-colors"
+                                            onClick={() => fileInputRef.current?.click()}
+                                            className="w-full py-4 border-2 border-dashed border-border rounded-2xl flex items-center justify-center gap-2 text-muted-foreground hover:text-primary hover:border-primary/50 hover:bg-primary/5 transition-all font-bold text-sm group"
                                         >
-                                            <X className="w-5 h-5" />
+                                            <Upload className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                                            Upload File
                                         </button>
-                                    </div>
-                                ))}
-                                {files.length < 5 && (
-                                    <button
-                                        type="button"
-                                        onClick={() => fileInputRef.current?.click()}
-                                        className="w-full py-4 border-2 border-dashed border-border rounded-2xl flex items-center justify-center gap-2 text-muted-foreground hover:text-primary hover:border-primary/50 hover:bg-primary/5 transition-all font-bold text-sm group"
-                                    >
-                                        <Upload className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                                        Upload File
-                                    </button>
-                                )}
-                                <input
-                                    type="file"
-                                    ref={fileInputRef}
-                                    onChange={handleFileSelect}
-                                    className="hidden"
-                                    multiple
-                                />
+                                    )}
+                                    <input
+                                        type="file"
+                                        ref={fileInputRef}
+                                        onChange={handleFileSelect}
+                                        className="hidden"
+                                        multiple
+                                    />
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    {/* Right Column: Sidebar */}
-                    <div className="space-y-6">
+                    {/* Right Column: Pricing (Desktop) (Mobile: Step 3, Desktop: Always Visible) */}
+                    <div className={clsx("space-y-6", currentStep !== 3 ? "hidden md:block" : "block")}>
 
                         {/* Price Card */}
                         <div className="bg-background rounded-3xl border border-border p-6 space-y-6 shadow-sm">
@@ -370,20 +406,30 @@ export default function CreateProductPage() {
                 </form>
             </div>
 
-            {/* Mobile Publish Button (Fixed Bottom) */}
+            {/* Mobile Bottom Bar (Navigation) */}
             <div className="md:hidden fixed bottom-0 left-0 right-0 p-4 bg-background/80 backdrop-blur-xl border-t border-border z-40">
-                <button
-                    onClick={handleSubmit}
-                    disabled={loading || !title || !description || !price}
-                    className="w-full py-3.5 bg-primary text-primary-foreground rounded-full font-black text-lg shadow-xl shadow-primary/30 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                >
-                    {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
-                        <>
-                            Publish Product
-                            <Sparkles className="w-5 h-5" />
-                        </>
-                    )}
-                </button>
+                {currentStep < totalSteps ? (
+                    <button
+                        onClick={nextStep}
+                        className="w-full py-3.5 bg-foreground text-background rounded-full font-black text-lg shadow-xl active:scale-95 transition-all flex items-center justify-center gap-2"
+                    >
+                        Next Step
+                        <ChevronRight className="w-5 h-5" />
+                    </button>
+                ) : (
+                    <button
+                        onClick={handleSubmit}
+                        disabled={loading || !title || !description || !price}
+                        className="w-full py-3.5 bg-primary text-primary-foreground rounded-full font-black text-lg shadow-xl shadow-primary/30 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                        {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
+                            <>
+                                Publish Product
+                                <Sparkles className="w-5 h-5" />
+                            </>
+                        )}
+                    </button>
+                )}
             </div>
         </div>
     );

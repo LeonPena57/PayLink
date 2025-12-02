@@ -22,6 +22,16 @@ export default function ServicePage({ params }: { params: Promise<{ id: string }
     const [isPaymentOpen, setIsPaymentOpen] = useState(false);
     const [processingPayment, setProcessingPayment] = useState(false);
 
+    // Tiers State
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [tiers, setTiers] = useState<any[]>([]);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [selectedTier, setSelectedTier] = useState<any>(null);
+
+    // Extras State
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [selectedExtras, setSelectedExtras] = useState<any[]>([]);
+
     useEffect(() => {
         const fetchService = async () => {
             const { data, error } = await supabase
@@ -33,7 +43,9 @@ export default function ServicePage({ params }: { params: Promise<{ id: string }
                         full_name,
                         username,
                         avatar_url,
-                        verification_status
+                        verification_status,
+                        vacation_mode,
+                        vacation_message
                     ),
                     service_tiers (*)
                 `)
@@ -44,6 +56,29 @@ export default function ServicePage({ params }: { params: Promise<{ id: string }
                 console.error("Error fetching service:", error);
             } else {
                 setService(data);
+
+                // Sort tiers: Basic -> Standard -> Premium
+                const sortedTiers = data.service_tiers?.sort((a: any, b: any) => {
+                    const order = { "Basic": 1, "Standard": 2, "Premium": 3 };
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    return (order[a.name as keyof typeof order] || 99) - (order[b.name as keyof typeof order] || 99);
+                }) || [];
+
+                setTiers(sortedTiers);
+                if (sortedTiers.length > 0) {
+                    setSelectedTier(sortedTiers[0]);
+                } else {
+                    // Fallback if no tiers exist (legacy services)
+                    const defaultTier = {
+                        name: "Basic",
+                        description: "Standard Package",
+                        price: data.price,
+                        delivery_days: 3,
+                        revisions: 1
+                    };
+                    setTiers([defaultTier]);
+                    setSelectedTier(defaultTier);
+                }
 
                 // Fetch reviews
                 const { data: reviewsData } = await supabase
@@ -60,6 +95,20 @@ export default function ServicePage({ params }: { params: Promise<{ id: string }
         fetchService();
     }, [serviceId]);
 
+    const toggleExtra = (extra: any) => {
+        if (selectedExtras.find(e => e.title === extra.title)) {
+            setSelectedExtras(selectedExtras.filter(e => e.title !== extra.title));
+        } else {
+            setSelectedExtras([...selectedExtras, extra]);
+        }
+    };
+
+    const calculateTotal = () => {
+        if (!selectedTier) return 0;
+        const extrasTotal = selectedExtras.reduce((acc, curr) => acc + curr.price, 0);
+        return selectedTier.price + extrasTotal;
+    };
+
     const handlePurchase = async () => {
         if (!user) {
             alert("Please login to purchase");
@@ -68,6 +117,8 @@ export default function ServicePage({ params }: { params: Promise<{ id: string }
 
         setProcessingPayment(true);
 
+        const totalAmount = calculateTotal();
+
         // 1. Create Order
         const { data: order, error } = await supabase
             .from('orders')
@@ -75,9 +126,10 @@ export default function ServicePage({ params }: { params: Promise<{ id: string }
                 buyer_id: user.id,
                 seller_id: service.seller_id,
                 service_id: service.id,
-                amount: service.price, // Using base price for now, later use tiers
+                amount: totalAmount,
                 status: 'pending_requirements',
-                description: `Order for ${service.title}`
+                description: `Order for ${service.title} (${selectedTier.name} Package)`,
+                selected_extras: selectedExtras
             })
             .select()
             .single();
@@ -95,14 +147,6 @@ export default function ServicePage({ params }: { params: Promise<{ id: string }
 
     if (loading) return <div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>;
     if (!service) return <div className="min-h-screen flex items-center justify-center">Service not found</div>;
-
-    const tier = service.service_tiers?.[0] || {
-        name: "Basic",
-        description: "Standard Package",
-        price: service.price,
-        delivery_days: 3,
-        revisions: 1
-    };
 
     return (
         <div className="min-h-screen bg-background pb-32">
@@ -192,33 +236,107 @@ export default function ServicePage({ params }: { params: Promise<{ id: string }
                     {/* Right Column: Pricing Card */}
                     <div className="lg:col-span-1">
                         <div className="bg-card rounded-3xl p-6 border border-border shadow-lg sticky top-24">
-                            <div className="flex items-center justify-between mb-4">
-                                <h3 className="font-black text-xl text-foreground">{tier.name}</h3>
-                                <div className="text-2xl font-black text-primary">${tier.price}</div>
-                            </div>
-                            <p className="text-sm text-muted-foreground font-medium mb-6">{tier.description}</p>
 
-                            <div className="space-y-3 mb-8">
-                                <div className="flex items-center gap-3 text-sm font-bold text-foreground">
-                                    <Clock className="w-4 h-4 text-primary" />
-                                    {tier.delivery_days} Days Delivery
+                            {/* Tier Tabs */}
+                            {tiers.length > 1 && (
+                                <div className="flex p-1 bg-muted/50 rounded-xl mb-6">
+                                    {tiers.map((tier) => (
+                                        <button
+                                            key={tier.name}
+                                            onClick={() => setSelectedTier(tier)}
+                                            className={clsx(
+                                                "flex-1 py-2 text-xs font-bold rounded-lg transition-all",
+                                                selectedTier?.name === tier.name
+                                                    ? "bg-background text-foreground shadow-sm"
+                                                    : "text-muted-foreground hover:text-foreground"
+                                            )}
+                                        >
+                                            {tier.name}
+                                        </button>
+                                    ))}
                                 </div>
-                                <div className="flex items-center gap-3 text-sm font-bold text-foreground">
-                                    <RefreshCw className="w-4 h-4 text-primary" />
-                                    {tier.revisions} Revisions
-                                </div>
-                                <div className="flex items-center gap-3 text-sm font-bold text-foreground">
-                                    <Check className="w-4 h-4 text-primary" />
-                                    Source File Included
-                                </div>
-                            </div>
+                            )}
 
-                            <button
-                                onClick={() => setIsPaymentOpen(true)}
-                                className="w-full py-4 bg-primary text-primary-foreground rounded-xl font-black text-lg shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
-                            >
-                                Continue (${tier.price})
-                            </button>
+                            {selectedTier && (
+                                <div className="animate-in fade-in slide-in-from-bottom-2 duration-300" key={selectedTier.name}>
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h3 className="font-black text-xl text-foreground">{selectedTier.name}</h3>
+                                        <div className="text-2xl font-black text-primary">${selectedTier.price}</div>
+                                    </div>
+                                    <p className="text-sm text-muted-foreground font-medium mb-6 min-h-[40px]">{selectedTier.description}</p>
+
+                                    <div className="space-y-3 mb-8">
+                                        <div className="flex items-center gap-3 text-sm font-bold text-foreground">
+                                            <Clock className="w-4 h-4 text-primary" />
+                                            {selectedTier.delivery_days} Days Delivery
+                                        </div>
+                                        <div className="flex items-center gap-3 text-sm font-bold text-foreground">
+                                            <RefreshCw className="w-4 h-4 text-primary" />
+                                            {selectedTier.revisions === 999 ? "Unlimited" : selectedTier.revisions} Revisions
+                                        </div>
+                                        <div className="flex items-center gap-3 text-sm font-bold text-foreground">
+                                            <Check className="w-4 h-4 text-primary" />
+                                            Source File Included
+                                        </div>
+                                    </div>
+
+                                    {/* Gig Extras Selection */}
+                                    {service.extras && service.extras.length > 0 && (
+                                        <div className="mb-8 space-y-3 pt-6 border-t border-border">
+                                            <h4 className="font-bold text-sm">Add Extras</h4>
+                                            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                                            {service.extras.map((extra: any, idx: number) => {
+                                                const isSelected = selectedExtras.some(e => e.title === extra.title);
+                                                return (
+                                                    <div
+                                                        key={idx}
+                                                        onClick={() => toggleExtra(extra)}
+                                                        className={clsx(
+                                                            "flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-all",
+                                                            isSelected
+                                                                ? "bg-primary/5 border-primary"
+                                                                : "bg-background border-border hover:border-primary/50"
+                                                        )}
+                                                    >
+                                                        <div className="flex items-center gap-3">
+                                                            <div className={clsx(
+                                                                "w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors",
+                                                                isSelected ? "border-primary bg-primary" : "border-muted-foreground"
+                                                            )}>
+                                                                {isSelected && <Check className="w-3 h-3 text-white" />}
+                                                            </div>
+                                                            <div>
+                                                                <div className="font-bold text-sm">{extra.title}</div>
+                                                                <div className="text-xs text-muted-foreground">{extra.description}</div>
+                                                            </div>
+                                                        </div>
+                                                        <div className="font-bold text-sm">+${extra.price}</div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+
+                                    <button
+                                        onClick={() => setIsPaymentOpen(true)}
+                                        disabled={service.profiles?.vacation_mode}
+                                        className={clsx(
+                                            "w-full py-4 rounded-xl font-black text-lg shadow-xl transition-all flex items-center justify-center gap-2",
+                                            service.profiles?.vacation_mode
+                                                ? "bg-muted text-muted-foreground cursor-not-allowed shadow-none"
+                                                : "bg-primary text-primary-foreground shadow-primary/20 hover:scale-[1.02] active:scale-[0.98]"
+                                        )}
+                                    >
+                                        {service.profiles?.vacation_mode ? "Seller on Vacation" : `Continue ($${calculateTotal()})`}
+                                    </button>
+
+                                    {service.profiles?.vacation_mode && (
+                                        <div className="mt-4 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-xl text-xs text-yellow-600 font-medium text-center">
+                                            {service.profiles.vacation_message || "This seller is currently taking a break."}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
 
                             <div className="mt-4 flex items-center justify-center gap-2 text-xs text-muted-foreground font-medium">
                                 <ShieldCheck className="w-3 h-3" />
@@ -233,7 +351,7 @@ export default function ServicePage({ params }: { params: Promise<{ id: string }
                 isOpen={isPaymentOpen}
                 onClose={() => setIsPaymentOpen(false)}
                 onConfirm={handlePurchase}
-                subtotal={tier.price}
+                subtotal={calculateTotal()}
                 isProcessing={processingPayment}
             />
         </div>

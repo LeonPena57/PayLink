@@ -196,13 +196,13 @@ export default function CreateInvoicePage() {
                 <div className="w-10" /> {/* Spacer */}
             </div>
 
-            <div className="max-w-xl mx-auto p-6 space-y-10">
-                <form id="create-invoice-form" onSubmit={handleSubmit} className="space-y-10">
+            <div className="max-w-xl mx-auto p-4 md:p-6 space-y-6 md:space-y-10">
+                <form id="create-invoice-form" onSubmit={handleSubmit} className="space-y-8 md:space-y-10">
 
                     {/* Big Total Display */}
-                    <div className="text-center space-y-2 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                        <div className="text-sm font-bold text-muted-foreground uppercase tracking-widest">Total Amount</div>
-                        <div className="text-6xl md:text-7xl font-black text-foreground tracking-tighter">
+                    <div className="text-center space-y-1 md:space-y-2 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        <div className="text-xs md:text-sm font-bold text-muted-foreground uppercase tracking-widest">Total Amount</div>
+                        <div className="text-5xl md:text-7xl font-black text-foreground tracking-tighter">
                             ${calculateTotal().toFixed(2)}
                         </div>
                     </div>
@@ -214,11 +214,11 @@ export default function CreateInvoicePage() {
                             value={title}
                             onChange={(e) => setTitle(e.target.value)}
                             placeholder="What's this for?"
-                            className="w-full text-center text-2xl md:text-3xl font-bold bg-transparent border-none placeholder:text-muted-foreground/30 focus:ring-0 p-0"
+                            className="w-full text-center text-xl md:text-3xl font-bold bg-transparent border-none placeholder:text-muted-foreground/30 focus:ring-0 p-0"
                             autoFocus
                             required
                         />
-                        <div className="h-1 w-20 bg-primary mx-auto rounded-full opacity-20" />
+                        <div className="h-1 w-16 md:w-20 bg-primary mx-auto rounded-full opacity-20" />
                     </div>
 
                     {/* Due Date Trigger */}
@@ -236,18 +236,18 @@ export default function CreateInvoicePage() {
                     </div>
 
                     {/* Items List */}
-                    <div className="space-y-4">
+                    <div className="space-y-3 md:space-y-4">
                         {items.map((item) => (
-                            <div key={item.id} className="group flex items-start gap-4 bg-muted/30 hover:bg-muted/50 p-4 rounded-3xl transition-all animate-in slide-in-from-bottom-2 border border-transparent hover:border-border">
+                            <div key={item.id} className="group flex items-start gap-3 md:gap-4 bg-muted/30 hover:bg-muted/50 p-3 md:p-4 rounded-2xl md:rounded-3xl transition-all animate-in slide-in-from-bottom-2 border border-transparent hover:border-border">
                                 {/* Image Bubble */}
                                 <div
                                     onClick={() => fileInputRefs.current[item.id]?.click()}
-                                    className="relative w-16 h-16 rounded-2xl bg-background shadow-sm flex items-center justify-center cursor-pointer hover:scale-105 transition-transform overflow-hidden shrink-0 mt-1"
+                                    className="relative w-12 h-12 md:w-16 md:h-16 rounded-xl md:rounded-2xl bg-background shadow-sm flex items-center justify-center cursor-pointer hover:scale-105 transition-transform overflow-hidden shrink-0 mt-1"
                                 >
                                     {item.preview ? (
                                         <Image src={item.preview} alt="" fill className="object-cover" />
                                     ) : (
-                                        <ImageIcon className="w-6 h-6 text-muted-foreground/40" />
+                                        <ImageIcon className="w-5 h-5 md:w-6 md:h-6 text-muted-foreground/40" />
                                     )}
                                     <input
                                         type="file"
@@ -259,23 +259,23 @@ export default function CreateInvoicePage() {
                                 </div>
 
                                 {/* Inputs */}
-                                <div className="flex-1 min-w-0 flex flex-col gap-3">
+                                <div className="flex-1 min-w-0 flex flex-col gap-2 md:gap-3">
                                     <input
                                         type="text"
                                         value={item.name}
                                         onChange={(e) => updateItem(item.id, 'name', e.target.value)}
                                         placeholder="Item name..."
-                                        className="w-full bg-transparent font-bold text-lg border-none focus:ring-0 p-0 placeholder:text-muted-foreground/50"
+                                        className="w-full bg-transparent font-bold text-base md:text-lg border-none focus:ring-0 p-0 placeholder:text-muted-foreground/50"
                                     />
-                                    <div className="flex items-center gap-3">
-                                        <div className="relative flex items-center bg-background rounded-xl shadow-sm ring-1 ring-border focus-within:ring-2 focus-within:ring-primary/50 transition-all">
-                                            <span className="absolute left-3 text-muted-foreground text-lg font-bold">$</span>
+                                    <div className="flex items-center gap-2 md:gap-3">
+                                        <div className="relative flex items-center bg-background rounded-lg md:rounded-xl shadow-sm ring-1 ring-border focus-within:ring-2 focus-within:ring-primary/50 transition-all">
+                                            <span className="absolute left-2 md:left-3 text-muted-foreground text-base md:text-lg font-bold">$</span>
                                             <input
                                                 type="number"
                                                 value={item.price}
                                                 onChange={(e) => updateItem(item.id, 'price', e.target.value)}
                                                 placeholder="0.00"
-                                                className="w-32 bg-transparent font-black text-xl border-none focus:ring-0 pl-7 pr-3 py-2 text-primary placeholder:text-muted-foreground/30"
+                                                className="w-24 md:w-32 bg-transparent font-black text-lg md:text-xl border-none focus:ring-0 pl-5 md:pl-7 pr-2 md:pr-3 py-1.5 md:py-2 text-primary placeholder:text-muted-foreground/30"
                                                 min="0"
                                             />
                                         </div>
@@ -286,12 +286,12 @@ export default function CreateInvoicePage() {
                                                 type="button"
                                                 onClick={() => updateItem(item.id, 'saveAsService', !item.saveAsService)}
                                                 className={clsx(
-                                                    "p-2.5 rounded-xl transition-colors",
+                                                    "p-2 md:p-2.5 rounded-lg md:rounded-xl transition-colors",
                                                     item.saveAsService ? "text-primary bg-primary/10" : "text-muted-foreground/40 hover:text-muted-foreground hover:bg-muted"
                                                 )}
                                                 title="Save as Service"
                                             >
-                                                <Briefcase className="w-5 h-5" />
+                                                <Briefcase className="w-4 h-4 md:w-5 md:h-5" />
                                             </button>
 
                                             {items.length > 1 && (
@@ -299,11 +299,11 @@ export default function CreateInvoicePage() {
                                                     type="button"
                                                     onClick={() => removeItem(item.id)}
                                                     className={clsx(
-                                                        "p-2.5 rounded-xl transition-colors",
+                                                        "p-2 md:p-2.5 rounded-lg md:rounded-xl transition-colors",
                                                         "text-muted-foreground/40 hover:text-destructive hover:bg-destructive/10"
                                                     )}
                                                 >
-                                                    <X className="w-5 h-5" />
+                                                    <X className="w-4 h-4 md:w-5 md:h-5" />
                                                 </button>
                                             )}
                                         </div>
@@ -313,11 +313,11 @@ export default function CreateInvoicePage() {
                         ))}
 
                         {/* Add Buttons */}
-                        <div className="flex gap-3 pt-2">
+                        <div className="flex gap-2 md:gap-3 pt-2">
                             <button
                                 type="button"
                                 onClick={addCustomItem}
-                                className="flex-1 py-3 rounded-2xl bg-muted/30 hover:bg-muted text-foreground font-bold text-sm transition-all flex items-center justify-center gap-2"
+                                className="flex-1 py-3 rounded-xl md:rounded-2xl bg-muted/30 hover:bg-muted text-foreground font-bold text-sm transition-all flex items-center justify-center gap-2"
                             >
                                 <Plus className="w-4 h-4" />
                                 Add Item
@@ -325,65 +325,44 @@ export default function CreateInvoicePage() {
                             <button
                                 type="button"
                                 onClick={() => setIsServicePickerOpen(true)}
-                                className="px-4 py-3 rounded-2xl bg-primary/10 hover:bg-primary/20 text-primary font-bold text-sm transition-all flex items-center justify-center gap-2"
+                                className="px-4 py-3 rounded-xl md:rounded-2xl bg-primary/10 hover:bg-primary/20 text-primary font-bold text-sm transition-all flex items-center justify-center gap-2"
                             >
                                 <Briefcase className="w-4 h-4" />
                             </button>
                         </div>
                     </div>
 
-                    {/* Payment Terms Toggle */}
+                    {/* Payment Terms Toggle (New Design) */}
                     <div className="space-y-3">
-                        <label className="text-sm font-bold text-muted-foreground uppercase tracking-wider block text-center">Payment Terms</label>
-                        <div className="grid grid-cols-2 gap-3">
+                        <label className="text-xs md:text-sm font-bold text-muted-foreground uppercase tracking-wider block text-center">Payment Terms</label>
+                        <div className="bg-background rounded-3xl border border-border/50 p-1.5 flex relative">
+                            <div
+                                className={clsx(
+                                    "absolute top-1.5 bottom-1.5 w-[calc(50%-6px)] bg-primary rounded-2xl transition-all duration-300 shadow-sm",
+                                    paymentType === 'full' ? "left-1.5" : "left-[calc(50%+4.5px)]"
+                                )}
+                            />
                             <button
                                 type="button"
                                 onClick={() => setPaymentType('full')}
                                 className={clsx(
-                                    "relative p-4 rounded-2xl border-2 text-left transition-all duration-200 flex flex-col gap-2",
-                                    paymentType === 'full'
-                                        ? "bg-primary/5 border-primary shadow-sm"
-                                        : "bg-card border-border hover:border-primary/30 hover:bg-muted/30"
+                                    "flex-1 py-3 rounded-2xl text-sm font-bold relative z-10 transition-colors flex flex-col items-center leading-tight",
+                                    paymentType === 'full' ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground"
                                 )}
                             >
-                                <div className={clsx(
-                                    "w-8 h-8 rounded-full flex items-center justify-center transition-colors",
-                                    paymentType === 'full' ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
-                                )}>
-                                    <DollarSign className="w-4 h-4" />
-                                </div>
-                                <div>
-                                    <div className={clsx("font-bold text-sm", paymentType === 'full' ? "text-primary" : "text-foreground")}>Full Payment</div>
-                                    <div className="text-xs text-muted-foreground font-medium mt-0.5">Get paid 100% upfront</div>
-                                </div>
-                                {paymentType === 'full' && (
-                                    <div className="absolute top-3 right-3 w-2 h-2 rounded-full bg-primary" />
-                                )}
+                                <span>Full Payment</span>
+                                <span className={clsx("text-[10px] font-medium opacity-80", paymentType === 'full' ? "text-primary-foreground" : "text-muted-foreground")}>100% Upfront</span>
                             </button>
-
                             <button
                                 type="button"
                                 onClick={() => setPaymentType('50-50')}
                                 className={clsx(
-                                    "relative p-4 rounded-2xl border-2 text-left transition-all duration-200 flex flex-col gap-2",
-                                    paymentType === '50-50'
-                                        ? "bg-primary/5 border-primary shadow-sm"
-                                        : "bg-card border-border hover:border-primary/30 hover:bg-muted/30"
+                                    "flex-1 py-3 rounded-2xl text-sm font-bold relative z-10 transition-colors flex flex-col items-center leading-tight",
+                                    paymentType === '50-50' ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground"
                                 )}
                             >
-                                <div className={clsx(
-                                    "w-8 h-8 rounded-full flex items-center justify-center transition-colors",
-                                    paymentType === '50-50' ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
-                                )}>
-                                    <span className="text-xs font-black">50%</span>
-                                </div>
-                                <div>
-                                    <div className={clsx("font-bold text-sm", paymentType === '50-50' ? "text-primary" : "text-foreground")}>50/50 Split</div>
-                                    <div className="text-xs text-muted-foreground font-medium mt-0.5">Deposit now, rest later</div>
-                                </div>
-                                {paymentType === '50-50' && (
-                                    <div className="absolute top-3 right-3 w-2 h-2 rounded-full bg-primary" />
-                                )}
+                                <span>50/50 Split</span>
+                                <span className={clsx("text-[10px] font-medium opacity-80", paymentType === '50-50' ? "text-primary-foreground" : "text-muted-foreground")}>Deposit & Completion</span>
                             </button>
                         </div>
                     </div>
@@ -393,7 +372,7 @@ export default function CreateInvoicePage() {
                         <button
                             type="submit"
                             disabled={loading || !title || calculateTotal() <= 0}
-                            className="w-full md:max-w-md py-4 bg-primary text-primary-foreground rounded-2xl md:rounded-full font-black text-lg shadow-xl shadow-primary/30 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                            className="w-full md:max-w-md py-3.5 md:py-4 bg-primary text-primary-foreground rounded-full font-black text-lg shadow-xl shadow-primary/30 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                         >
                             {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : (
                                 <>

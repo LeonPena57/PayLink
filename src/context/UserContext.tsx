@@ -25,6 +25,8 @@ export interface Profile {
     verification_status: 'none' | 'pending' | 'verified' | 'rejected';
     updated_at: string | null;
     is_admin?: boolean;
+    vacation_mode?: boolean;
+    skills?: string[];
 }
 
 interface UserContextType {

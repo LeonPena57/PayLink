@@ -1,13 +1,13 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Palette, Sun, Moon, Monitor, Settings, Shield, ChevronRight, LogOut, Crown } from "lucide-react";
+import { X, Palette, Sun, Moon, Monitor, Settings, Shield, ChevronRight, LogOut, Crown, Plane } from "lucide-react";
 import { useTheme } from "next-themes";
 import clsx from "clsx";
 import { useUser } from "@/context/UserContext";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface SettingsModalProps {
     isOpen: boolean;
@@ -17,9 +17,16 @@ interface SettingsModalProps {
 
 export function SettingsModal({ isOpen, onClose, onOpenSubscription }: SettingsModalProps) {
     const { theme, setTheme } = useTheme();
-    const { user, signOut, userMode, toggleUserMode } = useUser();
+    const { user, signOut, userMode, toggleUserMode, profile, refreshProfile } = useUser();
     const router = useRouter();
     const [resetSent, setResetSent] = useState(false);
+    const [vacationMode, setVacationMode] = useState(false);
+
+    useEffect(() => {
+        if (profile) {
+            setVacationMode(profile.vacation_mode || false);
+        }
+    }, [profile]);
 
     const handleSignOut = async () => {
         await signOut();
@@ -34,6 +41,25 @@ export function SettingsModal({ isOpen, onClose, onOpenSubscription }: SettingsM
             });
             setResetSent(true);
             setTimeout(() => setResetSent(false), 3000);
+        }
+    };
+
+    const handleVacationToggle = async () => {
+        if (!user) return;
+
+        const newStatus = !vacationMode;
+        setVacationMode(newStatus); // Optimistic update
+
+        const { error } = await supabase
+            .from('profiles')
+            .update({ vacation_mode: newStatus })
+            .eq('id', user.id);
+
+        if (error) {
+            console.error("Error updating vacation mode:", error);
+            setVacationMode(!newStatus); // Revert on error
+        } else {
+            refreshProfile();
         }
     };
 
@@ -166,6 +192,34 @@ export function SettingsModal({ isOpen, onClose, onOpenSubscription }: SettingsM
                                             <Monitor className="w-6 h-6 text-gray-500 mix-blend-difference" />
                                         </div>
                                         <span className={clsx("font-medium text-sm", theme === "system" ? "text-primary" : "text-muted-foreground")}>System</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Seller Settings */}
+                            <div className="space-y-4">
+                                <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+                                    <Plane className="w-4 h-4" />
+                                    Seller Settings
+                                </h3>
+                                <div className="p-4 bg-card border border-border rounded-xl flex items-center justify-between">
+                                    <div>
+                                        <div className="font-medium text-foreground">Vacation Mode</div>
+                                        <div className="text-sm text-muted-foreground">Pause your gigs and hide them from search</div>
+                                    </div>
+                                    <button
+                                        onClick={handleVacationToggle}
+                                        className={clsx(
+                                            "relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
+                                            vacationMode ? "bg-primary" : "bg-muted"
+                                        )}
+                                    >
+                                        <span
+                                            className={clsx(
+                                                "inline-block h-4 w-4 transform rounded-full bg-white transition-transform",
+                                                vacationMode ? "translate-x-6" : "translate-x-1"
+                                            )}
+                                        />
                                     </button>
                                 </div>
                             </div>
