@@ -25,7 +25,8 @@ import {
     Send,
     X,
     Briefcase,
-    Flag
+    Flag,
+    Link as LinkIcon
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -38,6 +39,7 @@ import { motion, AnimatePresence } from "framer-motion";
 const PROFILE_TABS = ["HOME", "SERVICES", "PORTFOLIO", "SHOP"];
 const TAGS = ["All", "Digital Art", "Graphic Design", "Photography", "3D Modeling", "Animation"];
 
+import { FollowListModal } from "@/components/features/FollowListModal";
 import { EditProfileModal } from "@/components/features/dashboard/EditProfileModal";
 import { EditServiceModal } from "@/components/features/dashboard/EditServiceModal";
 import { PostModal } from "@/components/features/PostModal";
@@ -51,6 +53,10 @@ export default function HomePage() {
     const [searchQuery, setSearchQuery] = useState("");
     const [activeTag, setActiveTag] = useState("All");
     const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
+    const [followModalConfig, setFollowModalConfig] = useState<{ isOpen: boolean; type: 'followers' | 'following' }>({
+        isOpen: false,
+        type: 'followers'
+    });
     const [stats, setStats] = useState({ followers: 0, following: 0, is_following: false });
     const [earnings, setEarnings] = useState({ total: 0, weekly: 0, orders: 0 });
 
@@ -627,25 +633,36 @@ export default function HomePage() {
                                         <Twitter className="w-6 h-6" />
                                     </a>
                                 )}
+                                {profile?.social_links?.youtube && (
+                                    <a href={`https://youtube.com/@${profile.social_links.youtube}`} target="_blank" className="text-white/80 hover:text-white transition-colors hover:scale-110 transform">
+                                        <div className="w-6 h-6 font-bold flex items-center justify-center border-2 border-current rounded-full text-[10px]">YT</div>
+                                    </a>
+                                )}
                             </div>
 
                             {/* Edit Profile Button */}
                             <button
                                 onClick={() => setIsEditProfileOpen(true)}
-                                className="absolute top-4 left-4 p-2 bg-black/50 rounded-full text-white opacity-0 group-hover/banner:opacity-100 transition-opacity hover:bg-black/70 z-30"
+                                style={{ backgroundColor: profile?.accent_color || undefined }}
+                                className={clsx(
+                                    "absolute z-30 p-2 rounded-full text-white transition-all hover:opacity-90",
+                                    "bottom-4 right-4 md:top-4 md:left-4 md:bottom-auto md:right-auto", // Positioning
+                                    "opacity-100 md:opacity-0 md:group-hover/banner:opacity-100", // Visibility
+                                    !profile?.accent_color && "bg-black/50 hover:bg-black/70"
+                                )}
                             >
                                 <Edit3 className="w-5 h-5" />
                             </button>
                         </div>
 
-                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 -mt-20 md:-mt-32">
-                            <div className="flex flex-col md:flex-row items-center md:items-end gap-6 md:gap-8">
+                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 -mt-24 md:-mt-32">
+                            <div className="flex flex-col md:flex-row items-center md:items-end gap-6 md:gap-10">
                                 {/* Avatar */}
                                 <div className="relative shrink-0 mx-auto md:mx-0 group/avatar">
-                                    <div className="w-32 h-32 md:w-48 md:h-48 rounded-3xl p-1 bg-card shadow-2xl">
-                                        <div className="w-full h-full rounded-2xl overflow-hidden relative border-2 border-border">
+                                    <div className="w-36 h-36 md:w-52 md:h-52 rounded-[2rem] p-1.5 bg-background shadow-2xl ring-1 ring-black/5">
+                                        <div className="w-full h-full rounded-[1.7rem] overflow-hidden relative border border-border/50">
                                             {profile?.avatar_url ? (
-                                                <Image src={profile.avatar_url} alt="Avatar" fill className="object-cover" sizes="(max-width: 768px) 128px, 192px" />
+                                                <Image src={profile.avatar_url} alt="Avatar" fill className="object-cover" sizes="(max-width: 768px) 144px, 208px" />
                                             ) : (
                                                 <div className="w-full h-full bg-muted flex items-center justify-center">
                                                     <User className="w-16 h-16 text-muted-foreground" />
@@ -653,43 +670,69 @@ export default function HomePage() {
                                             )}
                                             <div
                                                 onClick={handleAvatarClick}
-                                                className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-opacity cursor-pointer"
+                                                className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-all cursor-pointer backdrop-blur-[2px]"
                                             >
-                                                <Camera className="w-8 h-8 text-white" />
+                                                <Camera className="w-10 h-10 text-white drop-shadow-lg" />
                                             </div>
                                         </div>
                                     </div>
                                     {profile?.verification_status === 'verified' && (
-                                        <div className="absolute -bottom-2 -right-2 bg-card p-1.5 rounded-full shadow-lg border border-border">
-                                            <div className="text-white p-1 rounded-full bg-red-500">
-                                                <Check className="w-3 h-3 stroke-[4]" />
+                                        <div className="absolute -bottom-2 -right-2 bg-background p-2 rounded-full shadow-lg border border-border/50">
+                                            <div className="text-white p-1 rounded-full bg-[#FF4500]">
+                                                <Check className="w-4 h-4 stroke-[4]" />
                                             </div>
                                         </div>
                                     )}
                                 </div>
 
                                 {/* Profile Info */}
-                                <div className="flex-1 flex flex-col md:flex-row items-center md:items-end justify-between gap-6 w-full text-center md:text-left pb-4 min-w-0">
-                                    <div className="space-y-1">
-                                        <h1 className="text-3xl md:text-4xl font-black text-foreground tracking-tight">
+                                <div className="flex-1 flex flex-col md:flex-row items-center md:items-end justify-between gap-8 w-full text-center md:text-left pb-6 min-w-0">
+                                    <div className="space-y-2">
+                                        <h1 className="text-4xl md:text-5xl font-black text-foreground tracking-tighter leading-none">
                                             {profile?.full_name || user?.email?.split('@')[0]}
                                         </h1>
-                                        <p className="text-muted-foreground font-medium">@{profile?.username || "username"}</p>
+                                        <div className="flex flex-col md:flex-row items-center gap-2 md:gap-4 text-muted-foreground">
+                                            <p className="font-bold text-lg tracking-tight">@{profile?.username || "username"}</p>
+                                            {profile?.website && (
+                                                <>
+                                                    <span className="hidden md:block w-1 h-1 rounded-full bg-border" />
+                                                    <a href={profile.website} target="_blank" rel="noopener noreferrer" className="text-sm font-bold text-primary hover:underline flex items-center gap-1.5 transition-colors">
+                                                        <LinkIcon className="w-3.5 h-3.5" />
+                                                        {profile.website.replace(/^https?:\/\//, '').replace(/\/$/, '')}
+                                                    </a>
+                                                </>
+                                            )}
+                                        </div>
                                     </div>
 
-                                    <div className="flex items-center gap-6 text-sm font-bold justify-center md:justify-end">
-                                        <div className="text-center md:text-right">
-                                            <div className="text-foreground text-lg">{stats.followers}</div>
-                                            <div className="text-muted-foreground text-xs uppercase tracking-wider">Followers</div>
-                                        </div>
-                                        <div className="text-center md:text-right">
-                                            <div className="text-foreground text-lg">{stats.following}</div>
-                                            <div className="text-muted-foreground text-xs uppercase tracking-wider">Following</div>
-                                        </div>
+                                    <div className="flex items-center gap-8 md:gap-12 justify-center md:justify-end px-4 py-2">
+                                        <button
+                                            onClick={() => setFollowModalConfig({ isOpen: true, type: 'followers' })}
+                                            className="text-center hover:opacity-70 transition-opacity group"
+                                        >
+                                            <div className="text-foreground text-2xl md:text-3xl font-black tracking-tight leading-none mb-1 group-hover:text-primary transition-colors">{stats.followers}</div>
+                                            <div className="text-[10px] md:text-xs font-bold text-muted-foreground uppercase tracking-widest">Followers</div>
+                                        </button>
+                                        <div className="w-px h-8 bg-border/50" />
+                                        <button
+                                            onClick={() => setFollowModalConfig({ isOpen: true, type: 'following' })}
+                                            className="text-center hover:opacity-70 transition-opacity group"
+                                        >
+                                            <div className="text-foreground text-2xl md:text-3xl font-black tracking-tight leading-none mb-1 group-hover:text-primary transition-colors">{stats.following}</div>
+                                            <div className="text-[10px] md:text-xs font-bold text-muted-foreground uppercase tracking-widest">Following</div>
+                                        </button>
                                     </div>
                                 </div>
                             </div>
                         </div>
+
+                        {/* Follow List Modal */}
+                        <FollowListModal
+                            isOpen={followModalConfig.isOpen}
+                            onClose={() => setFollowModalConfig(prev => ({ ...prev, isOpen: false }))}
+                            type={followModalConfig.type}
+                            userId={user?.id || ""}
+                        />
                     </div>
 
                     {/* Tabs */}
@@ -702,7 +745,7 @@ export default function HomePage() {
                                     className={clsx(
                                         "px-6 py-3 rounded-full text-xs font-black tracking-wider transition-all flex items-center gap-2 uppercase min-w-max",
                                         activeProfileTab === tab
-                                            ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25 scale-105"
+                                            ? "bg-foreground text-background shadow-xl scale-105"
                                             : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
                                     )}
                                 >
@@ -722,22 +765,22 @@ export default function HomePage() {
                         {activeProfileTab === "HOME" && (
                             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-6">
                                 {/* Revenue Chart Section */}
-                                <div className="bg-card rounded-[2.5rem] p-8 relative overflow-hidden shadow-sm border border-border/50">
+                                <div className="bg-card rounded-[2.5rem] p-8 relative overflow-hidden shadow-sm border-2 border-border">
                                     <div className="flex justify-between items-center mb-8">
                                         <div>
                                             <h3 className="text-2xl font-black italic tracking-tight text-foreground">REVENUE</h3>
                                             <p className="text-muted-foreground font-medium">Your earnings over time.</p>
                                         </div>
-                                        <div className="flex items-center gap-2 text-xs font-bold bg-primary/10 px-4 py-2 rounded-full text-primary">
-                                            <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                                        <div className="flex items-center gap-2 text-xs font-bold bg-foreground/5 px-4 py-2 rounded-full text-foreground border border-foreground/10">
+                                            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
                                             2025
                                         </div>
                                     </div>
 
                                     <div className="h-64 w-full relative flex items-center justify-center bg-muted/30 rounded-[2rem] border-2 border-dashed border-border/50">
                                         <div className="text-center">
-                                            <div className="w-16 h-16 bg-background rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
-                                                <DollarSign className="w-8 h-8 text-muted-foreground" />
+                                            <div className="w-16 h-16 bg-background rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm border border-border">
+                                                <DollarSign className="w-8 h-8 text-foreground" />
                                             </div>
                                             {earnings.total > 0 ? (
                                                 <>
@@ -756,27 +799,27 @@ export default function HomePage() {
 
                                 {/* Overview Cards */}
                                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                                    <div className="lg:col-span-2 bg-card rounded-[2.5rem] p-8 shadow-sm border border-border/50">
+                                    <div className="lg:col-span-2 bg-card rounded-[2.5rem] p-8 shadow-sm border-2 border-border">
                                         <div className="flex justify-between items-center mb-8">
                                             <h4 className="text-xl font-black italic text-foreground">WEEKLY STATS</h4>
                                         </div>
                                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                            <div className="bg-muted/30 rounded-[2rem] p-6 flex flex-col items-center justify-center aspect-square hover:bg-muted/50 transition-colors group">
+                                            <div className="bg-muted/30 rounded-[2rem] p-6 flex flex-col items-center justify-center aspect-square hover:bg-muted/50 transition-colors group border border-transparent hover:border-border">
                                                 <TrendingUp className="w-8 h-8 text-foreground mb-3 group-hover:scale-110 transition-transform" />
                                                 <span className="text-3xl font-black text-foreground">{earnings.orders}</span>
                                                 <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider mt-1">Orders</span>
                                             </div>
-                                            <div className="bg-primary/5 rounded-[2rem] p-6 flex flex-col items-center justify-center aspect-square hover:bg-primary/10 transition-colors group">
-                                                <UserPlus className="w-8 h-8 text-primary mb-3 group-hover:scale-110 transition-transform" />
+                                            <div className="bg-muted/30 rounded-[2rem] p-6 flex flex-col items-center justify-center aspect-square hover:bg-muted/50 transition-colors group border border-transparent hover:border-border">
+                                                <UserPlus className="w-8 h-8 text-foreground mb-3 group-hover:scale-110 transition-transform" />
                                                 <span className="text-3xl font-black text-foreground">0</span>
-                                                <span className="text-xs font-bold text-primary uppercase tracking-wider mt-1">Visits</span>
+                                                <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider mt-1">Visits</span>
                                             </div>
-                                            <div className="bg-muted/30 rounded-[2rem] p-6 flex flex-col items-center justify-center aspect-square hover:bg-muted/50 transition-colors group">
-                                                <Star className="w-8 h-8 text-yellow-500 mb-3 fill-current group-hover:scale-110 transition-transform" />
+                                            <div className="bg-muted/30 rounded-[2rem] p-6 flex flex-col items-center justify-center aspect-square hover:bg-muted/50 transition-colors group border border-transparent hover:border-border">
+                                                <Star className="w-8 h-8 text-foreground mb-3 group-hover:scale-110 transition-transform" />
                                                 <span className="text-3xl font-black text-foreground">0.0</span>
                                                 <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider mt-1">Rating</span>
                                             </div>
-                                            <div className="bg-muted/30 rounded-[2rem] p-6 flex flex-col items-center justify-center aspect-square hover:bg-muted/50 transition-colors group">
+                                            <div className="bg-muted/30 rounded-[2rem] p-6 flex flex-col items-center justify-center aspect-square hover:bg-muted/50 transition-colors group border border-transparent hover:border-border">
                                                 <RefreshCw className="w-8 h-8 text-foreground mb-3 group-hover:scale-110 transition-transform" />
                                                 <span className="text-3xl font-black text-foreground">0</span>
                                                 <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider mt-1">Refunds</span>
@@ -784,18 +827,18 @@ export default function HomePage() {
                                         </div>
                                     </div>
 
-                                    <div className="bg-primary text-primary-foreground rounded-[2.5rem] p-8 shadow-lg shadow-primary/20 flex flex-col justify-between relative overflow-hidden">
+                                    <div className="bg-foreground text-background rounded-[2.5rem] p-8 shadow-2xl flex flex-col justify-between relative overflow-hidden">
                                         <div className="absolute top-0 right-0 p-8 opacity-10">
                                             <DollarSign className="w-32 h-32" />
                                         </div>
                                         <div className="relative z-10">
                                             <h4 className="text-xl font-black italic mb-8">EARNINGS</h4>
                                             <div className="space-y-6">
-                                                <div className="bg-white/10 backdrop-blur-md rounded-[2rem] p-6 text-center border border-white/20">
+                                                <div className="bg-background/10 backdrop-blur-md rounded-[2rem] p-6 text-center border border-background/20">
                                                     <span className="text-xs font-bold uppercase tracking-wider opacity-80 block mb-1">This Week</span>
                                                     <span className="text-4xl font-black tracking-tight">${earnings.weekly.toFixed(2)}</span>
                                                 </div>
-                                                <div className="bg-white/10 backdrop-blur-md rounded-[2rem] p-6 text-center border border-white/20">
+                                                <div className="bg-background/10 backdrop-blur-md rounded-[2rem] p-6 text-center border border-background/20">
                                                     <span className="text-xs font-bold uppercase tracking-wider opacity-80 block mb-1">Total</span>
                                                     <span className="text-4xl font-black tracking-tight">${earnings.total.toFixed(2)}</span>
                                                 </div>

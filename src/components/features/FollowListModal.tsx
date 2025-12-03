@@ -27,43 +27,45 @@ export function FollowListModal({ isOpen, onClose, type, userId }: FollowListMod
             let error: any = null;
 
             if (type === 'followers') {
-                const result = await supabase
+                // 1. Get follower IDs
+                const { data: follows, error: followsError } = await supabase
                     .from('follows')
-                    .select(`
-                        follower_id,
-                        profiles:follower_id (
-                            id,
-                            username,
-                            full_name,
-                            avatar_url,
-                            verification_status
-                        )
-                    `)
+                    .select('follower_id')
                     .eq('following_id', userId);
 
-                if (result.data) {
-                    data = result.data.map((item: any) => item.profiles);
+                if (followsError) {
+                    error = followsError;
+                } else if (follows && follows.length > 0) {
+                    const ids = follows.map((f: any) => f.follower_id);
+                    // 2. Get profiles
+                    const { data: profiles, error: profilesError } = await supabase
+                        .from('profiles')
+                        .select('id, username, full_name, avatar_url, verification_status')
+                        .in('id', ids);
+
+                    if (profiles) data = profiles;
+                    if (profilesError) error = profilesError;
                 }
-                error = result.error;
             } else {
-                const result = await supabase
+                // 1. Get following IDs
+                const { data: follows, error: followsError } = await supabase
                     .from('follows')
-                    .select(`
-                        following_id,
-                        profiles:following_id (
-                            id,
-                            username,
-                            full_name,
-                            avatar_url,
-                            verification_status
-                        )
-                    `)
+                    .select('following_id')
                     .eq('follower_id', userId);
 
-                if (result.data) {
-                    data = result.data.map((item: any) => item.profiles);
+                if (followsError) {
+                    error = followsError;
+                } else if (follows && follows.length > 0) {
+                    const ids = follows.map((f: any) => f.following_id);
+                    // 2. Get profiles
+                    const { data: profiles, error: profilesError } = await supabase
+                        .from('profiles')
+                        .select('id, username, full_name, avatar_url, verification_status')
+                        .in('id', ids);
+
+                    if (profiles) data = profiles;
+                    if (profilesError) error = profilesError;
                 }
-                error = result.error;
             }
 
             if (error) {

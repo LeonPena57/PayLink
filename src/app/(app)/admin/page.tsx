@@ -228,6 +228,20 @@ export default function AdminPage() {
                     </div>
                 )}
 
+                {/* Gig Approvals (Mocked) */}
+                <div className="bg-card border border-border rounded-2xl overflow-hidden">
+                    <div className="p-6 border-b border-border flex items-center justify-between">
+                        <h3 className="font-bold text-lg flex items-center gap-2">
+                            <Shield className="w-5 h-5 text-primary" />
+                            Gig Approvals
+                        </h3>
+                        <span className="text-xs font-bold bg-primary/10 text-primary px-2 py-1 rounded-full">2 Pending</span>
+                    </div>
+                    <div className="p-6 text-center text-muted-foreground italic">
+                        <p>No new gigs require approval at this time.</p>
+                    </div>
+                </div>
+
                 {/* Recent Users */}
                 <div className="bg-card border border-border rounded-2xl overflow-hidden">
                     <div className="p-6 border-b border-border flex items-center justify-between">
@@ -283,7 +297,21 @@ export default function AdminPage() {
                                             {new Date(u.created_at || Date.now()).toLocaleDateString()}
                                         </td>
                                         <td className="px-6 py-4">
-                                            <button className="text-primary hover:underline font-bold">View</button>
+                                            <div className="flex gap-3">
+                                                <button className="text-primary hover:underline font-bold text-xs">View</button>
+                                                <button
+                                                    onClick={() => alert("Ban functionality coming soon")}
+                                                    className="text-red-500 hover:underline font-bold text-xs"
+                                                >
+                                                    Ban
+                                                </button>
+                                                <button
+                                                    onClick={() => alert("Freeze funds functionality coming soon")}
+                                                    className="text-orange-500 hover:underline font-bold text-xs"
+                                                >
+                                                    Freeze
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}

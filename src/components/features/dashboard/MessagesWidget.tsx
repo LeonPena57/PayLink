@@ -211,6 +211,16 @@ export function MessagesWidget() {
     const handleSendMessage = async () => {
         if (!newMessage.trim() || !activeConversation || !user) return;
 
+        // Trust & Safety: Keyword Flagging
+        // We dynamically import to avoid circular dependencies if any, though not strictly needed here.
+        const { containsForbiddenKeywords } = await import("@/lib/safety");
+        const safetyCheck = containsForbiddenKeywords(newMessage);
+
+        if (safetyCheck.found) {
+            toast(`Message blocked: Contains forbidden keyword "${safetyCheck.keyword}". Please keep communication on the platform.`, "error");
+            return;
+        }
+
         const { error } = await supabase
             .from('messages')
             .insert({

@@ -38,6 +38,29 @@ export default function CreateServicePage() {
     // Extras State
     const [extras, setExtras] = useState<{ title: string; description: string; price: number; additional_days: number }[]>([]);
 
+    // Features Matrix State
+    const [features, setFeatures] = useState([
+        { id: 1, name: "Source File", Basic: false, Standard: true, Premium: true },
+        { id: 2, name: "Commercial Use", Basic: false, Standard: false, Premium: true },
+        { id: 3, name: "High Resolution", Basic: true, Standard: true, Premium: true },
+    ]);
+
+    const toggleFeature = (id: number, tier: "Basic" | "Standard" | "Premium") => {
+        setFeatures(features.map(f => f.id === id ? { ...f, [tier]: !f[tier] } : f));
+    };
+
+    const addFeature = () => {
+        setFeatures([...features, { id: Date.now(), name: "", Basic: false, Standard: false, Premium: false }]);
+    };
+
+    const removeFeature = (id: number) => {
+        setFeatures(features.filter(f => f.id !== id));
+    };
+
+    const updateFeatureName = (id: number, name: string) => {
+        setFeatures(features.map(f => f.id === id ? { ...f, name } : f));
+    };
+
     const addExtra = () => {
         setExtras([...extras, { title: "", description: "", price: 0, additional_days: 0 }]);
     };
@@ -143,7 +166,8 @@ export default function CreateServicePage() {
                     description: data.description,
                     price: parseFloat(data.price),
                     delivery_days: parseInt(data.delivery_days) || 3,
-                    revisions: data.revisions === "Unlimited" ? 999 : parseInt(data.revisions) || 1
+                    revisions: data.revisions === "Unlimited" ? 999 : parseInt(data.revisions) || 1,
+                    features: features.filter(f => f[name as "Basic" | "Standard" | "Premium"]).map(f => f.name)
                 };
             }).filter(Boolean);
 
@@ -440,6 +464,61 @@ export default function CreateServicePage() {
                                         />
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+
+                        {/* Features Matrix */}
+                        <div className="bg-background rounded-3xl border border-border p-6 space-y-6 shadow-sm">
+                            <div className="flex items-center justify-between border-b border-border pb-4">
+                                <div className="flex items-center gap-2 text-lg font-bold">
+                                    <CheckCircle2 className="w-5 h-5 text-primary" />
+                                    Package Features
+                                </div>
+                                <button type="button" onClick={addFeature} className="text-xs font-bold text-primary hover:underline">+ Add Feature</button>
+                            </div>
+
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-sm">
+                                    <thead>
+                                        <tr className="border-b border-border">
+                                            <th className="text-left py-2 font-bold text-muted-foreground w-1/3">Feature</th>
+                                            <th className="text-center py-2 font-bold text-muted-foreground">Basic</th>
+                                            <th className="text-center py-2 font-bold text-muted-foreground">Standard</th>
+                                            <th className="text-center py-2 font-bold text-muted-foreground">Premium</th>
+                                            <th className="w-8"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-border">
+                                        {features.map(feature => (
+                                            <tr key={feature.id}>
+                                                <td className="py-3">
+                                                    <input
+                                                        type="text"
+                                                        value={feature.name}
+                                                        onChange={(e) => updateFeatureName(feature.id, e.target.value)}
+                                                        placeholder="Feature name..."
+                                                        className="w-full bg-transparent border-none p-0 font-medium focus:ring-0"
+                                                    />
+                                                </td>
+                                                {(["Basic", "Standard", "Premium"] as const).map(tier => (
+                                                    <td key={tier} className="text-center py-3">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={feature[tier]}
+                                                            onChange={() => toggleFeature(feature.id, tier)}
+                                                            className="w-5 h-5 rounded border-border text-primary focus:ring-primary/20"
+                                                        />
+                                                    </td>
+                                                ))}
+                                                <td className="py-3 text-right">
+                                                    <button type="button" onClick={() => removeFeature(feature.id)} className="text-muted-foreground hover:text-destructive">
+                                                        <X className="w-4 h-4" />
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
 
